@@ -1,0 +1,3 @@
+[submodule "src/monocoque/simulatorapi/simapi"]
+	path = src/monocoque/simulatorapi/simapi
+	url = https://github.com/spacefreak18/simapi

@@ -1,0 +1,1 @@
+SUBSYSTEMS=="usb",ATTRS{product}=="Rev Burner",GROUP="input",TAG+="uaccess"

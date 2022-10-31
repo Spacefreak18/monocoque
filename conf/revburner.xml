@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TachometerSettings>
+  <SettingsValues>
+    <SettingsItem>
+      <Value>300</Value>
+      <TimeValue>43600</TimeValue>
+    </SettingsItem>
+    <SettingsItem>
+      <Value>500</Value>
+      <TimeValue>48800</TimeValue>
+    </SettingsItem>
+    <SettingsItem>
+      <Value>1000</Value>
+      <TimeValue>54700</TimeValue>
+    </SettingsItem>
+    <SettingsItem>
+      <Value>1500</Value>
+      <TimeValue>58600</TimeValue>
+    </SettingsItem>
+    <SettingsItem>
+      <Value>2000</Value>
+      <TimeValue>60100</TimeValue>
+    </SettingsItem>
+    <SettingsItem>
+      <Value>2500</Value>
+      <TimeValue>61100</TimeValue>
+    </SettingsItem>
+    <SettingsItem>
+      <Value>3000</Value>
+      <TimeValue>61900</TimeValue>
+    </SettingsItem>
+  </SettingsValues>
+  <MaxDisplayValue>3000</MaxDisplayValue>
+</TachometerSettings>
