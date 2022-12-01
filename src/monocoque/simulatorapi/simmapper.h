@@ -1,12 +1,14 @@
 #ifndef _SIMMAPPER_H
-#define _SIMMAPPEE_H
+#define _SIMMAPPER_H
 
 #include "ac.h"
+#include "rf2.h"
 
 #include "simdata.h"
 #include "../helper/confighelper.h"
 
 #include "simapi/acdata.h"
+#include "simapi/rf2data.h"
 
 typedef struct
 {
@@ -15,6 +17,7 @@ typedef struct
     union
     {
         ACMap ac;
+        RF2Map rf2;
     } d;
 }
 SimMap;

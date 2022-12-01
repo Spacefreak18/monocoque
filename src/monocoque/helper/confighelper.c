@@ -19,6 +19,11 @@ int strtogame(const char* game, MonocoqueSettings* ms)
         slogd("Setting simulator to Assetto Corsa");
         ms->sim_name = SIMULATOR_ASSETTO_CORSA;
     }
+    else if (strcmp(game, "rf2") == 0)
+    {
+        slogd("Setting simulator to RFactor 2");
+        ms->sim_name = SIMULATOR_RFACTOR2;
+    }
     else
         if (strcmp(game, "test") == 0)
         {

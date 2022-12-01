@@ -2,15 +2,19 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <string.h>
+#include <stdlib.h>
+#include <math.h>
 
 #include "simmapper.h"
 #include "simdata.h"
 #include "test.h"
 #include "ac.h"
+#include "rf2.h"
 #include "../helper/confighelper.h"
 #include "../slog/slog.h"
 
 #include "simapi/acdata.h"
+#include "simapi/rf2data.h"
 
 
 int simdatamap(SimData* simdata, SimMap* simmap, Simulator simulator)
@@ -32,8 +36,17 @@ int simdatamap(SimData* simdata, SimMap* simmap, Simulator simulator)
             simdata->velocity = simmap->d.ac.ac_physics.speedKmh;
             simdata->altitude = 1;
             break;
+        case SIMULATOR_RFACTOR2 :
+            memcpy(&simmap->d.rf2.rf2_telemetry, simmap->d.rf2.telemetry_map_addr, sizeof(simmap->d.rf2.rf2_telemetry));
+           
+            simdata->velocity = abs(ceil(simmap->d.rf2.rf2_telemetry.mVehicles[0].mLocalVel.z * 3.6));
+            simdata->rpms = ceil(simmap->d.rf2.rf2_telemetry.mVehicles[0].mEngineRPM);
+            simdata->gear = simmap->d.rf2.rf2_telemetry.mVehicles[0].mGear;
+            simdata->maxrpm - ceil(simmap->d.rf2.rf2_telemetry.mVehicles[0].mEngineMaxRPM);
+            break;
     }
 }
+
 
 int siminit(SimData* simdata, SimMap* simmap, Simulator simulator)
 {
@@ -90,6 +103,28 @@ int siminit(SimData* simdata, SimMap* simmap, Simulator simulator)
             simmap->d.ac.has_static=true;
 
             slogi("found data for Assetto Corsa...");
+            break;
+        
+        case SIMULATOR_RFACTOR2 :
+
+            simmap->d.rf2.has_telemetry=false;
+            simmap->d.rf2.has_scoring=false;
+            simmap->fd = shm_open(RF2_TELEMETRY_FILE, O_RDONLY, S_IRUSR | S_IWUSR);
+            if (simmap->fd == -1)
+            {
+                slogd("could not open RFactor2 Telemetry engine");
+                return MONOCOQUE_ERROR_NODATA;
+            }
+            simmap->d.rf2.telemetry_map_addr = mmap(NULL, sizeof(simmap->d.rf2.rf2_telemetry), PROT_READ, MAP_SHARED, simmap->fd, 0);
+            if (simmap->d.rf2.telemetry_map_addr == MAP_FAILED)
+            {
+                slogd("could not retrieve RFactor2 telemetry data");
+                return 30;
+            }
+            simmap->d.rf2.has_telemetry=true;
+
+
+            slogi("found data for RFactor2...");
             break;
     }
 
