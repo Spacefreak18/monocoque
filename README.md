@@ -26,7 +26,7 @@ Cross Platform device manager for driving and flight simulators, for use with co
 - libxml2
 - argtable2
 - libconfig
-- slog (static)
+- [slog](https://github.com/kala13x/slog) (static)
 - [wine-linux-shm-adapter](https://github.com/spacefreak18/wine-linux-shm-adapter)
 - [simapi](https://github.com/spacefreak18/simapi)
 
@@ -58,6 +58,7 @@ make
 ```
 
 ## ToDo
+ - windows port
  - more memory testing
  - handling null mallocs
  - move config code around
