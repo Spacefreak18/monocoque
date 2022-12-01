@@ -33,28 +33,35 @@ int showstats(SimData* simdata)
 
             int speed = simdata->velocity;
             int digits = 0;
-            while (speed > 0)
+            if (speed > 0)
             {
-                int mod = speed % 10;
-                speed = speed / 10;
-                digits++;
+                while (speed > 0)
+                {
+                    int mod = speed % 10;
+                    speed = speed / 10;
+                    digits++;
+                }
+                speed = simdata->velocity;
+                int s[digits];
+                int digit = 0;
+                while (speed > 0)
+                {
+                    int mod = speed % 10;
+                    s[digit] = mod;
+                    speed = speed / 10;
+                    digit++;
+                }
+                speed = simdata->velocity;
+                digit = digits;
+                while (digit > 0)
+                {
+                    fputc(s[digit-1]+'0', stdout);
+                    digit--;
+                }
             }
-            speed = simdata->velocity;
-            int s[digits];
-            int digit = 0;
-            while (speed > 0)
+            else
             {
-                int mod = speed % 10;
-                s[digit] = mod;
-                speed = speed / 10;
-                digit++;
-            }
-            speed = simdata->velocity;
-            digit = digits;
-            while (digit > 0)
-            {
-                fputc(s[digit-1]+'0', stdout);
-                digit--;
+                fputc('0', stdout);
             }
             fputc(' ', stdout);
         }
@@ -69,28 +76,35 @@ int showstats(SimData* simdata)
 
             int rpms = simdata->rpms;
             int digits = 0;
-            while (rpms > 0)
+            if (rpms > 0)
             {
-                int mod = rpms % 10;
-                rpms = rpms / 10;
-                digits++;
+                while (rpms > 0)
+                {
+                    int mod = rpms % 10;
+                    rpms = rpms / 10;
+                    digits++;
+                }
+                rpms = simdata->rpms;
+                int s[digits];
+                int digit = 0;
+                while (rpms > 0)
+                {
+                    int mod = rpms % 10;
+                    s[digit] = mod;
+                    rpms = rpms / 10;
+                    digit++;
+                }
+                rpms = simdata->rpms;
+                digit = digits;
+                while (digit > 0)
+                {
+                    fputc(s[digit-1]+'0', stdout);
+                    digit--;
+                }
             }
-            rpms = simdata->rpms;
-            int s[digits];
-            int digit = 0;
-            while (rpms > 0)
+            else
             {
-                int mod = rpms % 10;
-                s[digit] = mod;
-                rpms = rpms / 10;
-                digit++;
-            }
-            rpms = simdata->rpms;
-            digit = digits;
-            while (digit > 0)
-            {
-                fputc(s[digit-1]+'0', stdout);
-                digit--;
+                fputc('0', stdout);
             }
             fputc(' ', stdout);
         }
@@ -115,28 +129,35 @@ int showstats(SimData* simdata)
 
             int alt = simdata->altitude;
             int digits = 0;
-            while (alt > 0)
+            if (alt > 0)
             {
-                int mod = alt % 10;
-                alt = alt / 10;
-                digits++;
+                while (alt > 0)
+                {
+                    int mod = alt % 10;
+                    alt = alt / 10;
+                    digits++;
+                }
+                alt = simdata->altitude;
+                int s[digits];
+                int digit = 0;
+                while (alt > 0)
+                {
+                    int mod = alt % 10;
+                    s[digit] = mod;
+                    alt = alt / 10;
+                    digit++;
+                }
+                alt = simdata->altitude;
+                digit = digits;
+                while (digit > 0)
+                {
+                    fputc(s[digit-1]+'0', stdout);
+                    digit--;
+                }
             }
-            alt = simdata->altitude;
-            int s[digits];
-            int digit = 0;
-            while (alt > 0)
+            else
             {
-                int mod = alt % 10;
-                s[digit] = mod;
-                alt = alt / 10;
-                digit++;
-            }
-            alt = simdata->altitude;
-            digit = digits;
-            while (digit > 0)
-            {
-                fputc(s[digit-1]+'0', stdout);
-                digit--;
+                fputc('0', stdout);
             }
             fputc(' ', stdout);
         }
@@ -208,7 +229,8 @@ int looper(SimDevice* devices[], int numdevices, Simulator simulator)
             }
         }
     }
-
+    fprintf(stdout, "\n");
+    fflush(stdout);
     tcsetattr(0, TCSANOW, &canonicalmode);
 
     free(simdata);
