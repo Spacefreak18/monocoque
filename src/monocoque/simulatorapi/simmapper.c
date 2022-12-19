@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <math.h>
 
 #include "simmapper.h"
@@ -19,30 +20,33 @@
 
 int simdatamap(SimData* simdata, SimMap* simmap, Simulator simulator)
 {
+    char* a;
+    char* b;
     switch ( simulator )
     {
         case SIMULATOR_MONOCOQUE_TEST :
             memcpy(simdata, simmap->addr, sizeof(SimData));
             break;
         case SIMULATOR_ASSETTO_CORSA :
-            memcpy(&simmap->d.ac.ac_physics, simmap->d.ac.physics_map_addr, sizeof(simmap->d.ac.ac_physics));
+            a = simmap->d.ac.physics_map_addr;
             if (simmap->d.ac.has_static == true )
             {
-                memcpy(&simmap->d.ac.ac_static, simmap->d.ac.static_map_addr, sizeof(simmap->d.ac.ac_static));
-                simdata->maxrpm = simmap->d.ac.ac_static.maxRpm;
+                b = simmap->d.ac.static_map_addr;
+                simdata->maxrpm = *(uint32_t*) (char*) (b + offsetof(struct SPageFileStatic, maxRpm));
             }
-            simdata->rpms = simmap->d.ac.ac_physics.rpms;
-            simdata->gear = simmap->d.ac.ac_physics.gear;
-            simdata->velocity = simmap->d.ac.ac_physics.speedKmh;
+            simdata->rpms = *(uint32_t*) (char*) (a + offsetof(struct SPageFilePhysics, rpms));
+            simdata->gear = *(uint32_t*) (char*) (a + offsetof(struct SPageFilePhysics, gear));
+            simdata->velocity = ceil( *(float*) (char*) (a + offsetof(struct SPageFilePhysics, speedKmh)));
             simdata->altitude = 1;
             break;
         case SIMULATOR_RFACTOR2 :
-            memcpy(&simmap->d.rf2.rf2_telemetry, simmap->d.rf2.telemetry_map_addr, sizeof(simmap->d.rf2.rf2_telemetry));
            
-            simdata->velocity = abs(ceil(simmap->d.rf2.rf2_telemetry.mVehicles[0].mLocalVel.z * 3.6));
-            simdata->rpms = ceil(simmap->d.rf2.rf2_telemetry.mVehicles[0].mEngineRPM);
-            simdata->gear = simmap->d.rf2.rf2_telemetry.mVehicles[0].mGear;
-            simdata->maxrpm - ceil(simmap->d.rf2.rf2_telemetry.mVehicles[0].mEngineMaxRPM);
+            a = simmap->d.rf2.telemetry_map_addr;
+            
+            simdata->velocity = ceil(3.6 * ( *(double*) (char*) (a + offsetof(struct rF2Telemetry, mVehicles[0].mLocalVel.z))));
+            simdata->rpms = ceil( *(double*) (char*) (a + offsetof(struct rF2Telemetry, mVehicles[0].mEngineRPM)));
+            simdata->maxrpm = ceil( *(double*) (char*) (a + offsetof(struct rF2Telemetry, mVehicles[0].mEngineMaxRPM)));
+            simdata->gear = *(uint32_t*) (char*) (a + offsetof(struct rF2Telemetry, mVehicles[0].mGear));
             break;
     }
 }
