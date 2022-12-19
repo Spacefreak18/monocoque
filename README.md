@@ -22,7 +22,7 @@ Cross Platform device manager for driving and flight simulators, for use with co
 - hidapi - usb hid devices
 - libusb - used by hidapi
 - portaudio - sound devices (haptic bass shakers)
-- libenet - UDP support
+- libenet - UDP support (not yet implemented)
 - libxml2
 - argtable2
 - libconfig
