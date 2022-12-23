@@ -48,7 +48,7 @@ make
 ```
     mkdir build; cd build
     make clean
-    CFLAGS=-fanalyzer cmake ..
+    cmake -Danalyze=on ..
     make
 ```
 ### Valgrind

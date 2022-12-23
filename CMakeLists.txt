@@ -11,7 +11,7 @@ endif()
 
 
 SET_SOURCE_FILES_PROPERTIES( src/monocoque.c PROPERTIES LANGUAGE C)
-set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_BUILD_TYPE Debug)
 
 
 project(monocoque)
@@ -122,6 +122,12 @@ else() # GCC/Clang warning option
     # e.g. at the time of writing, GCC does not support -Wdocumentation
     #
     # enable all warnings about 'questionable constructs'
+
+    if(analyze)
+        message("-- Analyzer is on")
+        target_compile_options(monocoque PRIVATE -fanalyzer -Wno-analyzer-possible-null-argument -Wno-analyzer-possible-null-dereference)
+    endif()
+
     enable_cxx_compiler_flag_if_supported("-Wall")
     # issue 'pedantic' warnings for strict ISO compliance
     enable_cxx_compiler_flag_if_supported("-pedantic")
