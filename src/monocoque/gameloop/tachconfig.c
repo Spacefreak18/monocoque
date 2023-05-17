@@ -183,7 +183,7 @@ int config_tachometer(int max_revs, int granularity, const char* save_file, SimD
     WriteXmlFromArrays(nodes, rpm_array, values_array, max_revs, save_file);
     sleep(2);
     simdata->pulses = 0;
-    devupdate(simdevice, simdata);
+    simdevice->update(simdevice, simdata);
     fflush(stdout);
 
     return 0;

@@ -14,7 +14,7 @@
 #include "../simulatorapi/simmapper.h"
 #include "../slog/slog.h"
 
-#define DEFAULT_UPDATE_RATE      120.0
+#define DEFAULT_UPDATE_RATE      240.0
 
 int showstats(SimData* simdata)
 {
@@ -165,7 +165,7 @@ int showstats(SimData* simdata)
     fflush(stdout);
 }
 
-int looper(SimDevice* devices[], int numdevices, Simulator simulator)
+int looper(SimDevice* devices, int numdevices, Simulator simulator)
 {
 
     slogi("preparing game loop with %i devices...", numdevices);
@@ -179,6 +179,15 @@ int looper(SimDevice* devices[], int numdevices, Simulator simulator)
         return error;
     }
 
+    slogi("sending initial data to devices");
+    simdata->velocity = 16;
+    simdata->rpms = 100;
+    for (int x = 0; x < numdevices; x++)
+    {
+        devices[x].update(&devices[x], simdata);
+    }
+    sleep(3);
+
     struct termios newsettings, canonicalmode;
     tcgetattr(0, &canonicalmode);
     newsettings = canonicalmode;
@@ -191,34 +200,22 @@ int looper(SimDevice* devices[], int numdevices, Simulator simulator)
 
     double update_rate = DEFAULT_UPDATE_RATE;
     int t=0;
+    int s=0;
     int go = true;
     while (go == true)
     {
         simdatamap(simdata, simmap, simulator);
         showstats(simdata);
         t++;
-        if(simdata->rpms<250)
+        s++;
+        if(simdata->rpms<100)
         {
-            simdata->rpms=250;
+            simdata->rpms=100;
         }
         for (int x = 0; x < numdevices; x++)
         {
-            if (devices[x]->type == SIMDEV_SERIAL)
-            {
-                if(t>=update_rate)
-                {
-                    devupdate(devices[x], simdata);
-                }
-            }
-            else
-            {
-                devupdate(devices[x], simdata);
-            }
+            devices[x].update(&devices[x], simdata);
 
-        }
-        if(t>=update_rate)
-        {
-            t=0;
         }
         if( poll(&mypoll, 1, 1000.0/update_rate) )
         {
@@ -233,8 +230,156 @@ int looper(SimDevice* devices[], int numdevices, Simulator simulator)
     fflush(stdout);
     tcsetattr(0, TCSANOW, &canonicalmode);
 
+    simdata->velocity = 0;
+    simdata->rpms = 100;
+    for (int x = 0; x < numdevices; x++)
+    {
+        devices[x].update(&devices[x], simdata);
+    }
+
     free(simdata);
     free(simmap);
+
+    return 0;
+}
+
+int tester(SimDevice* devices, int numdevices)
+{
+
+    slogi("preparing test with %i devices...", numdevices);
+    SimData* simdata = malloc(sizeof(SimData));
+
+    struct termios newsettings, canonicalmode;
+    tcgetattr(0, &canonicalmode);
+    newsettings = canonicalmode;
+    newsettings.c_lflag &= (~ICANON & ~ECHO);
+    newsettings.c_cc[VMIN] = 1;
+    newsettings.c_cc[VTIME] = 0;
+    tcsetattr(0, TCSANOW, &newsettings);
+
+    fprintf(stdout, "\n");
+    simdata->gear = 0;
+    simdata->velocity = 16;
+    simdata->rpms = 100;
+    simdata->maxrpm = 8000;
+    sleep(3);
+
+    fprintf(stdout, "Setting rpms to 1000\n");
+    simdata->rpms = 1000;
+    for (int x = 0; x < numdevices; x++)
+    {
+        devices[x].update(&devices[x], simdata);
+    }
+    sleep(3);
+
+    fprintf(stdout, "Shifting into first gear\n");
+    simdata->gear = 1;
+    for (int x = 0; x < numdevices; x++)
+    {
+        devices[x].update(&devices[x], simdata);
+    }
+    for (int x = 0; x < numdevices; x++)
+    {
+        devices[x].update(&devices[x], simdata);
+    }
+    sleep(3);
+
+    fprintf(stdout, "Setting speed to 100\n");
+    simdata->velocity = 100;
+    for (int x = 0; x < numdevices; x++)
+    {
+        devices[x].update(&devices[x], simdata);
+    }
+    sleep(3);
+
+    fprintf(stdout, "Shifting into second gear\n");
+    simdata->gear = 2;
+    for (int x = 0; x < numdevices; x++)
+    {
+        devices[x].update(&devices[x], simdata);
+    }
+    for (int x = 0; x < numdevices; x++)
+    {
+        devices[x].update(&devices[x], simdata);
+    }
+    sleep(3);
+
+    fprintf(stdout, "Setting speed to 200\n");
+    simdata->velocity = 200;
+    for (int x = 0; x < numdevices; x++)
+    {
+        devices[x].update(&devices[x], simdata);
+    }
+    sleep(3);
+
+    fprintf(stdout, "Shifting into third gear\n");
+    simdata->gear = 3;
+    for (int x = 0; x < numdevices; x++)
+    {
+        devices[x].update(&devices[x], simdata);
+    }
+    for (int x = 0; x < numdevices; x++)
+    {
+        devices[x].update(&devices[x], simdata);
+    }
+    sleep(3);
+
+    fprintf(stdout, "Setting rpms to 2000\n");
+    simdata->rpms = 2000;
+    for (int x = 0; x < numdevices; x++)
+    {
+        devices[x].update(&devices[x], simdata);
+    }
+    sleep(3);
+
+    fprintf(stdout, "Setting rpms to 4000\n");
+    simdata->rpms = 4000;
+    for (int x = 0; x < numdevices; x++)
+    {
+        devices[x].update(&devices[x], simdata);
+    }
+    sleep(3);
+
+    fprintf(stdout, "Shifting into fourth gear\n");
+    simdata->gear = 4;
+    for (int x = 0; x < numdevices; x++)
+    {
+        devices[x].update(&devices[x], simdata);
+    }
+    for (int x = 0; x < numdevices; x++)
+    {
+        devices[x].update(&devices[x], simdata);
+    }
+    sleep(3);
+
+    fprintf(stdout, "Setting speed to 300\n");
+    simdata->velocity = 300;
+    for (int x = 0; x < numdevices; x++)
+    {
+        devices[x].update(&devices[x], simdata);
+    }
+    sleep(3);
+
+    fprintf(stdout, "Setting rpms to 8000\n");
+    simdata->rpms = 8000;
+    for (int x = 0; x < numdevices; x++)
+    {
+        devices[x].update(&devices[x], simdata);
+    }
+    sleep(3);
+
+    simdata->velocity = 0;
+    simdata->rpms = 100;
+    for (int x = 0; x < numdevices; x++)
+    {
+        devices[x].update(&devices[x], simdata);
+    }
+    sleep(1);
+
+    fflush(stdout);
+    tcsetattr(0, TCSANOW, &canonicalmode);
+
+    free(simdata);
 
     return 0;
 }

@@ -15,8 +15,9 @@ Parameters;
 typedef enum
 {
     A_PLAY          = 0,
-    A_CONFIG_TACH   = 1,
-    A_CONFIG_SHAKER = 2
+    A_TEST          = 1,
+    A_CONFIG_TACH   = 2,
+    A_CONFIG_SHAKER = 3
 }
 ProgramAction;
 

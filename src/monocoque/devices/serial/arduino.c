@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "arduino.h"
-#include "../slog/slog.h"
+#include "../../slog/slog.h"
 
 #define arduino_timeout 2000
 
@@ -18,11 +19,12 @@ int arduino_update(SerialDevice* serialdevice, SimData* simdata)
     return result;
 }
 
-int arduino_init(SerialDevice* serialdevice)
+int arduino_init(SerialDevice* serialdevice, const char* portdev)
 {
     slogi("initializing arduino serial device...");
     int error = 0;
-    char* port_name = "/dev/ttyACM0";
+    char* port_name = strdup(portdev);
+
     slogd("Looking for port %s.\n", port_name);
     error = check(sp_get_port_by_name(port_name, &serialdevice->port));
     if (error != 0)
@@ -40,6 +42,7 @@ int arduino_init(SerialDevice* serialdevice)
     check(sp_set_stopbits(serialdevice->port, 1));
     check(sp_set_flowcontrol(serialdevice->port, SP_FLOWCONTROL_NONE));
 
+    free(port_name);
     slogd("Successfully setup arduino serial device...");
     return 0;
 }

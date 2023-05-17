@@ -21,8 +21,10 @@ typedef enum
 {
     SIMDEVTYPE_UNKNOWN           = 0,
     SIMDEVTYPE_TACHOMETER        = 1,
-    SIMDEVTYPE_SHAKER            = 2,
-    SIMDEVTYPE_SHIFTLIGHTS       = 3
+    SIMDEVTYPE_SHIFTLIGHTS       = 2,
+    SIMDEVTYPE_SIMWIND           = 3,
+    SIMDEVTYPE_ENGINESOUND       = 4,
+    SIMDEVTYPE_GEARSOUND         = 5
 }
 DeviceSubType;
 
@@ -76,15 +78,24 @@ TachometerSettings;
 
 typedef struct
 {
+    char* portdev;
+}
+SerialDeviceSettings;
+
+typedef struct
+{
     bool is_valid;
     DeviceType dev_type;
     DeviceSubType dev_subtype;
     TachometerSettings tachsettings;
+    SerialDeviceSettings serialdevsettings;
 }
 DeviceSettings;
 
 int strtogame(const char* game, MonocoqueSettings* ms);
 
 int devsetup(const char* device_type, const char* device_subtype, const char* config_files, MonocoqueSettings* ms, DeviceSettings* ds, config_setting_t* device_settings);
+
+int settingsfree(DeviceSettings ds);
 
 #endif

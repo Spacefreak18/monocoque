@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "simdevice.h"
 #include "../helper/parameters.h"
@@ -6,80 +7,101 @@
 #include "../simulatorapi/simdata.h"
 #include "../slog/slog.h"
 
-int devupdate(SimDevice* simdevice, SimData* simdata)
+
+int update(SimDevice* this, SimData* simdata)
 {
-    if (simdevice->initialized==false)
-    {
-        return 0;
-    }
-    switch ( simdevice->type )
-    {
-        case SIMDEV_USB :
-            usbdev_update(&simdevice->d.usbdevice, simdata);
-            break;
-        case SIMDEV_SOUND :
-            sounddev_update(&simdevice->d.sounddevice, simdata);
-            break;
-        case SIMDEV_SERIAL :
-            serialdev_update(&simdevice->d.serialdevice, simdata);
-            break;
-    }
+    ((vtable*)this->vtable)->update(this, simdata);
+}
+
+int simdevfree(SimDevice* this)
+{
+    ((vtable*)this->vtable)->free(this);
+}
+
+int devupdate(SimDevice* this, SimData* simdata)
+{
+
     return 0;
 }
 
-int devfree(SimDevice* simdevice)
+int devfree(SimDevice* simdevices, int numdevices)
 {
 
-    if (simdevice->initialized==false)
+    slogi("freeing %i simdevices...", numdevices);
+    int devices = 0;
+
+    for (int j = 0; j < numdevices; j++)
     {
-        slogw("Attempt to free an uninitialized device");
-        return MONOCOQUE_ERROR_INVALID_DEV;
+        SimDevice simdev = simdevices[j]; 
+        if (simdev.initialized == true)
+        {
+            simdev.free(&simdev);
+        }
     }
-    switch ( simdevice->type )
-    {
-        case SIMDEV_USB :
-            usbdev_free(&simdevice->d.usbdevice);
-            break;
-        case SIMDEV_SOUND :
-            sounddev_free(&simdevice->d.sounddevice);
-            break;
-        case SIMDEV_SERIAL :
-            serialdev_free(&simdevice->d.serialdevice);
-            break;
-    }
+
+    free(simdevices);
+
     return 0;
 }
 
-int devinit(SimDevice* simdevice, DeviceSettings* ds)
+int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds)
 {
-    slogi("initializing simdevice...");
-    simdevice->initialized = false;
-    int err = 0;
+    slogi("initializing simdevices...");
+    int devices = 0;
 
-    switch ( ds->dev_type )
+    for (int j = 0; j < numdevices; j++)
     {
-        case SIMDEV_USB :
-            simdevice->type = SIMDEV_USB;
-            simdevice->d.usbdevice.type = USBDEV_UNKNOWN;
-            err = usbdev_init(&simdevice->d.usbdevice, ds);
-            break;
-        case SIMDEV_SOUND :
-            simdevice->type = SIMDEV_SOUND;
-            err = sounddev_init(&simdevice->d.sounddevice);
-            break;
-        case SIMDEV_SERIAL :
-            simdevice->type = SIMDEV_SERIAL;
-            err = serialdev_init(&simdevice->d.serialdevice);
-            break;
-        default :
-            sloge("Unknown device type");
-            err = MONOCOQUE_ERROR_UNKNOWN_DEV;
-            break;
+        simdevices[j].initialized = false;
+
+        if (ds[j].dev_type == SIMDEV_USB) {
+            USBDevice* sim = new_usb_device(&ds[j]);
+            if (sim != NULL)
+            {
+                simdevices[j] = sim->m;
+                simdevices[j].initialized = true;
+                simdevices[j].type = SIMDEV_USB;
+                devices++;
+            }
+            else
+            {
+                slogw("Could not initialize USB Device");
+            }
+        }
+
+        if (ds[j].dev_type == SIMDEV_SOUND) {
+
+            SoundDevice* sim = new_sound_device(&ds[j]);
+            if (sim != NULL)
+            {
+
+                simdevices[j] = sim->m;
+                simdevices[j].initialized = true;
+                simdevices[j].type = SIMDEV_SOUND;
+                devices++;
+            }
+            else
+            {
+                slogw("Could not initialize Sound Device");
+            }
+        }
+
+        if (ds[j].dev_type == SIMDEV_SERIAL) {
+
+            SerialDevice* sim = new_serial_device(&ds[j]);
+            if (sim != NULL)
+            {
+                simdevices[j] = sim->m;
+                simdevices[j].initialized = true;
+                simdevices[j].type = SIMDEV_SERIAL;
+                devices++;
+
+            }
+            else
+            {
+                slogw("Could not initialize Serial Device");
+            }
+        }
     }
 
-    if (err==0)
-    {
-        simdevice->initialized = true;
-    }
-    return err;
+    return devices;
 }

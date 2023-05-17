@@ -23,6 +23,7 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
 
     struct arg_lit* arg_verbosity1   = arg_litn("v","verbose", 0, 2, "increase logging verbosity");
     struct arg_lit* arg_verbosity2   = arg_litn("v","verbose", 0, 2, "increase logging verbosity");
+    struct arg_lit* arg_verbosity3   = arg_litn("v","verbose", 0, 2, "increase logging verbosity");
 
     struct arg_rex* cmd1             = arg_rex1(NULL, NULL, "play", NULL, REG_ICASE, NULL);
     struct arg_str* arg_sim          = arg_strn("s", "sim", "<gamename>", 0, 1, NULL);
@@ -42,6 +43,13 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
     struct arg_end* end2             = arg_end(20);
     void* argtable2[]                = {cmd2a,cmd2b,arg_max_revs,arg_granularity,arg_save,arg_verbosity2,help2,vers2,end2};
     int nerrors2;
+
+    struct arg_rex* cmd3             = arg_rex1(NULL, NULL, "test", NULL, REG_ICASE, NULL);
+    struct arg_lit* help3            = arg_litn(NULL,"help", 0, 1, "print this help and exit");
+    struct arg_lit* vers3            = arg_litn(NULL,"version", 0, 1, "print version information and exit");
+    struct arg_end* end3             = arg_end(20);
+    void* argtable3[]                = {cmd3,arg_verbosity3,help3,vers3,end3};
+    int nerrors3;
 
     struct arg_lit*  help0           = arg_lit0(NULL,"help",     "print this help and exit");
     struct arg_lit*  version0        = arg_lit0(NULL,"version",  "print version information and exit");
@@ -70,6 +78,7 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
     nerrors0 = arg_parse(argc,argv,argtable0);
     nerrors1 = arg_parse(argc,argv,argtable1);
     nerrors2 = arg_parse(argc,argv,argtable2);
+    nerrors3 = arg_parse(argc,argv,argtable3);
 
     if (nerrors1==0)
     {
@@ -92,6 +101,11 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
             p->verbosity_count = arg_verbosity2->count;
             exitcode = E_SUCCESS_AND_DO;
         }
+        else if (nerrors3==0)
+        {
+            p->program_action = A_TEST;
+            exitcode = E_SUCCESS_AND_DO;
+        }
         else
         {
             if (cmd1->count > 0)
@@ -111,12 +125,13 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
                 {
                     if (help->count==0 && vers->count==0)
                     {
-                        printf("%s: missing <play|config> command.\n",progname);
+                        printf("%s: missing <play|config|test> command.\n",progname);
                         printf("Usage 1: %s ", progname);
                         arg_print_syntax(stdout,argtable1,"\n");
                         printf("Usage 2: %s ", progname);
                         arg_print_syntax(stdout,argtable2,"\n");
-
+                        printf("Usage 3: %s ", progname);
+                        arg_print_syntax(stdout,argtable3,"\n");
                     }
                 }
             exitcode = E_SUCCESS_AND_EXIT;
@@ -131,6 +146,8 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
         arg_print_syntax(stdout,argtable1,"\n");
         printf("Usage 2: %s ", progname);
         arg_print_syntax(stdout,argtable2,"\n");
+        printf("Usage 3: %s ", progname);
+        arg_print_syntax(stdout,argtable3,"\n");
         printf("\nReport bugs on the github github.com/spacefreak18/monocoque.\n");
         exitcode = E_SUCCESS_AND_EXIT;
         goto cleanup;
@@ -148,6 +165,7 @@ cleanup:
     arg_freetable(argtable0,sizeof(argtable0)/sizeof(argtable0[0]));
     arg_freetable(argtable1,sizeof(argtable1)/sizeof(argtable1[0]));
     arg_freetable(argtable2,sizeof(argtable2)/sizeof(argtable2[0]));
+    arg_freetable(argtable3,sizeof(argtable3)/sizeof(argtable3[0]));
     return exitcode;
 
 }

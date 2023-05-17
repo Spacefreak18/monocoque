@@ -3,15 +3,19 @@
 
 #include "portaudio.h"
 
-#include "../simulatorapi/simdata.h"
-#include "../helper/parameters.h"
-
 typedef enum
 {
     SOUNDDEV_UNKNOWN       = 0,
     SOUNDDEV_SHAKER        = 1
 }
 SoundType;
+
+typedef enum
+{
+    SOUNDEFFECT_ENGINERPM   = 0,
+    SOUNDEFFECT_GEARSHIFT   = 1
+}
+VibrationEffectType;
 
 #define MAX_TABLE_SIZE   (6000)
 typedef struct
@@ -27,19 +31,5 @@ typedef struct
     int gear_sound_data;
 }
 PATestData;
-
-typedef struct
-{
-    int id;
-    SoundType type;
-    PATestData sounddata;
-    PaStreamParameters outputParameters;
-    PaStream* stream;
-}
-SoundDevice;
-
-int sounddev_update(SoundDevice* sounddevice, SimData* simdata);
-int sounddev_init(SoundDevice* sounddevice);
-int sounddev_free(SoundDevice* sounddevice);
 
 #endif

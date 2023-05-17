@@ -1,1 +1,5 @@
 SUBSYSTEMS=="usb",ATTRS{product}=="Rev Burner",GROUP="input",TAG+="uaccess"
+
+
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0043", ATTRS{serial}=="75033303335351A080F0", SYMLINK+="simdev0", GROUP="input", TAG+="uaccess"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0043", ATTRS{serial}=="242303138313514131F1", SYMLINK+="simdev1", GROUP="input", TAG+="uaccess"

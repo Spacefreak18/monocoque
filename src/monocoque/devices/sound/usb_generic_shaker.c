@@ -15,8 +15,7 @@
 #endif
 
 
-
-int patestCallback(const void*                     inputBuffer,
+int patestCallbackEngineRPM(const void*                     inputBuffer,
                    void*                           outputBuffer,
                    unsigned long                   framesPerBuffer,
                    const PaStreamCallbackTimeInfo* timeInfo,
@@ -36,27 +35,16 @@ int patestCallback(const void*                     inputBuffer,
         float v = 0;
         v = data->amp * sin (2 * M_PI * ((float) n) / (float) SAMPLE_RATE);
 
-        if ( data->gear_sound_data > 0 )
+        if (n>=data->table_size)
         {
-            if (n>=1764)
-            {
-                n=0;
-            }
-        }
-        else
-        {
-            if (n>=data->table_size)
-            {
-                n=0;
-            }
+            n=0;
         }
 
 
-        if ( data->gear_sound_data > 0 )
+        if (data->gear_sound_data > 0)
         {
-            // right channel only?
-            // i have my butt hooked up to right channel... make this configurable?
-            *out++ = v;
+            *out++ = 0;
+            *out++ = 0;
         }
         else
         {
@@ -64,6 +52,50 @@ int patestCallback(const void*                     inputBuffer,
             *out++ = v;
         }
     }
+
+    data->gear_sound_data = 0;
+    data->n=n;
+    return 0;
+}
+
+
+int patestCallbackGearShift(const void*                     inputBuffer,
+                   void*                           outputBuffer,
+                   unsigned long                   framesPerBuffer,
+                   const PaStreamCallbackTimeInfo* timeInfo,
+                   PaStreamCallbackFlags           statusFlags,
+                   void*                           userData)
+{
+    PATestData* data = (PATestData*)userData;
+    float* out = (float*)outputBuffer;
+    memset(out, 0, framesPerBuffer * 2 * sizeof(float));
+    unsigned int i;
+    unsigned int n;
+    n = data->n;
+    (void) inputBuffer; /* Prevent unused argument warning. */
+
+    for( i=0; i<framesPerBuffer; i++,n++ )
+    {
+        float v = 0;
+        v = data->amp * sin (2 * M_PI * ((float) n) / (float) SAMPLE_RATE);
+
+        if (n>=data->table_size)
+        {
+            n=0;
+        }
+
+        if(data->gear_sound_data > 0)
+        {
+            *out++ = v;
+            *out++ = v;
+        }
+        else
+        {
+            *out++ = 0;
+            *out++ = 0;
+        }
+    }
+    data->gear_sound_data = 0;
 
     data->n=n;
     return 0;
@@ -97,14 +129,28 @@ int usb_generic_shaker_init(SoundDevice* sounddevice)
     sounddevice->outputParameters.suggestedLatency = Pa_GetDeviceInfo( sounddevice->outputParameters.device )->defaultLowOutputLatency;
     sounddevice->outputParameters.hostApiSpecificStreamInfo = NULL;
 
-    err = Pa_OpenStream( &sounddevice->stream,
-                         NULL,              /* No input. */
-                         &sounddevice->outputParameters, /* As above. */
-                         SAMPLE_RATE,
-                         440,               /* Frames per buffer. */
-                         paClipOff,         /* No out of range samples expected. */
-                         patestCallback,
-                         &sounddevice->sounddata );
+    if (sounddevice->effecttype == SOUNDEFFECT_GEARSHIFT)
+    {
+        err = Pa_OpenStream( &sounddevice->stream,
+                             NULL,              /* No input. */
+                             &sounddevice->outputParameters, /* As above. */
+                             SAMPLE_RATE,
+                             440,               /* Frames per buffer. */
+                             paClipOff,         /* No out of range samples expected. */
+                             patestCallbackGearShift,
+                             &sounddevice->sounddata );
+    }
+    else
+    {
+        err = Pa_OpenStream( &sounddevice->stream,
+                             NULL,              /* No input. */
+                             &sounddevice->outputParameters, /* As above. */
+                             SAMPLE_RATE,
+                             440,               /* Frames per buffer. */
+                             paClipOff,         /* No out of range samples expected. */
+                             patestCallbackEngineRPM,
+                             &sounddevice->sounddata );
+    }
     if( err != paNoError )
     {
         goto error;
@@ -121,8 +167,5 @@ int usb_generic_shaker_init(SoundDevice* sounddevice)
 
 error:
     Pa_Terminate();
-    //fprintf( stderr, "An error occured while using the portaudio stream\n" );
-    //fprintf( stderr, "Error number: %d\n", err );
-    //fprintf( stderr, "Error message: %s\n", Pa_GetErrorText( err ) );
     return err;
 }

@@ -1,14 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "usbdevice.h"
+#include "simdevice.h"
 #include "../helper/parameters.h"
 #include "../simulatorapi/simdata.h"
 #include "../slog/slog.h"
 
-int usbdev_update(USBDevice* usbdevice, SimData* simdata)
+int usbdev_update(SimDevice* this, SimData* simdata)
 {
+    USBDevice* usbdevice = (void *) this->derived;
+
     switch ( usbdevice->type )
     {
         case USBDEV_UNKNOWN :
@@ -20,8 +24,10 @@ int usbdev_update(USBDevice* usbdevice, SimData* simdata)
     return 0;
 }
 
-int usbdev_free(USBDevice* usbdevice)
+int usbdev_free(SimDevice* this)
 {
+    USBDevice* usbdevice = (void *) this->derived;
+
     switch ( usbdevice->type )
     {
         case USBDEV_UNKNOWN :
@@ -30,6 +36,8 @@ int usbdev_free(USBDevice* usbdevice)
             break;
     }
 
+    free(usbdevice);
+
     return 0;
 }
 
@@ -37,6 +45,8 @@ int usbdev_init(USBDevice* usbdevice, DeviceSettings* ds)
 {
     slogi("initializing usb device...");
     int error = 0;
+
+    usbdevice->type = USBDEV_TACHOMETER;
     switch ( usbdevice->type )
     {
         case USBDEV_UNKNOWN :
@@ -46,4 +56,25 @@ int usbdev_init(USBDevice* usbdevice, DeviceSettings* ds)
     }
 
     return error;
+}
+
+static const vtable usb_simdevice_vtable = { &usbdev_update, &usbdev_free };
+
+USBDevice* new_usb_device(DeviceSettings* ds) {
+
+    USBDevice* this = (USBDevice*) malloc(sizeof(USBDevice));
+
+    this->m.update = &update;
+    this->m.free = &simdevfree;
+    this->m.derived = this;
+    this->m.vtable = &usb_simdevice_vtable;
+
+    int error = usbdev_init(this, ds);
+
+    if (error != 0)
+    {
+        free(this);
+        return NULL;
+    }
+    return this;
 }
