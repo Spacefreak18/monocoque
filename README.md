@@ -27,7 +27,7 @@ Cross Platform device manager for driving and flight simulators, for use with co
 - argtable2
 - libconfig
 - [slog](https://github.com/kala13x/slog) (static)
-- [wine-linux-shm-adapter](https://github.com/spacefreak18/wine-linux-shm-adapter)
+- [wine-linux-shm-adapter](https://github.com/spacefreak18/simshmbridge) - for sims that need shared memory mapping like AC.
 - [simapi](https://github.com/spacefreak18/simapi)
 
 ## Building
@@ -43,6 +43,8 @@ cmake ..
 make
 ```
 ## Testing
+
+### Setting up Your Arduino Device
 
 ### Static Analysis
 ```
@@ -60,7 +62,6 @@ make
 ## ToDo
  - windows port
  - more memory testing
- - handling null mallocs
  - move config code around
  - cleanup tests which are basically just copies of the example from their respective projects
  - much, much more
