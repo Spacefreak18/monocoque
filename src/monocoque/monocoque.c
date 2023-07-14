@@ -10,7 +10,7 @@
 #include "helper/parameters.h"
 #include "helper/dirhelper.h"
 #include "helper/confighelper.h"
-#include "simulatorapi/simdata.h"
+#include "simulatorapi/simapi/simapi/simdata.h"
 #include "slog/slog.h"
 
 int create_dir(char* dir)

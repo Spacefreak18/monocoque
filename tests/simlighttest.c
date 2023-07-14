@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <libserialport.h>
-#include "../src/monocoque/simulatorapi/simdata.h"
+#include "../src/monocoque/simulatorapi/simapi/simapi/simdata.h"
 
 /* Helper function for error handling. */
 int check(enum sp_return result);

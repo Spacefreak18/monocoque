@@ -4,7 +4,7 @@
 #include "simdevice.h"
 #include "../helper/parameters.h"
 #include "../helper/confighelper.h"
-#include "../simulatorapi/simdata.h"
+#include "../simulatorapi/simapi/simapi/simdata.h"
 #include "../slog/slog.h"
 
 

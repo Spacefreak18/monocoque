@@ -8,7 +8,7 @@
 #include "simdevice.h"
 #include "sounddevice.h"
 #include "sound/usb_generic_shaker.h"
-#include "../simulatorapi/simdata.h"
+#include "../simulatorapi/simapi/simapi/simdata.h"
 #include "../helper/parameters.h"
 #include "../slog/slog.h"
 

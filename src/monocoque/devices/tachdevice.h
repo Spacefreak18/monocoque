@@ -3,7 +3,7 @@
 
 #include <hidapi/hidapi.h>
 #include "../helper/confighelper.h"
-#include "../simulatorapi/simdata.h"
+#include "../simulatorapi/simapi/simapi/simdata.h"
 
 //typedef int (*tachdev_update)(int revs);
 

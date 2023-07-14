@@ -5,7 +5,7 @@
 #include "tachdevice.h"
 #include "revburner.h"
 #include "../../helper/confighelper.h"
-#include "../../simulatorapi/simdata.h"
+#include "../../simulatorapi/simapi/simapi/simdata.h"
 #include "../../slog/slog.h"
 
 int tachdev_update(TachDevice* tachdevice, SimData* simdata)

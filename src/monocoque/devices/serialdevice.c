@@ -8,7 +8,7 @@
 #include "serialdevice.h"
 #include "serial/arduino.h"
 #include "../helper/parameters.h"
-#include "../simulatorapi/simdata.h"
+#include "../simulatorapi/simapi/simapi/simdata.h"
 #include "../slog/slog.h"
 
 int serialdev_update(SimDevice* this, SimData* simdata)

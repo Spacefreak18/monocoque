@@ -15,7 +15,7 @@
 #include <libxml/tree.h>
 
 #include "../devices/simdevice.h"
-#include "../simulatorapi/simdata.h"
+#include "../simulatorapi/simapi/simapi/simdata.h"
 #include "../slog/slog.h"
 
 #define DEFAULT_UPDATE_RATE      30.0

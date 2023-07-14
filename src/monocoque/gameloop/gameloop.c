@@ -10,8 +10,8 @@
 #include "../helper/parameters.h"
 #include "../helper/confighelper.h"
 #include "../devices/simdevice.h"
-#include "../simulatorapi/simdata.h"
-#include "../simulatorapi/simmapper.h"
+#include "../simulatorapi/simapi/simapi/simdata.h"
+#include "../simulatorapi/simapi/simapi/simmapper.h"
 #include "../slog/slog.h"
 
 #define DEFAULT_UPDATE_RATE      240.0

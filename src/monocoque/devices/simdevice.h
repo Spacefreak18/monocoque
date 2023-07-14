@@ -7,7 +7,7 @@
 #include "sounddevice.h"
 #include "serialdevice.h"
 #include "../helper/confighelper.h"
-#include "../simulatorapi/simdata.h"
+#include "../simulatorapi/simapi/simapi/simdata.h"
 
 typedef struct SimDevice SimDevice;
 

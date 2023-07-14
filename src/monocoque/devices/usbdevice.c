@@ -6,7 +6,7 @@
 #include "usbdevice.h"
 #include "simdevice.h"
 #include "../helper/parameters.h"
-#include "../simulatorapi/simdata.h"
+#include "../simulatorapi/simapi/simapi/simdata.h"
 #include "../slog/slog.h"
 
 int usbdev_update(SimDevice* this, SimData* simdata)

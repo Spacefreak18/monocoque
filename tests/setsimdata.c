@@ -5,8 +5,8 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "../src/monocoque/simulatorapi/simdata.h"
-#include "../src/monocoque/simulatorapi/test.h"
+#include "../src/monocoque/simulatorapi/simapi/simapi/simdata.h"
+#include "../src/monocoque/simulatorapi/simapi/simapi/test.h"
 
 #define DATA "Hello, World! From PID %d"
 
