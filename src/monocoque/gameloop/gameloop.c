@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,6 +16,7 @@
 #include "../slog/slog.h"
 
 #define DEFAULT_UPDATE_RATE      240.0
+#define SIM_CHECK_RATE           1.0
 
 int showstats(SimData* simdata)
 {
@@ -165,19 +167,12 @@ int showstats(SimData* simdata)
     fflush(stdout);
 }
 
-int looper(SimDevice* devices, int numdevices, Simulator simulator)
+
+int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdata, SimMap* simmap)
 {
 
     slogi("preparing game loop with %i devices...", numdevices);
-    SimData* simdata = malloc(sizeof(SimData));
-    SimMap* simmap = malloc(sizeof(SimMap));
 
-    int error = siminit(simdata, simmap, simulator);
-
-    if (error != MONOCOQUE_ERROR_NONE)
-    {
-        return error;
-    }
 
     slogi("sending initial data to devices");
     simdata->velocity = 16;
@@ -204,7 +199,7 @@ int looper(SimDevice* devices, int numdevices, Simulator simulator)
     int go = true;
     while (go == true)
     {
-        simdatamap(simdata, simmap, simulator);
+        simdatamap(simdata, simmap, p->sim);
         showstats(simdata);
         t++;
         s++;
@@ -236,6 +231,67 @@ int looper(SimDevice* devices, int numdevices, Simulator simulator)
     {
         devices[x].update(&devices[x], simdata);
     }
+
+
+    return 0;
+}
+
+int looper(SimDevice* devices, int numdevices, Parameters* p)
+{
+
+    SimData* simdata = malloc(sizeof(SimData));
+    SimMap* simmap = malloc(sizeof(SimMap));
+
+    struct termios newsettings, canonicalmode;
+    tcgetattr(0, &canonicalmode);
+    newsettings = canonicalmode;
+    newsettings.c_lflag &= (~ICANON & ~ECHO);
+    newsettings.c_cc[VMIN] = 1;
+    newsettings.c_cc[VTIME] = 0;
+    tcsetattr(0, TCSANOW, &newsettings);
+    char ch;
+    struct pollfd mypoll = { STDIN_FILENO, POLLIN|POLLPRI };
+
+    fprintf(stdout, "Searching for sim data... Press q to quit...\n");
+
+    p->simon = false;
+    double update_rate = SIM_CHECK_RATE;
+    int go = true;
+    while (go == true)
+    {
+
+
+
+
+        if (p->simon == false)
+        {
+            getSim(simdata, simmap, &p->simon, &p->sim);
+        }
+
+        if (p->simon == true)
+        {
+            clilooper(devices, numdevices, p, simdata, simmap);
+        }
+        if (p->simon == true)
+        {
+            p->simon = false;
+            fprintf(stdout, "Searching for sim data... Press q again to quit...\n");
+            sleep(2);
+        }
+
+        if( poll(&mypoll, 1, 1000.0/update_rate) )
+        {
+            scanf("%c", &ch);
+            if(ch == 'q')
+            {
+                go = false;
+            }
+        }
+    }
+
+    fprintf(stdout, "\n");
+    fflush(stdout);
+    tcsetattr(0, TCSANOW, &canonicalmode);
 
     free(simdata);
     free(simmap);

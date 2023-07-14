@@ -28,14 +28,6 @@ typedef enum
 }
 DeviceSubType;
 
-typedef enum
-{
-    SIMULATOR_MONOCOQUE_TEST    = 0,
-    SIMULATOR_ASSETTO_CORSA     = 1,
-    SIMULATOR_RFACTOR           = 2,
-    SIMULATOR_RFACTOR2          = 3
-}
-Simulator;
 
 typedef enum
 {

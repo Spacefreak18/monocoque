@@ -40,7 +40,7 @@ int strtogame(const char* game, MonocoqueSettings* ms)
         if (strcicmp(game, "test") == 0)
         {
             slogd("Setting simulator to Test Data");
-            ms->sim_name = SIMULATOR_MONOCOQUE_TEST;
+            ms->sim_name = SIMULATOR_SIMAPI_TEST;
         }
         else
         {

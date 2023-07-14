@@ -1,6 +1,9 @@
 #ifndef _PARAMETERS_H
 #define _PARAMETERS_H
 
+#include <stdbool.h>
+#include "../simulatorapi/simapi/simapi/simapi.h"
+
 typedef struct
 {
     int   program_action;
@@ -9,6 +12,9 @@ typedef struct
     int max_revs;
     int granularity;
     int verbosity_count;
+
+    Simulator sim;
+    bool simon;
 }
 Parameters;
 

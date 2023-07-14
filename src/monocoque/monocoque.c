@@ -153,7 +153,7 @@ int main(int argc, char** argv)
         {
             error = MONOCOQUE_ERROR_NONE;
             DeviceSettings settings;
-            ds[i] = settings;
+
             config_setting_t* config_device = config_setting_get_elem(config_devices, i);
             const char* device_type;
             const char* device_subtype;
@@ -164,12 +164,13 @@ int main(int argc, char** argv)
 
             if (error == MONOCOQUE_ERROR_NONE)
             {
-                error = devsetup(device_type, device_subtype, device_config_file, ms, &ds[i], config_device);
+                error = devsetup(device_type, device_subtype, device_config_file, ms, &settings, config_device);
             }
             if (error == MONOCOQUE_ERROR_NONE)
             {
                 numdevices++;
             }
+            ds[i] = settings;
 
             i++;
 
@@ -183,15 +184,15 @@ int main(int argc, char** argv)
 
         if (p->program_action == A_PLAY)
         {
-            slogi("running monocoque in gameloop mode..");
-            error = strtogame(p->sim_string, ms);
-            if (error != MONOCOQUE_ERROR_NONE)
-            {
-                goto cleanup_final;
-            }
+            //slogi("running monocoque in gameloop mode..");
+            //error = strtogame(p->sim_string, ms);
+            //if (error != MONOCOQUE_ERROR_NONE)
+            //{
+            //    goto cleanup_final;
+            //}
 
 
-            error = looper(devices, initdevices, ms->sim_name);
+            error = looper(devices, initdevices, p);
             if (error == MONOCOQUE_ERROR_NONE)
             {
                 slogi("Game loop exited succesfully with error code: %i", error);

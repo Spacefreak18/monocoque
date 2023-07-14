@@ -30,7 +30,8 @@ int devfree(SimDevice* simdevices, int numdevices)
     slogi("freeing %i simdevices...", numdevices);
     int devices = 0;
 
-    for (int j = 0; j < numdevices; j++)
+    int freed = 0;
+    for (int j = 0; j < 1; j++)
     {
         SimDevice simdev = simdevices[j]; 
         if (simdev.initialized == true)
@@ -39,7 +40,7 @@ int devfree(SimDevice* simdevices, int numdevices)
         }
     }
 
-    free(simdevices);
+    //free(simdevices);
 
     return 0;
 }
