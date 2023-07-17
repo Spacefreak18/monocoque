@@ -1,7 +1,7 @@
 #include <FastLED.h>
-#include "../../monocoque/simulatorapi/simdata.h"
+#include "simdata.h"
 
-#define BYTE_SIZE sizeof(SimData)
+#define SIMDATA_SIZE sizeof(SimData)
 
 #define LED_PIN     7
 #define NUM_LEDS    6
@@ -39,12 +39,12 @@ void setup()
 void loop()
 {
     int l = 0;
-    char buff[BYTE_SIZE];
+    char buff[SIMDATA_SIZE];
 
-    if (Serial.available() >= BYTE_SIZE)
+    if (Serial.available() >= SIMDATA_SIZE)
     {
-        Serial.readBytes(buff, BYTE_SIZE);
-        memcpy(&sd, &buff, BYTE_SIZE);
+        Serial.readBytes(buff, SIMDATA_SIZE);
+        memcpy(&sd, &buff, SIMDATA_SIZE);
         rpm = sd.rpms;
         maxrpm = sd.maxrpm;
 
