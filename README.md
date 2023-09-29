@@ -44,29 +44,6 @@ cmake ..
 make
 ```
 
-### A note about GitHub's ssh cloning policy
-
-if you do not have an ssh key set up in you environment that is registered to a GitHub account, Microsoft will decline the clone request and you'll see a permission error like this:
-
-```
-git@github.com: Permission denied (publickey).
-fatal: Could not read from remote repository.
-
-Please make sure you have the correct access rights
-and the repository exists.
-```
-
-to get around this, first clone the repository over https, then modify the `.gitmodules` file locally such that ssh urls are replaced with https urls.
-You can then continue on to sync and update submodules.
-
-```
-git clone https://github.com/Spacefreak18/monocoque
-cd monocoque
-# vim .gitmodules
-git submodule sync --recursive
-git submodule update --init --recursive
-```
-
 ## Testing
 
 ### Setting up Your Arduino Device
