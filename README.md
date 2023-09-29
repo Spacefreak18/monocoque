@@ -36,12 +36,14 @@ This code depends on the shared memory data headers in the simapi [repo](https:/
 git submodule sync --recursive
 git submodule update --init --recursive
 ```
+
 Then to compile simply:
 ```
 mkdir build; cd build
 cmake ..
 make
 ```
+
 ## Testing
 
 ### Setting up Your Arduino Device

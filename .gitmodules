@@ -1,3 +1,4 @@
 [submodule "src/monocoque/simulatorapi/simapi"]
 	path = src/monocoque/simulatorapi/simapi
-	url = git@github.com:spacefreak18/simapi
+	url = https://github.com/spacefreak18/simapi
+	# url = git@github.com:spacefreak18/simapi # ssh is better but Microsoft requires an account
