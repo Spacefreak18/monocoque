@@ -44,9 +44,51 @@ cmake ..
 make
 ```
 
+## Configuration
+
+`~/.config/monocoque/monocoque.config`
+
+```
+devices = (
+{   device      = "Sound";
+    type        = "Engine"
+    devid       = "1022:15E2" },
+{   device      = "Sound";
+    type        = "Gear"
+    devid       = "1022:15E2" }
+);
+```
+
+make sure to substitute your audio device ID in the `devid` field. You can find your audio device ID with `lspci -nnk | grep -i audio`
+
+see `conf/` directory for more example configuration and functionality options
+
+### Rfactor2
+
+credit to schelgp for porting the rF2SharedMemoryMapPlugin to Wine
+
+https://github.com/schlegp/rF2SharedMemoryMapPlugin_Wine
+
+you can use this download link:
+https://github.com/schlegp/rF2SharedMemoryMapPlugin_Wine/raw/master/build/rFactor2SharedMemoryMapPlugin64_Wine.dll
+
+save the file to `~.steam/steam/steamapps/common/rFactor 2/Bin64/Plugins/`
+
+It's likely you'll have to `chmod +x` the .dll file also
+
+Launch Rfactor2 and navigate to ‘Content & Settings’ -> ‘Settings’ at the bottom right of the screen there should be a ‘Plugins’ section. Enable the shared memorymap plugin. This will allow monocoque to access rfactor's in-game variables such as rpm, traction, etc.
+
 ## Testing
 
+```
+cd build
+./monocoque test
+```
+
+cd build`
+
 ### Setting up Your Arduino Device
+(TODO)
 
 ### Static Analysis
 ```
