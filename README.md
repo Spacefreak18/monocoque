@@ -72,7 +72,7 @@ https://github.com/schlegp/rF2SharedMemoryMapPlugin_Wine
 you can use this download link:
 https://github.com/schlegp/rF2SharedMemoryMapPlugin_Wine/raw/master/build/rFactor2SharedMemoryMapPlugin64_Wine.dll
 
-save the file to `~.steam/steam/steamapps/common/rFactor 2/Bin64/Plugins/`
+save the file to `~/.steam/steam/steamapps/common/rFactor 2/Bin64/Plugins/`
 
 It's likely you'll have to `chmod +x` the .dll file also
 
