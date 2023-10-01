@@ -85,7 +85,7 @@ cd build
 ./monocoque test
 ```
 
-cd build`
+Note: PipeWire is not yet supported, and you may see an "Address boundary" error
 
 ### Setting up Your Arduino Device
 (TODO)
@@ -102,6 +102,16 @@ cd build`
     cd build
     valgrind -v --leak-check=full --show-leak-kinds=all --suppressions=../.valgrindrc ./monocoque play
 ```
+
+## Run
+once you have monocoque configured, your game modded, and `./monocoque test` exiting cleanly, you can run the program as follows:
+
+```
+cd build
+./monocoque play
+```
+
+happy simming
 
 ## ToDo
  - windows port
