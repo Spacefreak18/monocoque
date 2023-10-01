@@ -39,7 +39,7 @@ git submodule update --init --recursive
 
 Then to compile simply:
 ```
-mkdir build; cd build
+cd build
 cmake ..
 make
 ```
