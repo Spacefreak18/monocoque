@@ -183,21 +183,14 @@ int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdat
     }
     sleep(3);
 
-    struct termios newsettings, canonicalmode;
-    tcgetattr(0, &canonicalmode);
-    newsettings = canonicalmode;
-    newsettings.c_lflag &= (~ICANON & ~ECHO);
-    newsettings.c_cc[VMIN] = 1;
-    newsettings.c_cc[VTIME] = 0;
-    tcsetattr(0, TCSANOW, &newsettings);
-    char ch;
-    struct pollfd mypoll = { STDIN_FILENO, POLLIN|POLLPRI };
 
+    struct pollfd mypoll = { STDIN_FILENO, POLLIN|POLLPRI };
     double update_rate = DEFAULT_UPDATE_RATE;
+    char ch;
     int t=0;
     int s=0;
-    int go = true;
-    while (go == true)
+    bool go = true;
+    while (go == true && simdata->simstatus > 1)
     {
         simdatamap(simdata, simmap, p->sim);
         showstats(simdata);
@@ -212,18 +205,16 @@ int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdat
             devices[x].update(&devices[x], simdata);
 
         }
-        if( poll(&mypoll, 1, 1000.0/update_rate) )
-        {
-            scanf("%c", &ch);
-            if(ch == 'q')
-            {
-                go = false;
-            }
-        }
+
+    	if( poll(&mypoll, 1, 1000.0/DEFAULT_UPDATE_RATE) )
+    	{
+    	    scanf("%c", &ch);
+    	    if(ch == 'q')
+    	    {
+    	        go = false;
+    	    }
+    	}
     }
-    fprintf(stdout, "\n");
-    fflush(stdout);
-    tcsetattr(0, TCSANOW, &canonicalmode);
 
     simdata->velocity = 0;
     simdata->rpms = 100;
@@ -232,6 +223,7 @@ int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdat
         devices[x].update(&devices[x], simdata);
     }
 
+    fprintf(stdout, "\n");
 
     return 0;
 }
