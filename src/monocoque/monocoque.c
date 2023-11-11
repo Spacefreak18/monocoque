@@ -7,11 +7,13 @@
 #include "gameloop/gameloop.h"
 #include "gameloop/tachconfig.h"
 #include "devices/simdevice.h"
+#include "devices/sound.h"
 #include "helper/parameters.h"
 #include "helper/dirhelper.h"
 #include "helper/confighelper.h"
 #include "simulatorapi/simapi/simapi/simdata.h"
 #include "slog/slog.h"
+
 
 int create_dir(char* dir)
 {
@@ -149,9 +151,9 @@ int main(int argc, char** argv)
         DeviceSettings ds[configureddevices];
         slogi("found %i devices in configuration", configureddevices);
         int i = 0;
+        error = MONOCOQUE_ERROR_NONE;
         while (i<configureddevices)
         {
-            error = MONOCOQUE_ERROR_NONE;
             DeviceSettings settings;
 
             config_setting_t* config_device = config_setting_get_elem(config_devices, i);
@@ -160,8 +162,11 @@ int main(int argc, char** argv)
             const char* device_config_file;
             config_setting_lookup_string(config_device, "device", &device_type);
             config_setting_lookup_string(config_device, "type", &device_subtype);
-            config_setting_lookup_string(config_device, "config", &device_config_file);
+            //config_setting_lookup_string(config_device, "config", &device_config_file);
 
+            slogt("device type: %s", device_type);
+            slogt("device sub type: %s", device_subtype);
+            //slogt("device config file: %s", device_config_file);
             if (error == MONOCOQUE_ERROR_NONE)
             {
                 error = devsetup(device_type, device_subtype, device_config_file, ms, &settings, config_device);
@@ -179,18 +184,22 @@ int main(int argc, char** argv)
         i = 0;
         int j = 0;
         error = MONOCOQUE_ERROR_NONE;
+
+        setupsound();
         SimDevice* devices = malloc(numdevices * sizeof(SimDevice));
         int initdevices = devinit(devices, configureddevices, ds);
 
         if (p->program_action == A_PLAY)
         {
-            //slogi("running monocoque in gameloop mode..");
+            slogi("running monocoque in gameloop mode..");
             //error = strtogame(p->sim_string, ms);
             //if (error != MONOCOQUE_ERROR_NONE)
             //{
             //    goto cleanup_final;
             //}
-
+#ifdef USE_PULSEAUDIO
+            pa_threaded_mainloop_unlock(mainloop);
+#endif
 
             error = looper(devices, initdevices, p);
             if (error == MONOCOQUE_ERROR_NONE)
@@ -205,6 +214,11 @@ int main(int argc, char** argv)
         else
         {
             slogi("running monocoque in test mode...");
+
+#ifdef USE_PULSEAUDIO
+            pa_threaded_mainloop_unlock(mainloop);
+#endif
+
             error = tester(devices, initdevices);
             if (error == MONOCOQUE_ERROR_NONE)
             {

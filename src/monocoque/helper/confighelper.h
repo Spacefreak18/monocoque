@@ -24,7 +24,8 @@ typedef enum
     SIMDEVTYPE_SHIFTLIGHTS       = 2,
     SIMDEVTYPE_SIMWIND           = 3,
     SIMDEVTYPE_ENGINESOUND       = 4,
-    SIMDEVTYPE_GEARSOUND         = 5
+    SIMDEVTYPE_GEARSOUND         = 5,
+    SIMDEVTYPE_ABSBRAKES         = 6
 }
 DeviceSubType;
 
@@ -76,11 +77,24 @@ SerialDeviceSettings;
 
 typedef struct
 {
+    int frequency;
+    int volume;
+    int lowbound_frequency;
+    int upperbound_frequency;
+    int pan;
+    double duration;
+    char* dev;
+}
+SoundDeviceSettings;
+
+typedef struct
+{
     bool is_valid;
     DeviceType dev_type;
     DeviceSubType dev_subtype;
     TachometerSettings tachsettings;
     SerialDeviceSettings serialdevsettings;
+    SoundDeviceSettings sounddevsettings;
 }
 DeviceSettings;
 

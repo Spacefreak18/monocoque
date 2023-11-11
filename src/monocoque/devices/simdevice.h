@@ -9,6 +9,7 @@
 #include "../helper/confighelper.h"
 #include "../simulatorapi/simapi/simapi/simdata.h"
 
+
 typedef struct SimDevice SimDevice;
 
 struct SimDevice
@@ -83,9 +84,13 @@ typedef struct
     int id;
     SoundType type;
     VibrationEffectType effecttype;
-    PATestData sounddata;
+    SoundData sounddata;
+#ifdef USE_PULSEAUDIO
+    pa_stream *stream;
+#else
     PaStreamParameters outputParameters;
     PaStream* stream;
+#endif
 }
 SoundDevice;
 

@@ -104,6 +104,7 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
         else if (nerrors3==0)
         {
             p->program_action = A_TEST;
+            p->verbosity_count = arg_verbosity3->count;
             exitcode = E_SUCCESS_AND_DO;
         }
         else

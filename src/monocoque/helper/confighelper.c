@@ -11,7 +11,9 @@
 #include "confighelper.h"
 
 #include "../slog/slog.h"
+#include "parameters.h"
 
+#include <pulse/pulseaudio.h>
 
 int strcicmp(char const *a, char const *b)
 {
@@ -82,6 +84,11 @@ int strtodevsubtype(const char* device_subtype, DeviceSettings* ds, int simdev)
             if (strcicmp(device_subtype, "Gear") == 0)
             {
                 ds->dev_subtype = SIMDEVTYPE_GEARSOUND;
+                break;
+            }
+            if (strcicmp(device_subtype, "ABS") == 0)
+            {
+                ds->dev_subtype = SIMDEVTYPE_ABSBRAKES;
                 break;
             }
         default:
@@ -228,7 +235,7 @@ int loadconfig(const char* config_file, DeviceSettings* ds)
 int devsetup(const char* device_type, const char* device_subtype, const char* config_file, MonocoqueSettings* ms, DeviceSettings* ds, config_setting_t* device_settings)
 {
     int error = MONOCOQUE_ERROR_NONE;
-    slogi("Called device setup with %s %s %s", device_type, device_subtype, config_file);
+    slogt("Called device setup with %s %s %s", device_type, device_subtype, config_file);
     ds->dev_type = SIMDEV_UNKNOWN;
 
     error = strtodev(device_type, device_subtype, ds);
@@ -244,6 +251,41 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
     if (error != MONOCOQUE_ERROR_NONE)
     {
         return error;
+    }
+
+    if (ds->dev_type == SIMDEV_SOUND)
+    {
+        slogi("reading configured sound device settings");
+        ds->sounddevsettings.frequency = -1;
+        ds->sounddevsettings.volume = -1;
+        ds->sounddevsettings.lowbound_frequency = -1;
+        ds->sounddevsettings.upperbound_frequency = -1;
+        ds->sounddevsettings.pan = 0;
+        ds->sounddevsettings.duration = 2.0;
+        if (ds->dev_subtype == SIMDEVTYPE_GEARSOUND)
+        {
+            ds->sounddevsettings.duration = .125;
+        }
+        if (device_settings != NULL)
+        {
+
+            config_setting_lookup_int(device_settings, "volume", &ds->sounddevsettings.volume);
+            config_setting_lookup_int(device_settings, "frequency", &ds->sounddevsettings.frequency);
+            config_setting_lookup_int(device_settings, "pan", &ds->sounddevsettings.pan);
+            config_setting_lookup_float(device_settings, "duration", &ds->sounddevsettings.duration);
+
+            const char* temp;
+            int found = 0;
+            found = config_setting_lookup_string(device_settings, "devid", &temp);
+            if (found == 0)
+            {
+                ds->sounddevsettings.dev = NULL;
+            }
+            else
+            {
+                ds->sounddevsettings.dev = strdup(temp);
+            }
+        }
     }
 
     if (ds->dev_subtype == SIMDEVTYPE_TACHOMETER)
@@ -264,6 +306,8 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
             ds->tachsettings.use_pulses = false;
         }
     }
+
+
     if (ds->dev_subtype == SIMDEVTYPE_SIMWIND || ds->dev_subtype == SIMDEVTYPE_SHIFTLIGHTS)
     {
         if (device_settings != NULL)

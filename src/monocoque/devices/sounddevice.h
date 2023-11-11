@@ -1,7 +1,11 @@
 #ifndef _SOUNDDEVICE_H
 #define _SOUNDDEVICE_H
 
+#ifdef USE_PULSEAUDIO
+#include <pulse/pulseaudio.h>
+#else
 #include "portaudio.h"
+#endif
 
 typedef enum
 {
@@ -20,16 +24,13 @@ VibrationEffectType;
 #define MAX_TABLE_SIZE   (6000)
 typedef struct
 {
-    float sine[MAX_TABLE_SIZE];
-    float pitch;
     int last_gear;
-    int left_phase;
-    int right_phase;
-    int n;
-    int table_size;
-    int amp;
-    int gear_sound_data;
+    int volume;
+    int frequency;
+    double duration;
+    int curr_frequency;
+    double curr_duration;
 }
-PATestData;
+SoundData;
 
 #endif
