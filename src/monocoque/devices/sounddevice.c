@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "sound.h"
 #include "simdevice.h"
 #include "sounddevice.h"
 #include "sound/usb_generic_shaker.h"
@@ -12,13 +13,18 @@
 #include "../helper/parameters.h"
 #include "../slog/slog.h"
 
+
 int gear_sound_set(SoundDevice* sounddevice, SimData* simdata)
 {
-    if (sounddevice->sounddata.last_gear != simdata->gear && simdata->gear != 0)
+    if (sounddevice->sounddata.last_gear != simdata->gear && simdata->gear > 1)
     {
-        sounddevice->sounddata.gear_sound_data = 3.14;
+        //sounddevice->sounddata.gear_sound_data = 3.14;
+        sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency;
+        sounddevice->sounddata.curr_duration = 0;
     }
     sounddevice->sounddata.last_gear = simdata->gear;
+
+    slogt("set gear frequency to %i", sounddevice->sounddata.frequency);
 }
 
 // we could make a vtable for these different effects too
@@ -26,9 +32,10 @@ int sounddev_engine_update(SimDevice* this, SimData* simdata)
 {
     SoundDevice* sounddevice = (void *) this->derived;
 
-    gear_sound_set(sounddevice, simdata);
+    sounddevice->sounddata.curr_frequency = simdata->rpms/60;
+    //sounddevice->sounddata.table_size = 48000/(sounddevice->sounddata.frequency);
 
-    sounddevice->sounddata.table_size = 44100/(simdata->rpms/60);
+    slogt("set engine frequency to %i", sounddevice->sounddata.frequency);
 }
 
 int sounddev_gearshift_update(SimDevice* this, SimData* simdata)
@@ -49,28 +56,51 @@ int sounddev_free(SimDevice* this)
     return 0;
 }
 
-int sounddev_init(SoundDevice* sounddevice)
+int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int frequency, int pan, double duration)
 {
     slogi("initializing standalone sound device...");
 
-    sounddevice->sounddata.pitch = 1;
-    sounddevice->sounddata.pitch = 261.626;
-    sounddevice->sounddata.amp = 32;
-    sounddevice->sounddata.left_phase = sounddevice->sounddata.right_phase = 0;
-    sounddevice->sounddata.table_size = 44100/(100/60);
-    sounddevice->sounddata.last_gear = 0;
 
+    slogi("volume is: %i", volume);
+    slogi("frequency is: %i", frequency);
+    slogi("pan is: %i", pan);
+    slogi("duration is: %f", duration);
+
+
+    sounddevice->sounddata.frequency = frequency;
+    //sounddevice->sounddata.pitch = 1;
+    //sounddevice->sounddata.pitch = 261.626;
+    //sounddevice->sounddata.amp = 32;
+    //sounddevice->sounddata.left_phase = sounddevice->sounddata.right_phase = 0;
+    //sounddevice->sounddata.table_size = 48000/(100/60);
+    sounddevice->sounddata.curr_frequency = 100/60;
+
+
+
+    const char* streamname= "Engine";
     switch (sounddevice->effecttype) {
         case (SOUNDEFFECT_GEARSHIFT):
 
-            sounddevice->sounddata.pitch = 500;
-            sounddevice->sounddata.amp = 128;
-            sounddevice->sounddata.left_phase = sounddevice->sounddata.right_phase = 0;
-            sounddevice->sounddata.table_size = 44100/(1);
+            sounddevice->sounddata.last_gear = 0;
+            //sounddevice->sounddata.pitch = 500;
+            //sounddevice->sounddata.amp = 128;
+            //sounddevice->sounddata.left_phase = sounddevice->sounddata.right_phase = 0;
+            //sounddevice->sounddata.table_size = 48000/(1);
+            sounddevice->sounddata.duration = duration;
+            sounddevice->sounddata.curr_duration = duration;
+            streamname = "Gear";
             break;
     }
 
+#ifdef USE_PULSEAUDIO
+
+
+    //pa_threaded_mainloop* mainloop;
+    //pa_context* context;
+    usb_generic_shaker_init(sounddevice, mainloop, context, devname, volume, pan, streamname);
+#else
     usb_generic_shaker_init(sounddevice);
+#endif
 }
 
 static const vtable engine_sound_simdevice_vtable = { &sounddev_engine_update, &sounddev_free };
@@ -98,7 +128,9 @@ SoundDevice* new_sound_device(DeviceSettings* ds) {
             break;
     }
 
-    int error = sounddev_init(this);
+    slogt("Attempting to use device %s", ds->sounddevsettings.dev);
+
+    int error = sounddev_init(this, ds->sounddevsettings.dev, ds->sounddevsettings.volume, ds->sounddevsettings.frequency, ds->sounddevsettings.pan, ds->sounddevsettings.duration);
     if (error != 0)
     {
         free(this);

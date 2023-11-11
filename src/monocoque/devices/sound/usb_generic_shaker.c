@@ -1,3 +1,5 @@
+#ifndef USE_PULSEAUDIO
+
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -9,6 +11,9 @@
 #include "../sounddevice.h"
 
 #define SAMPLE_RATE   (48000)
+
+#define DURATION 4.0
+#define AMPLITUDE .5
 
 #ifndef M_PI
 #define M_PI  (3.14159265)
@@ -22,39 +27,27 @@ int patestCallbackEngineRPM(const void*                     inputBuffer,
                    PaStreamCallbackFlags           statusFlags,
                    void*                           userData)
 {
-    PATestData* data = (PATestData*)userData;
+    SoundData* data = (SoundData*)userData;
     float* out = (float*)outputBuffer;
     memset(out, 0, framesPerBuffer * 2 * sizeof(float));
     unsigned int i;
     unsigned int n;
-    n = data->n;
+    //n = data->n;
     (void) inputBuffer; /* Prevent unused argument warning. */
 
     for( i=0; i<framesPerBuffer; i++,n++ )
     {
-        float v = 0;
-        v = data->amp * sin (2 * M_PI * ((float) n) / (float) SAMPLE_RATE);
+        static double t = 0.0;
+        double sample = AMPLITUDE * 32767.0 * sin(2.0 * M_PI * data->curr_frequency * t);
 
-        if (n>=data->table_size)
-        {
-            n=0;
+        t += 1.0 / SAMPLE_RATE;
+        if (t >= DURATION) {
+            t = 0.0;
         }
-
-
-        if (data->gear_sound_data > 0)
-        {
-            *out++ = 0;
-            *out++ = 0;
-        }
-        else
-        {
-            *out++ = v;
-            *out++ = v;
-        }
+        *out++ = sample;
+        *out++ = sample;
     }
 
-    data->gear_sound_data = 0;
-    data->n=n;
     return 0;
 }
 
@@ -66,39 +59,33 @@ int patestCallbackGearShift(const void*                     inputBuffer,
                    PaStreamCallbackFlags           statusFlags,
                    void*                           userData)
 {
-    PATestData* data = (PATestData*)userData;
+    SoundData* data = (SoundData*)userData;
     float* out = (float*)outputBuffer;
     memset(out, 0, framesPerBuffer * 2 * sizeof(float));
     unsigned int i;
     unsigned int n;
-    n = data->n;
+    //n = data->n;
     (void) inputBuffer; /* Prevent unused argument warning. */
 
     for( i=0; i<framesPerBuffer; i++,n++ )
     {
-        float v = 0;
-        v = data->amp * sin (2 * M_PI * ((float) n) / (float) SAMPLE_RATE);
-
-        if (n>=data->table_size)
+        static double t = 0.0;
+        double sample = 0;
+        if (data->frequency>0)
         {
-            n=0;
+            sample = AMPLITUDE * 32767.0 * sin(2.0 * M_PI * data->curr_frequency * data->curr_duration);
         }
 
-        if(data->gear_sound_data > 0)
-        {
-            *out++ = v;
-            *out++ = v;
+
+        data->curr_duration += 1.0 / SAMPLE_RATE;
+        if (data->curr_duration >= data->duration) {
+            data->curr_duration = 0.0;
+            data->curr_frequency = 0;
         }
-        else
-        {
-            *out++ = 0;
-            *out++ = 0;
-        }
+
+        *out++ = sample;
+        *out++ = sample;
     }
-    data->gear_sound_data = 0;
-
-    data->n=n;
-    return 0;
 }
 
 int usb_generic_shaker_free(SoundDevice* sounddevice)
@@ -169,3 +156,5 @@ error:
     Pa_Terminate();
     return err;
 }
+
+#endif

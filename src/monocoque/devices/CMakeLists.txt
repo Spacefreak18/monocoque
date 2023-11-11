@@ -9,10 +9,13 @@ set(devices_source_files
   serialdevice.c
   tachdevice.h
   tachdevice.c
+  sound.h
+  sound.c
   usb/revburner.h
   usb/revburner.c
   sound/usb_generic_shaker.h
   sound/usb_generic_shaker.c
+  sound/usb_generic_shaker_pulse.c
   serial/arduino.h
   serial/arduino.c
 )

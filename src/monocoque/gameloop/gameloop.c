@@ -321,7 +321,7 @@ int tester(SimDevice* devices, int numdevices)
     sleep(3);
 
     fprintf(stdout, "Shifting into first gear\n");
-    simdata->gear = 1;
+    simdata->gear = 2;
     for (int x = 0; x < numdevices; x++)
     {
         devices[x].update(&devices[x], simdata);
@@ -341,7 +341,7 @@ int tester(SimDevice* devices, int numdevices)
     sleep(3);
 
     fprintf(stdout, "Shifting into second gear\n");
-    simdata->gear = 2;
+    simdata->gear = 3;
     for (int x = 0; x < numdevices; x++)
     {
         devices[x].update(&devices[x], simdata);
@@ -361,7 +361,7 @@ int tester(SimDevice* devices, int numdevices)
     sleep(3);
 
     fprintf(stdout, "Shifting into third gear\n");
-    simdata->gear = 3;
+    simdata->gear = 4;
     for (int x = 0; x < numdevices; x++)
     {
         devices[x].update(&devices[x], simdata);
@@ -389,7 +389,7 @@ int tester(SimDevice* devices, int numdevices)
     sleep(3);
 
     fprintf(stdout, "Shifting into fourth gear\n");
-    simdata->gear = 4;
+    simdata->gear = 5;
     for (int x = 0; x < numdevices; x++)
     {
         devices[x].update(&devices[x], simdata);

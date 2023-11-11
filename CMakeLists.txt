@@ -33,15 +33,23 @@ FIND_LIBRARY(LIBUSB_LIBRARY NAMES usb-1.0
 set(HIDAPI_WITH_LIBUSB TRUE) # surely will be used only on Linux
 set(BUILD_SHARED_LIBS TRUE) # HIDAPI as static library on all platforms
 
+add_executable(monocoque src/monocoque/monocoque.c)
+if(USE_PULSEAUDIO)
+    message("Using pulseaudio backend...")
+    add_compile_definitions(USE_PULSEAUDIO=true)
+    target_link_libraries(monocoque m ${LIBUSB_LIBRARY} hidapi-libusb pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi)
+else()
+    message("Using portaudio backend...")
+    target_link_libraries(monocoque m ${LIBUSB_LIBRARY} hidapi-libusb portaudio serialport xml2 argtable2 config gameloop helper devices slog simulatorapi)
+endif()
+
+target_include_directories(monocoque PUBLIC config ${LIBUSB_INCLUDE_DIR} ${LIBXML_INCLUDE_DIR})
+
 add_subdirectory(src/monocoque/gameloop)
 add_subdirectory(src/monocoque/simulatorapi)
 add_subdirectory(src/monocoque/helper)
 add_subdirectory(src/monocoque/devices)
 add_subdirectory(src/monocoque/slog)
-
-add_executable(monocoque src/monocoque/monocoque.c)
-target_include_directories(monocoque PUBLIC config ${LIBUSB_INCLUDE_DIR} ${LIBXML_INCLUDE_DIR})
-target_link_libraries(monocoque m ${LIBUSB_LIBRARY} hidapi-libusb portaudio serialport xml2 argtable2 config gameloop helper devices slog simulatorapi)
 
 add_executable(listusb tests/testlibusb.c)
 target_include_directories(listusb PUBLIC ${LIBUSB_INCLUDE_DIR})
