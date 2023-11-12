@@ -162,10 +162,10 @@ int main(int argc, char** argv)
             const char* device_config_file;
             config_setting_lookup_string(config_device, "device", &device_type);
             config_setting_lookup_string(config_device, "type", &device_subtype);
-            //config_setting_lookup_string(config_device, "config", &device_config_file);
+            config_setting_lookup_string(config_device, "config", &device_config_file);
 
-            slogt("device type: %s", device_type);
-            slogt("device sub type: %s", device_subtype);
+            //slogt("device type: %s", device_type);
+            //slogt("device sub type: %s", device_subtype);
             //slogt("device config file: %s", device_config_file);
             if (error == MONOCOQUE_ERROR_NONE)
             {
