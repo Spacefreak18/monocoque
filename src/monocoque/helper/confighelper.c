@@ -235,7 +235,7 @@ int loadconfig(const char* config_file, DeviceSettings* ds)
 int devsetup(const char* device_type, const char* device_subtype, const char* config_file, MonocoqueSettings* ms, DeviceSettings* ds, config_setting_t* device_settings)
 {
     int error = MONOCOQUE_ERROR_NONE;
-    slogt("Called device setup with %s %s %s", device_type, device_subtype, config_file);
+    //slogt("Called device setup with %s %s %s", device_type, device_subtype, config_file);
     ds->dev_type = SIMDEV_UNKNOWN;
 
     error = strtodev(device_type, device_subtype, ds);
@@ -330,7 +330,14 @@ int settingsfree(DeviceSettings ds)
         {
             free(ds.serialdevsettings.portdev);
         }
-    }
 
+    }
+    if (ds.dev_type == SIMDEV_SOUND)
+    {
+        if (ds.sounddevsettings.dev != NULL)
+        {
+            free(ds.sounddevsettings.dev);
+        }
+    }
     return 0;
 }
