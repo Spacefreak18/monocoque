@@ -16,12 +16,14 @@ Cross Platform device manager for driving and flight simulators, for use with co
 - Includes utility to configure revburner tachometer
 - Can send data to any serial device. So far only tested with arduino. Includes sample arduino sketch for sim lights.
 - The support for haptic bass shakers is limited and needs the most work. So far the engine rev is a simple sine wave, which I find convincing. The gear shift event works but not convincing enough for me.
+- Choice of Portaudio or Pulseaudio backend.
 
 ## Dependencies
 - libserialport - arduino serial devices
 - hidapi - usb hid devices
 - libusb - used by hidapi
 - portaudio - sound devices (haptic bass shakers)
+- pulseaudio - sound devices (haptic bass shakers)
 - libenet - UDP support (not yet implemented)
 - libxml2
 - argtable2
@@ -42,6 +44,11 @@ Then to compile simply:
 mkdir build; cd build
 cmake ..
 make
+```
+
+to use the pulseaudio backend use this cmake command
+```
+cmake -DUSE_PULSEAUDIO=YES ..
 ```
 
 ## Testing
