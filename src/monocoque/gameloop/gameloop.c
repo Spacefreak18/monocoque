@@ -203,10 +203,9 @@ int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdat
         for (int x = 0; x < numdevices; x++)
         {
             devices[x].update(&devices[x], simdata);
-
         }
 
-    	if( poll(&mypoll, 1, 1000.0/DEFAULT_UPDATE_RATE) )
+    	if( poll(&mypoll, 1, 1000.0/update_rate) )
     	{
     	    scanf("%c", &ch);
     	    if(ch == 'q')
