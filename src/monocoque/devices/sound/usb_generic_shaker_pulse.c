@@ -123,7 +123,7 @@ int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* main
 
     // recommended settings, i.e. server uses sensible values
     pa_buffer_attr buffer_attr;
-    buffer_attr.maxlength = (uint32_t) -1;
+    buffer_attr.maxlength = (uint32_t) 32767;
     buffer_attr.tlength = (uint32_t) -1;
     buffer_attr.prebuf = (uint32_t) -1;
     buffer_attr.minreq = (uint32_t) -1;
@@ -131,21 +131,16 @@ int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* main
     pa_cvolume cv;
     uint16_t pvolume =  ceil(((double) volume/100.0d)*65535);
     // Settings copied as per the chromium browser source
-    pa_stream_flags_t stream_flags;
-    stream_flags = PA_STREAM_INTERPOLATE_TIMING |
-       PA_STREAM_NOT_MONOTONIC | PA_STREAM_AUTO_TIMING_UPDATE |
-       PA_STREAM_ADJUST_LATENCY;
 
-    //stream_flags = PA_STREAM_START_CORKED;
+    pa_stream_flags_t stream_flags;
+    stream_flags = PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_NOT_MONOTONIC | PA_STREAM_AUTO_TIMING_UPDATE | PA_STREAM_ADJUST_LATENCY | PA_STREAM_START_CORKED;
+
     // Connect stream to the default audio output sink
     pa_cvolume_set(&cv, sample_specifications.channels, pvolume);
-    //pa_cvolume_set(&cv, 1, 0);
 
     pa_cvolume_set_balance(&cv, &channel_map, pan);
 
     assert(pa_stream_connect_playback(stream, devname, &buffer_attr, stream_flags, &cv, NULL) == 0);
-
-
 
     // Wait for the stream to be ready
     for(;;) {
