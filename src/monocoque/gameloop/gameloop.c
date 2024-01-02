@@ -171,17 +171,6 @@ int showstats(SimData* simdata)
 int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdata, SimMap* simmap)
 {
 
-    slogi("preparing game loop with %i devices...", numdevices);
-
-
-    slogi("sending initial data to devices");
-    simdata->velocity = 16;
-    simdata->rpms = 100;
-    for (int x = 0; x < numdevices; x++)
-    {
-        devices[x].update(&devices[x], simdata);
-    }
-    sleep(3);
 
 
     struct pollfd mypoll = { STDIN_FILENO, POLLIN|POLLPRI };
@@ -251,16 +240,22 @@ int looper(SimDevice* devices, int numdevices, Parameters* p)
     while (go == true)
     {
 
+        getSim(simdata, simmap, &p->simon, &p->sim);
 
-
-
-        if (p->simon == false)
+        if (p->simon == true && simdata->simstatus > 1)
         {
-            getSim(simdata, simmap, &p->simon, &p->sim);
-        }
+            slogi("preparing game loop with %i devices...", numdevices);
 
-        if (p->simon == true)
-        {
+
+            slogi("sending initial data to devices");
+            simdata->velocity = 16;
+            simdata->rpms = 100;
+            for (int x = 0; x < numdevices; x++)
+            {
+                devices[x].update(&devices[x], simdata);
+            }
+            sleep(3);
+
             clilooper(devices, numdevices, p, simdata, simmap);
         }
         if (p->simon == true)
