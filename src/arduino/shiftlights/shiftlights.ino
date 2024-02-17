@@ -7,6 +7,16 @@
 #define NUM_LEDS    6
 #define BRIGHTNESS  40
 
+#define COLOR1A 0
+#define COLOR1B 0
+#define COLOR1C 255
+#define COLOR2A 0
+#define COLOR2B 255
+#define COLOR2C 0
+#define COLOR3A 255
+#define COLOR3B 0
+#define COLOR3C 0
+
 CRGB leds[NUM_LEDS];
 SimData sd;
 int maxrpm = 0;
@@ -75,15 +85,15 @@ void loop()
 
         if (l >= numlights / 2)
         {
-            leds[l] = CRGB ( 0, 0, 255);
+            leds[l] = CRGB ( COLOR1A, COLOR1B, COLOR1C);
         }
         if (l < numlights / 2)
         {
-            leds[l] = CRGB ( 0, 255, 0);
+            leds[l] = CRGB ( COLOR2A, COLOR2B, COLOR2C);
         }
         if (l == numlights - 1)
         {
-            leds[l] = CRGB ( 255, 0, 0);
+            leds[l] = CRGB ( COLOR3A, COLOR3B, COLOR3C);
         }
         if (lights[l] <= 0)
         {

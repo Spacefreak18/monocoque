@@ -3,7 +3,7 @@
 
 #define BYTE_SIZE sizeof(SimData)
 #define KPHTOMPH .621317
-
+#define FANPOWER .6
 
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 
@@ -46,6 +46,6 @@ void loop() {
     {
       v = 255;
     }
-    myMotor1->setSpeed(v);
-    myMotor2->setSpeed(v);
+    myMotor1->setSpeed(v*FANPOWER);
+    myMotor2->setSpeed(v*FANPOWER);
 }
