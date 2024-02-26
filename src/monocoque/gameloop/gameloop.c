@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <poll.h>
 #include <termios.h>
+#include <signal.h>
 
 #include "gameloop.h"
 #include "../helper/parameters.h"
@@ -17,6 +18,19 @@
 
 #define DEFAULT_UPDATE_RATE      240.0
 #define SIM_CHECK_RATE           1.0
+bool go = false;
+bool go2 = false;
+struct sigaction act;
+
+void sighandler(int signum, siginfo_t* info, void* ptr)
+{
+    sloge("caught signal");
+    go = false;
+    go2 = false;
+    //gfx_clear(pixels, pixels_len);
+    //gfx_swapbuffers();
+    //gfx_close();
+}
 
 int showstats(SimData* simdata)
 {
@@ -170,16 +184,13 @@ int showstats(SimData* simdata)
 
 int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdata, SimMap* simmap)
 {
-
-
-
     struct pollfd mypoll = { STDIN_FILENO, POLLIN|POLLPRI };
     double update_rate = DEFAULT_UPDATE_RATE;
     char ch;
     int t=0;
     int s=0;
-    bool go = true;
-    while (go == true && simdata->simstatus > 1)
+    go2 = true;
+    while (go2 == true && simdata->simstatus > 1)
     {
         simdatamap(simdata, simmap, p->sim);
         showstats(simdata);
@@ -199,7 +210,7 @@ int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdat
     	    scanf("%c", &ch);
     	    if(ch == 'q')
     	    {
-    	        go = false;
+    	        go2 = false;
     	    }
     	}
     }
@@ -218,6 +229,12 @@ int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdat
 
 int looper(SimDevice* devices, int numdevices, Parameters* p)
 {
+    memset(&act, 0, sizeof(act));
+    act.sa_sigaction = sighandler;
+    act.sa_flags = SA_SIGINFO;
+    sigaction(SIGTERM, &act, NULL);
+    sigaction(SIGINT, &act, NULL);
+    sigaction(SIGTSTP, &act, NULL);
 
     SimData* simdata = malloc(sizeof(SimData));
     SimMap* simmap = malloc(sizeof(SimMap));
@@ -233,13 +250,12 @@ int looper(SimDevice* devices, int numdevices, Parameters* p)
     struct pollfd mypoll = { STDIN_FILENO, POLLIN|POLLPRI };
 
     fprintf(stdout, "Searching for sim data... Press q to quit...\n");
-
     p->simon = false;
     double update_rate = SIM_CHECK_RATE;
-    int go = true;
+    go = true;
     while (go == true)
     {
-
+        p->simon = false;
         getSim(simdata, simmap, &p->simon, &p->sim);
 
         if (p->simon == true && simdata->simstatus > 1)
@@ -265,12 +281,15 @@ int looper(SimDevice* devices, int numdevices, Parameters* p)
             sleep(2);
         }
 
-        if( poll(&mypoll, 1, 1000.0/update_rate) )
+        if (poll(&mypoll, 1, 1000.0/update_rate) )
         {
-            scanf("%c", &ch);
-            if(ch == 'q')
+            if (go != false )
             {
-                go = false;
+                scanf("%c", &ch);
+                if(ch == 'q')
+                {
+                    go = false;
+                }
             }
         }
     }
