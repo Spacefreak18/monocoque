@@ -29,7 +29,7 @@ Cross Platform device manager for driving and flight simulators, for use with co
 - argtable2
 - libconfig
 - [slog](https://github.com/kala13x/slog) (static)
-- [wine-linux-shm-adapter](https://github.com/spacefreak18/simshmbridge) - for sims that need shared memory mapping like AC.
+- [simshmbridge](https://github.com/spacefreak18/simshmbridge) - for sims that need shared memory mapping like AC and Project Cars related.
 - [simapi](https://github.com/spacefreak18/simapi)
 
 ## Building
@@ -51,9 +51,36 @@ to use the pulseaudio backend use this cmake command
 cmake -DUSE_PULSEAUDIO=YES ..
 ```
 
-## Testing
+## Using Arduino Devices
 
-### Setting up Your Arduino Device
+Currently Monocoque supports simwind and shiftlights through the included arduino sketches which have been tested on Uno boards. The simwind controller requires a Motor shield.
+
+There are included Makefiles for each controller. For now, the makefiles expect the device to be attached at /dev/ttyACM0. So unplug both controllers, and then plug in just the
+controller you're updating to ensure the correct controller is at /dev/ttyACM0.
+
+To compile and upload these sketches, the Makefiles use arduino-cli. Unfortunately it seems some distributions such as debian do not include this in the repositories. If this is
+the case follow the install instructions here:
+```
+https://arduino.github.io/arduino-cli/0.35/installation/
+```
+You may have to download the core libraries, it will prompt you to do so if you do not have them and you go further
+```
+arduino-cli core install arduino:avr
+```
+Then for shiftlights navigate to included shiftlight directory ( be sure only the shiftlight controller is plugged into the machine and is available at /dev/ttyACM0 ) and
+
+```
+arduino-cli lib install FastLED
+make
+```
+Then for simwind navigate to the included simwind directory ( be sure only the simwind controller is plugged into the machine and is available at /dev/ttyACM0 ) and
+```
+ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL=true arduino-cli lib install --git-url https://github.com/adafruit/Adafruit_Motor_Shield_V2_Library.git
+ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL=true arduino-cli lib install --git-url https://github.com/adafruit/Adafruit_BusIO.git
+make
+```
+
+## Testing
 
 ### Static Analysis
 ```
