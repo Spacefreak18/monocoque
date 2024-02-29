@@ -38,6 +38,55 @@ int sounddev_engine_update(SimDevice* this, SimData* simdata)
     slogt("set engine frequency to %i", sounddevice->sounddata.frequency);
 }
 
+int sounddev_tyreslip_update(SimDevice* this, SimData* simdata)
+{
+    SoundDevice* sounddevice = (void *) this->derived;
+
+    double play = 0;
+    if (this->tyre == FRONTLEFT || this->tyre == FRONTS || this->tyre == ALLFOUR)
+    {
+        play += simdata->wheelslip[0];
+    }
+    if (this->tyre == FRONTRIGHT || this->tyre == FRONTS || this->tyre == ALLFOUR)
+    {
+        play += simdata->wheelslip[1];
+    }
+    if (this->tyre == REARLEFT || this->tyre == REARS || this->tyre == ALLFOUR)
+    {
+        play += simdata->wheelslip[2];
+    }
+    if (this->tyre == REARRIGHT || this->tyre == REARS || this->tyre == ALLFOUR)
+    {
+        play += simdata->wheelslip[3];
+    }
+    if (play > 0)
+    {
+        sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency * play;
+        sounddevice->sounddata.curr_duration = sounddevice->sounddata.duration;
+    }
+    else
+    {
+        sounddevice->sounddata.curr_frequency = 0;
+        sounddevice->sounddata.curr_duration = 0;
+    }
+}
+
+int sounddev_absbrakes_update(SimDevice* this, SimData* simdata)
+{
+    SoundDevice* sounddevice = (void *) this->derived;
+
+    if (simdata->abs > 0)
+    {
+        sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency;
+        sounddevice->sounddata.curr_duration = sounddevice->sounddata.duration;
+    }
+    else
+    {
+        sounddevice->sounddata.curr_frequency = 0;
+        sounddevice->sounddata.curr_duration = 0;
+    }
+}
+
 int sounddev_gearshift_update(SimDevice* this, SimData* simdata)
 {
     SoundDevice* sounddevice = (void *) this->derived;
@@ -90,6 +139,16 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int
             sounddevice->sounddata.curr_duration = duration;
             streamname = "Gear";
             break;
+        case (SOUNDEFFECT_TYRESLIP):
+            sounddevice->sounddata.duration = duration;
+            sounddevice->sounddata.curr_duration = duration;
+            streamname = "TyreSlip";
+            break;
+        case (SOUNDEFFECT_ABSBRAKES):
+            sounddevice->sounddata.duration = duration;
+            sounddevice->sounddata.curr_duration = duration;
+            streamname = "ABS";
+            break;
     }
 
 #ifdef USE_PULSEAUDIO
@@ -105,6 +164,8 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int
 
 static const vtable engine_sound_simdevice_vtable = { &sounddev_engine_update, &sounddev_free };
 static const vtable gear_sound_simdevice_vtable = { &sounddev_gearshift_update, &sounddev_free };
+static const vtable tyreslip_sound_simdevice_vtable = { &sounddev_tyreslip_update, &sounddev_free };
+static const vtable absbrakes_sound_simdevice_vtable = { &sounddev_absbrakes_update, &sounddev_free };
 
 SoundDevice* new_sound_device(DeviceSettings* ds) {
 
@@ -125,6 +186,16 @@ SoundDevice* new_sound_device(DeviceSettings* ds) {
             this->effecttype = SOUNDEFFECT_GEARSHIFT;
             this->m.vtable = &gear_sound_simdevice_vtable;
             slogi("Initializing sound device for gear shift vibrations.");
+            break;
+        case (SIMDEVTYPE_TYRESLIP):
+            this->effecttype = SOUNDEFFECT_TYRESLIP;
+            this->m.vtable = &tyreslip_sound_simdevice_vtable;
+            slogi("Initializing sound device for tyre slip vibrations.");
+            break;
+        case (SIMDEVTYPE_ABSBRAKES):
+            this->effecttype = SOUNDEFFECT_ABSBRAKES;
+            this->m.vtable = &absbrakes_sound_simdevice_vtable;
+            slogi("Initializing sound device for abs vibrations.");
             break;
     }
 

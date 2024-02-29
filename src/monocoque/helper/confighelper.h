@@ -1,6 +1,7 @@
 #ifndef _CONFIGHELPER_H
 #define _CONFIGHELPER_H
 
+#include <pulse/channelmap.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -25,7 +26,8 @@ typedef enum
     SIMDEVTYPE_SIMWIND           = 3,
     SIMDEVTYPE_ENGINESOUND       = 4,
     SIMDEVTYPE_GEARSOUND         = 5,
-    SIMDEVTYPE_ABSBRAKES         = 6
+    SIMDEVTYPE_ABSBRAKES         = 6,
+    SIMDEVTYPE_TYRESLIP          = 7
 }
 DeviceSubType;
 
@@ -51,6 +53,18 @@ typedef enum
     MONOCOQUE_ERROR_UNKNOWN_DEV   = 5
 }
 MonocoqueError;
+
+typedef enum
+{
+    FRONTLEFT         = 0,
+    FRONTRIGHT        = 1,
+    REARLEFT          = 2,
+    REARRIGHT         = 3,
+    FRONTS            = 4,
+    REARS             = 5,
+    ALLFOUR           = 6
+}
+MonocoqueTyreIdentifier;
 
 typedef struct
 {
@@ -95,6 +109,7 @@ typedef struct
     TachometerSettings tachsettings;
     SerialDeviceSettings serialdevsettings;
     SoundDeviceSettings sounddevsettings;
+    MonocoqueTyreIdentifier tyre;
 }
 DeviceSettings;
 
