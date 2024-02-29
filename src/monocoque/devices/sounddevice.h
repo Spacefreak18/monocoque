@@ -17,7 +17,9 @@ SoundType;
 typedef enum
 {
     SOUNDEFFECT_ENGINERPM   = 0,
-    SOUNDEFFECT_GEARSHIFT   = 1
+    SOUNDEFFECT_GEARSHIFT   = 1,
+    SOUNDEFFECT_ABSBRAKES   = 2,
+    SOUNDEFFECT_TYRESLIP    = 3
 }
 VibrationEffectType;
 

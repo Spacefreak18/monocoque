@@ -21,7 +21,7 @@ struct SimDevice
     int id;
     bool initialized;
     DeviceType type;
-
+    MonocoqueTyreIdentifier tyre;
 };
 
 typedef struct {
@@ -96,6 +96,7 @@ SoundDevice;
 
 int sounddev_engine_update(SimDevice* this, SimData* simdata);
 int sounddev_gearshift_update(SimDevice* this, SimData* simdata);
+int sounddev_tyreslip_update(SimDevice* this, SimData* simdata);
 int sounddev_free(SimDevice* this);
 
 SoundDevice* new_sound_device(DeviceSettings* ds);

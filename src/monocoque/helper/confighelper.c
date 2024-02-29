@@ -91,6 +91,11 @@ int strtodevsubtype(const char* device_subtype, DeviceSettings* ds, int simdev)
                 ds->dev_subtype = SIMDEVTYPE_ABSBRAKES;
                 break;
             }
+            if ((strcicmp(device_subtype, "SLIP") == 0) || (strcicmp(device_subtype, "TYRESLIP") == 0))
+            {
+                ds->dev_subtype = SIMDEVTYPE_TYRESLIP;
+                break;
+            }
         default:
             ds->is_valid = false;
             slogw("%s does not appear to be a valid device sub type, but attempting to continue with other devices", device_subtype);
@@ -274,6 +279,8 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
             config_setting_lookup_int(device_settings, "pan", &ds->sounddevsettings.pan);
             config_setting_lookup_float(device_settings, "duration", &ds->sounddevsettings.duration);
 
+
+
             const char* temp;
             int found = 0;
             found = config_setting_lookup_string(device_settings, "devid", &temp);
@@ -284,6 +291,38 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
             else
             {
                 ds->sounddevsettings.dev = strdup(temp);
+            }
+            if (ds->dev_subtype == SIMDEVTYPE_TYRESLIP)
+            {
+
+                found = config_setting_lookup_string(device_settings, "tyre", &temp);
+
+                ds->tyre = ALLFOUR;
+
+                if (strcicmp(temp, "FRONTS") == 0)
+                {
+                    ds->tyre = FRONTS;
+                }
+                if (strcicmp(temp, "REARS") == 0)
+                {
+                    ds->tyre = REARS;
+                }
+                if (strcicmp(temp, "FRONTLEFT") == 0)
+                {
+                    ds->tyre = FRONTLEFT;
+                }
+                if (strcicmp(temp, "FRONTRIGHT") == 0)
+                {
+                    ds->tyre = FRONTRIGHT;
+                }
+                if (strcicmp(temp, "REARLEFT") == 0)
+                {
+                    ds->tyre = REARLEFT;
+                }
+                if (strcicmp(temp, "REARRIGHT") == 0)
+                {
+                    ds->tyre = REARRIGHT;
+                }
             }
         }
     }
