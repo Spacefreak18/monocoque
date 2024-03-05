@@ -10,7 +10,7 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 Adafruit_DCMotor *myMotor1 = AFMS.getMotor(1);
 Adafruit_DCMotor *myMotor2 = AFMS.getMotor(3);
 
-SimData sd;
+SimWindData sd;
 int velocity = 0;
 
 void setup() {
@@ -19,10 +19,6 @@ void setup() {
         Serial.println("Could not find Motor Shield. Check wiring.");
         while (1);
     }
-    sd.rpms = 0;
-    sd.maxrpm = 6500;
-    sd.altitude = 10;
-    sd.pulses = 40000;
     sd.velocity = 10;
 
     myMotor1->setSpeed(0);

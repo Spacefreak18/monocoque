@@ -6,18 +6,20 @@
 
 typedef struct
 {
-    char color_1_red;
-    char color_1_green;
-    char color_1_blue;
-    char color_2_red;
-    char color_2_green;
-    char color_2_blue;
-    char color_3_red;
-    char color_3_green;
-    char color_3_blue;
+    unsigned char color_1_red;
+    unsigned char color_1_green;
+    unsigned char color_1_blue;
+    unsigned char color_2_red;
+    unsigned char color_2_green;
+    unsigned char color_2_blue;
+    unsigned char color_3_red;
+    unsigned char color_3_green;
+    unsigned char color_3_blue;
+    unsigned char space_1;
+    unsigned char space_2;
+    unsigned char space_3;
     uint32_t maxrpm;
     uint32_t rpm;
-    uint32_t pulses;
 }
 ShiftLightsData;
 

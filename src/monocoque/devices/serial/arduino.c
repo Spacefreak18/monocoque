@@ -6,13 +6,14 @@
 #include "arduino.h"
 #include "../../slog/slog.h"
 
-#define arduino_timeout 2000
+#define arduino_timeout 5000
 
 int arduino_update(SerialDevice* serialdevice, void* data, size_t size)
 {
     int result = 1;
     if (serialdevice->port)
     {
+        slogt("copying %i bytes to arduino device", size);
         result = check(sp_blocking_write(serialdevice->port, data, size, arduino_timeout));
     }
 
