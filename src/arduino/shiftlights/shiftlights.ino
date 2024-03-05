@@ -1,5 +1,5 @@
 #include <FastLED.h>
-#include "simdata.h"
+#include "shiftlights.h"
 
 #define SIMDATA_SIZE sizeof(ShiftLightsData)
 
@@ -18,7 +18,7 @@
 #define COLOR3C 0
 
 CRGB leds[NUM_LEDS];
-SimData sd;
+ShiftLightsData sd;
 int maxrpm = 0;
 int rpm = 0;
 int numlights = NUM_LEDS;
@@ -55,7 +55,6 @@ void loop()
         rpm = sd.rpm;
         maxrpm = sd.maxrpm;
     }
-
 
     while (l < numlights)
     {
