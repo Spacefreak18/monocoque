@@ -6,7 +6,7 @@
 
 typedef struct
 {
-    float velocity;
+    uint32_t velocity;
     float fanpower;
 }
 SimWindData;
