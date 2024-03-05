@@ -45,19 +45,19 @@ int sounddev_tyreslip_update(SimDevice* this, SimData* simdata)
     double play = 0;
     if (this->tyre == FRONTLEFT || this->tyre == FRONTS || this->tyre == ALLFOUR)
     {
-        play += simdata->wheelslip0;
+        play += simdata->wheelslip[0];
     }
     if (this->tyre == FRONTRIGHT || this->tyre == FRONTS || this->tyre == ALLFOUR)
     {
-        play += simdata->wheelslip1;
+        play += simdata->wheelslip[1];
     }
     if (this->tyre == REARLEFT || this->tyre == REARS || this->tyre == ALLFOUR)
     {
-        play += simdata->wheelslip2;
+        play += simdata->wheelslip[2];
     }
     if (this->tyre == REARRIGHT || this->tyre == REARS || this->tyre == ALLFOUR)
     {
-        play += simdata->wheelslip3;
+        play += simdata->wheelslip[3];
     }
     if (play > 0)
     {
