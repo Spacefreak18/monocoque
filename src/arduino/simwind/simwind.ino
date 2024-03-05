@@ -1,7 +1,7 @@
 #include <Adafruit_MotorShield.h>
-#include "simdata.h"
+#include "simwind.h"
 
-#define BYTE_SIZE sizeof(SimData)
+#define BYTE_SIZE sizeof(SimWindData)
 #define KPHTOMPH .621317
 #define FANPOWER .6
 

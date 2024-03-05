@@ -1,7 +1,7 @@
 #include <FastLED.h>
 #include "simdata.h"
 
-#define SIMDATA_SIZE sizeof(SimData)
+#define SIMDATA_SIZE sizeof(ShiftLightsData)
 
 #define LED_PIN     7
 #define NUM_LEDS    6
@@ -39,11 +39,8 @@ void setup()
     }
     FastLED.clear();
 
-    sd.rpms = 0;
+    sd.rpm = 0;
     sd.maxrpm = 6500;
-    sd.altitude = 10;
-    sd.pulses = 40000;
-    sd.velocity = 10;
 }
 
 void loop()
@@ -55,9 +52,8 @@ void loop()
     {
         Serial.readBytes(buff, SIMDATA_SIZE);
         memcpy(&sd, &buff, SIMDATA_SIZE);
-        rpm = sd.rpms;
+        rpm = sd.rpm;
         maxrpm = sd.maxrpm;
-
     }
 
 
