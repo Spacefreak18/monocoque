@@ -8,16 +8,38 @@
 
 #define arduino_timeout 2000
 
-int arduino_update(SerialDevice* serialdevice, SimData* simdata)
+int arduino_update(SerialDevice* serialdevice, void* data, size_t size)
 {
     int result = 1;
     if (serialdevice->port)
     {
-        result = check(sp_blocking_write(serialdevice->port, simdata, sizeof(SimData), arduino_timeout));
+        result = check(sp_blocking_write(serialdevice->port, data, size, arduino_timeout));
     }
 
     return result;
 }
+
+//int arduino_shiftlights_update(SerialDevice* serialdevice, SimData* simdata)
+//{
+//    int result = 1;
+//    if (serialdevice->port)
+//    {
+//        result = check(sp_blocking_write(serialdevice->port, simdata, sizeof(SimData), arduino_timeout));
+//    }
+//
+//    return result;
+//}
+//
+//int arduino_simwind_update(SerialDevice* serialdevice, SimData* simdata)
+//{
+//    int result = 1;
+//    if (serialdevice->port)
+//    {
+//        result = check(sp_blocking_write(serialdevice->port, simdata, sizeof(SimData), arduino_timeout));
+//    }
+//
+//    return result;
+//}
 
 int arduino_init(SerialDevice* serialdevice, const char* portdev)
 {
@@ -80,3 +102,4 @@ int check(enum sp_return result)
             return result;
     }
 }
+
