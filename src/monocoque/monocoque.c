@@ -231,7 +231,13 @@ int main(int argc, char** argv)
         }
 
 
-        devfree(devices, initdevices);
+        for (int x = 0; x < numdevices; x++)
+        {
+            if (devices[x].initialized == true)
+            {
+                devices[x].free(&devices[x]);
+            }
+        }
 
         i = 0;
         // improve the api around the config helper

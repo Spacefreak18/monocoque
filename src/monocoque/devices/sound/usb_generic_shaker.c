@@ -116,7 +116,7 @@ int usb_generic_shaker_init(SoundDevice* sounddevice)
     sounddevice->outputParameters.suggestedLatency = Pa_GetDeviceInfo( sounddevice->outputParameters.device )->defaultLowOutputLatency;
     sounddevice->outputParameters.hostApiSpecificStreamInfo = NULL;
 
-    if (sounddevice->effecttype == SOUNDEFFECT_GEARSHIFT)
+    if (sounddevice->effecttype == EFFECT_GEARSHIFT)
     {
         err = Pa_OpenStream( &sounddevice->stream,
                              NULL,              /* No input. */

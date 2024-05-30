@@ -24,27 +24,6 @@ int devupdate(SimDevice* this, SimData* simdata)
     return 0;
 }
 
-int devfree(SimDevice* simdevices, int numdevices)
-{
-
-    slogi("freeing %i simdevices...", numdevices);
-    int devices = 0;
-
-    int freed = 0;
-    for (int j = 0; j < 1; j++)
-    {
-        SimDevice simdev = simdevices[j]; 
-        if (simdev.initialized == true)
-        {
-            simdev.free(&simdev);
-        }
-    }
-
-    //free(simdevices);
-
-    return 0;
-}
-
 int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds)
 {
     slogi("initializing simdevices...");
