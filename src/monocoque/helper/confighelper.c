@@ -52,6 +52,31 @@ int strtogame(const char* game, MonocoqueSettings* ms)
     return MONOCOQUE_ERROR_NONE;
 }
 
+int strtoeffecttype(const char* effect, DeviceSettings* ds)
+{
+    ds->is_valid = false;
+
+    if (strcicmp(effect, "Engine") == 0)
+    {
+        ds->effect_type = EFFECT_ENGINERPM;
+    }
+    if (strcicmp(effect, "Gear") == 0)
+    {
+        ds->effect_type = EFFECT_GEARSHIFT;
+    }
+    if (strcicmp(effect, "ABS") == 0)
+    {
+        ds->effect_type = EFFECT_ABSBRAKES;
+    }
+    if ((strcicmp(effect, "SLIP") == 0) || (strcicmp(effect, "TYRESLIP") == 0) || (strcicmp(effect, "TIRESLIP") == 0))
+    {
+        ds->effect_type = EFFECT_TYRESLIP;
+    }
+
+    ds->is_valid = true;
+    return MONOCOQUE_ERROR_NONE;
+}
+
 int strtodevsubtype(const char* device_subtype, DeviceSettings* ds, int simdev)
 {
     ds->is_valid = false;
@@ -62,6 +87,11 @@ int strtodevsubtype(const char* device_subtype, DeviceSettings* ds, int simdev)
             if (strcicmp(device_subtype, "Tachometer") == 0)
             {
                 ds->dev_subtype = SIMDEVTYPE_TACHOMETER;
+                break;
+            }
+            if (strcicmp(device_subtype, "UsbHaptic") == 0 || strcicmp(device_subtype, "Haptic") == 0)
+            {
+                ds->dev_subtype = SIMDEVTYPE_USBHAPTIC;
                 break;
             }
         case SIMDEV_SERIAL:
@@ -76,26 +106,8 @@ int strtodevsubtype(const char* device_subtype, DeviceSettings* ds, int simdev)
                 break;
             }
         case SIMDEV_SOUND:
-            if (strcicmp(device_subtype, "Engine") == 0)
-            {
-                ds->dev_subtype = SIMDEVTYPE_ENGINESOUND;
-                break;
-            }
-            if (strcicmp(device_subtype, "Gear") == 0)
-            {
-                ds->dev_subtype = SIMDEVTYPE_GEARSOUND;
-                break;
-            }
-            if (strcicmp(device_subtype, "ABS") == 0)
-            {
-                ds->dev_subtype = SIMDEVTYPE_ABSBRAKES;
-                break;
-            }
-            if ((strcicmp(device_subtype, "SLIP") == 0) || (strcicmp(device_subtype, "TYRESLIP") == 0))
-            {
-                ds->dev_subtype = SIMDEVTYPE_TYRESLIP;
-                break;
-            }
+            ds->is_valid = true;
+            break;
         default:
             ds->is_valid = false;
             slogw("%s does not appear to be a valid device sub type, but attempting to continue with other devices", device_subtype);
@@ -228,6 +240,40 @@ int loadtachconfig(const char* config_file, DeviceSettings* ds)
     return 0;
 }
 
+int gettyre(config_setting_t* device_settings, DeviceSettings* ds) {
+
+    const char* temp;
+    int found = config_setting_lookup_string(device_settings, "tyre", &temp);
+    
+    ds->tyre = ALLFOUR;
+    
+    if (strcicmp(temp, "FRONTS") == 0)
+    {
+        ds->tyre = FRONTS;
+    }
+    if (strcicmp(temp, "REARS") == 0)
+    {
+        ds->tyre = REARS;
+    }
+    if (strcicmp(temp, "FRONTLEFT") == 0)
+    {
+        ds->tyre = FRONTLEFT;
+    }
+    if (strcicmp(temp, "FRONTRIGHT") == 0)
+    {
+        ds->tyre = FRONTRIGHT;
+    }
+    if (strcicmp(temp, "REARLEFT") == 0)
+    {
+        ds->tyre = REARLEFT;
+    }
+    if (strcicmp(temp, "REARRIGHT") == 0)
+    {
+        ds->tyre = REARRIGHT;
+    }
+
+}
+
 int loadconfig(const char* config_file, DeviceSettings* ds)
 {
     if (ds->dev_subtype == SIMDEVTYPE_TACHOMETER)
@@ -244,6 +290,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
     ds->dev_type = SIMDEV_UNKNOWN;
 
     error = strtodev(device_type, device_subtype, ds);
+
     if (error != MONOCOQUE_ERROR_NONE)
     {
         return error;
@@ -258,74 +305,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         return error;
     }
 
-    if (ds->dev_type == SIMDEV_SOUND)
-    {
-        slogi("reading configured sound device settings");
-        ds->sounddevsettings.frequency = -1;
-        ds->sounddevsettings.volume = -1;
-        ds->sounddevsettings.lowbound_frequency = -1;
-        ds->sounddevsettings.upperbound_frequency = -1;
-        ds->sounddevsettings.pan = 0;
-        ds->sounddevsettings.duration = 2.0;
-        if (ds->dev_subtype == SIMDEVTYPE_GEARSOUND)
-        {
-            ds->sounddevsettings.duration = .125;
-        }
-        if (device_settings != NULL)
-        {
 
-            config_setting_lookup_int(device_settings, "volume", &ds->sounddevsettings.volume);
-            config_setting_lookup_int(device_settings, "frequency", &ds->sounddevsettings.frequency);
-            config_setting_lookup_int(device_settings, "pan", &ds->sounddevsettings.pan);
-            config_setting_lookup_float(device_settings, "duration", &ds->sounddevsettings.duration);
-
-
-
-            const char* temp;
-            int found = 0;
-            found = config_setting_lookup_string(device_settings, "devid", &temp);
-            if (found == 0)
-            {
-                ds->sounddevsettings.dev = NULL;
-            }
-            else
-            {
-                ds->sounddevsettings.dev = strdup(temp);
-            }
-            if (ds->dev_subtype == SIMDEVTYPE_TYRESLIP)
-            {
-
-                found = config_setting_lookup_string(device_settings, "tyre", &temp);
-
-                ds->tyre = ALLFOUR;
-
-                if (strcicmp(temp, "FRONTS") == 0)
-                {
-                    ds->tyre = FRONTS;
-                }
-                if (strcicmp(temp, "REARS") == 0)
-                {
-                    ds->tyre = REARS;
-                }
-                if (strcicmp(temp, "FRONTLEFT") == 0)
-                {
-                    ds->tyre = FRONTLEFT;
-                }
-                if (strcicmp(temp, "FRONTRIGHT") == 0)
-                {
-                    ds->tyre = FRONTRIGHT;
-                }
-                if (strcicmp(temp, "REARLEFT") == 0)
-                {
-                    ds->tyre = REARLEFT;
-                }
-                if (strcicmp(temp, "REARRIGHT") == 0)
-                {
-                    ds->tyre = REARRIGHT;
-                }
-            }
-        }
-    }
 
     if (ds->dev_subtype == SIMDEVTYPE_TACHOMETER)
     {
@@ -346,6 +326,73 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         }
     }
 
+    if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC)
+    {
+        if (device_settings != NULL)
+        {
+            ds->usbdevsettings.value0 = 0;
+            ds->usbdevsettings.value1 = 1;
+
+            const char* temp;
+            int found = config_setting_lookup_string(device_settings, "devpath", &temp);
+            if (found == 0)
+            {
+                ds->usbdevsettings.dev = NULL;
+            }
+            else
+            {
+                ds->usbdevsettings.dev = strdup(temp);
+            }
+            
+            config_setting_lookup_int(device_settings, "value0", &ds->usbdevsettings.value0);
+            config_setting_lookup_int(device_settings, "value1", &ds->usbdevsettings.value1);
+        }
+    }
+
+    if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC || ds->dev_type == SIMDEV_SOUND) {
+        const char* effect;
+        config_setting_lookup_string(device_settings, "effect", &effect);
+        strtoeffecttype(effect, ds);
+        if (ds->effect_type == EFFECT_TYRESLIP || ds->effect_type == EFFECT_WHEELLOCK)
+        {
+            gettyre(device_settings, ds);
+        }
+        
+        if (ds->dev_type == SIMDEV_SOUND)
+        {
+            slogi("reading configured sound device settings");
+            ds->sounddevsettings.frequency = -1;
+            ds->sounddevsettings.volume = -1;
+            ds->sounddevsettings.lowbound_frequency = -1;
+            ds->sounddevsettings.upperbound_frequency = -1;
+            ds->sounddevsettings.pan = 0;
+            ds->sounddevsettings.duration = 2.0;
+            if (ds->effect_type == EFFECT_GEARSHIFT)
+            {
+                ds->sounddevsettings.duration = .125;
+            }
+            if (device_settings != NULL)
+            {
+
+                config_setting_lookup_int(device_settings, "volume", &ds->sounddevsettings.volume);
+                config_setting_lookup_int(device_settings, "frequency", &ds->sounddevsettings.frequency);
+                config_setting_lookup_int(device_settings, "pan", &ds->sounddevsettings.pan);
+                config_setting_lookup_float(device_settings, "duration", &ds->sounddevsettings.duration);
+
+                const char* temp;
+                int found = 0;
+                found = config_setting_lookup_string(device_settings, "devid", &temp);
+                if (found == 0)
+                {
+                    ds->sounddevsettings.dev = NULL;
+                }
+                else
+                {
+                    ds->sounddevsettings.dev = strdup(temp);
+                }
+            }
+        }
+    }
 
     if (ds->dev_subtype == SIMDEVTYPE_SIMWIND || ds->dev_subtype == SIMDEVTYPE_SHIFTLIGHTS)
     {
@@ -376,6 +423,14 @@ int settingsfree(DeviceSettings ds)
         if (ds.sounddevsettings.dev != NULL)
         {
             free(ds.sounddevsettings.dev);
+        }
+    }
+
+    if (ds.dev_type == SIMDEV_USB)
+    {
+        if (ds.usbdevsettings.dev != NULL )
+        {
+            free(ds.usbdevsettings.dev);
         }
     }
     return 0;

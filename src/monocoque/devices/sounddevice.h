@@ -14,15 +14,6 @@ typedef enum
 }
 SoundType;
 
-typedef enum
-{
-    SOUNDEFFECT_ENGINERPM   = 0,
-    SOUNDEFFECT_GEARSHIFT   = 1,
-    SOUNDEFFECT_ABSBRAKES   = 2,
-    SOUNDEFFECT_TYRESLIP    = 3
-}
-VibrationEffectType;
-
 #define MAX_TABLE_SIZE   (6000)
 typedef struct
 {

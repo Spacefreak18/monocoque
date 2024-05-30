@@ -112,7 +112,7 @@ int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* main
     pa_stream_set_state_callback(stream, stream_state_cb, mainloop);
 
 
-    if (sounddevice->effecttype == SOUNDEFFECT_GEARSHIFT)
+    if (sounddevice->effecttype == EFFECT_GEARSHIFT)
     {
         pa_stream_set_write_callback(stream, gear_sound_stream, &sounddevice->sounddata);
     }

@@ -9,6 +9,8 @@ set(devices_source_files
   serialdevice.c
   tachdevice.h
   tachdevice.c
+  usbhapticdevice.h
+  usbhapticdevice.c
   sound.h
   sound.c
   usb/revburner.h

@@ -64,7 +64,8 @@ SerialDevice* new_serial_device(DeviceSettings* ds);
 typedef enum
 {
     USBDEV_UNKNOWN       = 0,
-    USBDEV_TACHOMETER    = 1
+    USBDEV_TACHOMETER    = 1,
+    USBDEV_GENERICHAPTIC = 2
 }
 USBType;
 
@@ -76,6 +77,7 @@ typedef struct
     union
     {
         TachDevice tachdevice;
+        USBGenericHapticDevice hapticdevice;
     } u;
 }
 USBDevice;

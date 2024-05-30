@@ -22,12 +22,9 @@ typedef enum
 {
     SIMDEVTYPE_UNKNOWN           = 0,
     SIMDEVTYPE_TACHOMETER        = 1,
-    SIMDEVTYPE_SHIFTLIGHTS       = 2,
-    SIMDEVTYPE_SIMWIND           = 3,
-    SIMDEVTYPE_ENGINESOUND       = 4,
-    SIMDEVTYPE_GEARSOUND         = 5,
-    SIMDEVTYPE_ABSBRAKES         = 6,
-    SIMDEVTYPE_TYRESLIP          = 7
+    SIMDEVTYPE_USBHAPTIC         = 2,
+    SIMDEVTYPE_SHIFTLIGHTS       = 3,
+    SIMDEVTYPE_SIMWIND           = 4
 }
 DeviceSubType;
 
@@ -42,6 +39,16 @@ typedef enum
     SIMULATOR_UPDATE_ALTITUDE   = 5
 }
 SimulatorUpdate;
+
+typedef enum
+{
+    EFFECT_ENGINERPM   = 0,
+    EFFECT_GEARSHIFT   = 1,
+    EFFECT_ABSBRAKES   = 2,
+    EFFECT_TYRESLIP    = 3,
+    EFFECT_WHEELLOCK   = 4
+}
+VibrationEffectType;
 
 typedef enum
 {
@@ -103,12 +110,23 @@ SoundDeviceSettings;
 
 typedef struct
 {
+    int value0;
+    int value1;
+    char* dev;
+}
+USBDeviceSettings;
+
+typedef struct
+{
     bool is_valid;
     DeviceType dev_type;
     DeviceSubType dev_subtype;
+    VibrationEffectType effect_type;
+    // union?
     TachometerSettings tachsettings;
     SerialDeviceSettings serialdevsettings;
     SoundDeviceSettings sounddevsettings;
+    USBDeviceSettings usbdevsettings;
     MonocoqueTyreIdentifier tyre;
 }
 DeviceSettings;

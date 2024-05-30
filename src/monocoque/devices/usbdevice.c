@@ -19,6 +19,9 @@ int usbdev_update(SimDevice* this, SimData* simdata)
         case USBDEV_TACHOMETER :
             tachdev_update(&usbdevice->u.tachdevice, simdata);
             break;
+        case USBDEV_GENERICHAPTIC :
+            usbhapticdev_update(&usbdevice->u.hapticdevice, simdata);
+            break;
     }
 
     return 0;
@@ -28,11 +31,15 @@ int usbdev_free(SimDevice* this)
 {
     USBDevice* usbdevice = (void *) this->derived;
 
+    slogt("Usb device free");
     switch ( usbdevice->type )
     {
         case USBDEV_UNKNOWN :
         case USBDEV_TACHOMETER :
             tachdev_free(&usbdevice->u.tachdevice);
+            break;
+        case USBDEV_GENERICHAPTIC :
+            usbhapticdev_free(&usbdevice->u.hapticdevice);
             break;
     }
 
@@ -46,12 +53,15 @@ int usbdev_init(USBDevice* usbdevice, DeviceSettings* ds)
     slogi("initializing usb device...");
     int error = 0;
 
-    usbdevice->type = USBDEV_TACHOMETER;
+    //usbdevice->type = USBDEV_TACHOMETER;
     switch ( usbdevice->type )
     {
         case USBDEV_UNKNOWN :
         case USBDEV_TACHOMETER :
             error = tachdev_init(&usbdevice->u.tachdevice, ds);
+            break;
+        case USBDEV_GENERICHAPTIC :
+            error = usbhapticdev_init(&usbdevice->u.hapticdevice, ds);
             break;
     }
 
@@ -68,6 +78,12 @@ USBDevice* new_usb_device(DeviceSettings* ds) {
     this->m.free = &simdevfree;
     this->m.derived = this;
     this->m.vtable = &usb_simdevice_vtable;
+
+    this->type = USBDEV_TACHOMETER;
+    if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC)
+    {
+        this->type = USBDEV_GENERICHAPTIC;
+    }
 
     int error = usbdev_init(this, ds);
 

@@ -128,7 +128,7 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int
 
     const char* streamname= "Engine";
     switch (sounddevice->effecttype) {
-        case (SOUNDEFFECT_GEARSHIFT):
+        case (EFFECT_GEARSHIFT):
 
             sounddevice->sounddata.last_gear = 0;
             //sounddevice->sounddata.pitch = 500;
@@ -139,12 +139,12 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int
             sounddevice->sounddata.curr_duration = duration;
             streamname = "Gear";
             break;
-        case (SOUNDEFFECT_TYRESLIP):
+        case (EFFECT_TYRESLIP):
             sounddevice->sounddata.duration = duration;
             sounddevice->sounddata.curr_duration = duration;
             streamname = "TyreSlip";
             break;
-        case (SOUNDEFFECT_ABSBRAKES):
+        case (EFFECT_ABSBRAKES):
             sounddevice->sounddata.duration = duration;
             sounddevice->sounddata.curr_duration = duration;
             streamname = "ABS";
@@ -175,25 +175,25 @@ SoundDevice* new_sound_device(DeviceSettings* ds) {
     this->m.free = &simdevfree;
     this->m.derived = this;
 
-    slogt("Attempting to configure sound device with subtype: %i", ds->dev_subtype);
-    switch (ds->dev_subtype) {
-        case (SIMDEVTYPE_ENGINESOUND):
-            this->effecttype = SOUNDEFFECT_ENGINERPM;
+    slogt("Attempting to configure sound device with subtype: %i", ds->effect_type);
+    switch (ds->effect_type) {
+        case (EFFECT_ENGINERPM):
+            this->effecttype = EFFECT_ENGINERPM;
             this->m.vtable = &engine_sound_simdevice_vtable;
             slogi("Initializing sound device for engine vibrations.");
             break;
-        case (SIMDEVTYPE_GEARSOUND):
-            this->effecttype = SOUNDEFFECT_GEARSHIFT;
+        case (EFFECT_GEARSHIFT):
+            this->effecttype = EFFECT_GEARSHIFT;
             this->m.vtable = &gear_sound_simdevice_vtable;
             slogi("Initializing sound device for gear shift vibrations.");
             break;
-        case (SIMDEVTYPE_TYRESLIP):
-            this->effecttype = SOUNDEFFECT_TYRESLIP;
+        case (EFFECT_TYRESLIP):
+            this->effecttype = EFFECT_TYRESLIP;
             this->m.vtable = &tyreslip_sound_simdevice_vtable;
             slogi("Initializing sound device for tyre slip vibrations.");
             break;
-        case (SIMDEVTYPE_ABSBRAKES):
-            this->effecttype = SOUNDEFFECT_ABSBRAKES;
+        case (EFFECT_ABSBRAKES):
+            this->effecttype = EFFECT_ABSBRAKES;
             this->m.vtable = &absbrakes_sound_simdevice_vtable;
             slogi("Initializing sound device for abs vibrations.");
             break;
