@@ -353,7 +353,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         const char* effect;
         config_setting_lookup_string(device_settings, "effect", &effect);
         strtoeffecttype(effect, ds);
-        if (ds->effect_type == EFFECT_TYRESLIP || ds->effect_type == EFFECT_WHEELLOCK)
+        if (ds->effect_type == EFFECT_TYRESLIP || ds->effect_type == EFFECT_TYRELOCK)
         {
             gettyre(device_settings, ds);
         }

@@ -71,6 +71,44 @@ int sounddev_tyreslip_update(SimDevice* this, SimData* simdata)
     }
 }
 
+int sounddev_tyrelock_update(SimDevice* this, SimData* simdata)
+{
+    SoundDevice* sounddevice = (void *) this->derived;
+
+    double play = 0;
+    if (simdata->velocity > 0)
+    {
+        if (this->tyre == FRONTLEFT || this->tyre == FRONTS || this->tyre == ALLFOUR)
+        {
+            play += simdata->wheelspeed[0];
+        }
+        if (this->tyre == FRONTRIGHT || this->tyre == FRONTS || this->tyre == ALLFOUR)
+        {
+            play += simdata->wheelspeed[1];
+        }
+        if (this->tyre == REARLEFT || this->tyre == REARS || this->tyre == ALLFOUR)
+        {
+            play += simdata->wheelspeed[2];
+        }
+        if (this->tyre == REARRIGHT || this->tyre == REARS || this->tyre == ALLFOUR)
+        {
+            play += simdata->wheelspeed[3];
+        }
+    }
+
+    if (play > 0)
+    {
+        sounddevice->sounddata.curr_frequency = 0;
+        sounddevice->sounddata.curr_duration = 0;
+
+    }
+    else
+    {
+        sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency * play;
+        sounddevice->sounddata.curr_duration = sounddevice->sounddata.duration;
+    }
+}
+
 int sounddev_absbrakes_update(SimDevice* this, SimData* simdata)
 {
     SoundDevice* sounddevice = (void *) this->derived;
@@ -165,6 +203,7 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int
 static const vtable engine_sound_simdevice_vtable = { &sounddev_engine_update, &sounddev_free };
 static const vtable gear_sound_simdevice_vtable = { &sounddev_gearshift_update, &sounddev_free };
 static const vtable tyreslip_sound_simdevice_vtable = { &sounddev_tyreslip_update, &sounddev_free };
+static const vtable tyrelock_sound_simdevice_vtable = { &sounddev_tyrelock_update, &sounddev_free };
 static const vtable absbrakes_sound_simdevice_vtable = { &sounddev_absbrakes_update, &sounddev_free };
 
 SoundDevice* new_sound_device(DeviceSettings* ds) {
@@ -190,6 +229,11 @@ SoundDevice* new_sound_device(DeviceSettings* ds) {
         case (EFFECT_TYRESLIP):
             this->effecttype = EFFECT_TYRESLIP;
             this->m.vtable = &tyreslip_sound_simdevice_vtable;
+            slogi("Initializing sound device for tyre slip vibrations.");
+            break;
+        case (EFFECT_TYRELOCK):
+            this->effecttype = EFFECT_TYRELOCK;
+            this->m.vtable = &tyrelock_sound_simdevice_vtable;
             slogi("Initializing sound device for tyre slip vibrations.");
             break;
         case (EFFECT_ABSBRAKES):

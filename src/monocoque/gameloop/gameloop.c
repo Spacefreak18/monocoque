@@ -328,6 +328,10 @@ int tester(SimDevice* devices, int numdevices)
     simdata->wheelslip[1] = 1;
     simdata->wheelslip[2] = 1;
     simdata->wheelslip[3] = 1;
+    simdata->wheelspeed[0] = 100;
+    simdata->wheelspeed[1] = 100;
+    simdata->wheelspeed[2] = 100;
+    simdata->wheelspeed[3] = 100;
     sleep(3);
 
     fprintf(stdout, "Setting rpms to 1000\n");
@@ -368,10 +372,6 @@ int tester(SimDevice* devices, int numdevices)
     {
         devices[x].update(&devices[x], simdata);
     }
-    for (int x = 0; x < numdevices; x++)
-    {
-        devices[x].update(&devices[x], simdata);
-    }
     sleep(3);
 
     fprintf(stdout, "Setting speed to 100\n");
@@ -388,10 +388,6 @@ int tester(SimDevice* devices, int numdevices)
     {
         devices[x].update(&devices[x], simdata);
     }
-    for (int x = 0; x < numdevices; x++)
-    {
-        devices[x].update(&devices[x], simdata);
-    }
     sleep(3);
 
     fprintf(stdout, "Setting speed to 200\n");
@@ -402,12 +398,24 @@ int tester(SimDevice* devices, int numdevices)
     }
     sleep(3);
 
-    fprintf(stdout, "Shifting into third gear\n");
-    simdata->gear = 4;
+    fprintf(stdout, "Setting Wheelspeed to 0, wheels locked at speed.\n");
+    simdata->wheelspeed[0] = 0;
+    simdata->wheelspeed[1] = 0;
+    simdata->wheelspeed[2] = 0;
+    simdata->wheelspeed[3] = 0;
     for (int x = 0; x < numdevices; x++)
     {
         devices[x].update(&devices[x], simdata);
     }
+    sleep(3);
+    simdata->wheelspeed[0] = 100;
+    simdata->wheelspeed[1] = 100;
+    simdata->wheelspeed[2] = 100;
+    simdata->wheelspeed[3] = 100;
+
+
+    fprintf(stdout, "Shifting into third gear\n");
+    simdata->gear = 4;
     for (int x = 0; x < numdevices; x++)
     {
         devices[x].update(&devices[x], simdata);
@@ -432,10 +440,6 @@ int tester(SimDevice* devices, int numdevices)
 
     fprintf(stdout, "Shifting into fourth gear\n");
     simdata->gear = 5;
-    for (int x = 0; x < numdevices; x++)
-    {
-        devices[x].update(&devices[x], simdata);
-    }
     for (int x = 0; x < numdevices; x++)
     {
         devices[x].update(&devices[x], simdata);

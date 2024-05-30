@@ -46,7 +46,7 @@ typedef enum
     EFFECT_GEARSHIFT   = 1,
     EFFECT_ABSBRAKES   = 2,
     EFFECT_TYRESLIP    = 3,
-    EFFECT_WHEELLOCK   = 4
+    EFFECT_TYRELOCK    = 4
 }
 VibrationEffectType;
 

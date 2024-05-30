@@ -11,11 +11,53 @@
 int usbhapticdev_update(USBGenericHapticDevice* usbhapticdevice, SimData* simdata)
 {
     double play = 0;
+    double playthreshhold = 0;
     switch (usbhapticdevice->effecttype)
     {
         case (EFFECT_TYRESLIP):
-
+            playthreshhold = .4;
             if (usbhapticdevice->effecttype == EFFECT_TYRESLIP)
+            {
+                if (usbhapticdevice->tyre == FRONTLEFT || usbhapticdevice->tyre == FRONTS || usbhapticdevice->tyre == ALLFOUR)
+                {
+                    play += (1.0 - simdata->wheelslip[0]);
+                }
+                if (usbhapticdevice->tyre == FRONTRIGHT || usbhapticdevice->tyre == FRONTS || usbhapticdevice->tyre == ALLFOUR)
+                {
+                    play += (1.0 - simdata->wheelslip[1]);
+                }
+                if (usbhapticdevice->tyre == REARLEFT || usbhapticdevice->tyre == REARS || usbhapticdevice->tyre == ALLFOUR)
+                {
+                    play += (1.0 - simdata->wheelslip[2]);
+                }
+                if (usbhapticdevice->tyre == REARRIGHT || usbhapticdevice->tyre == REARS || usbhapticdevice->tyre == ALLFOUR)
+                {
+                    play += (1.0 - simdata->wheelslip[3]);
+                }
+            }
+            break;
+        case (EFFECT_TYRELOCK):
+
+            if (simdata->velocity > 0)
+            {
+                if (usbhapticdevice->tyre == FRONTLEFT || usbhapticdevice->tyre == FRONTS || usbhapticdevice->tyre == ALLFOUR)
+                {
+                    play += simdata->wheelspeed[0];
+                }
+                if (usbhapticdevice->tyre == FRONTRIGHT || usbhapticdevice->tyre == FRONTS || usbhapticdevice->tyre == ALLFOUR)
+                {
+                    play += simdata->wheelspeed[1];
+                }
+                if (usbhapticdevice->tyre == REARLEFT || usbhapticdevice->tyre == REARS || usbhapticdevice->tyre == ALLFOUR)
+                {
+                    play += simdata->wheelspeed[2];
+                }
+                if (usbhapticdevice->tyre == REARRIGHT || usbhapticdevice->tyre == REARS || usbhapticdevice->tyre == ALLFOUR)
+                {
+                    play += simdata->wheelspeed[3];
+                }
+            }
+            if (usbhapticdevice->effecttype == EFFECT_TYRELOCK)
             {
                 if (usbhapticdevice->tyre == FRONTLEFT || usbhapticdevice->tyre == FRONTS || usbhapticdevice->tyre == ALLFOUR)
                 {
@@ -42,7 +84,7 @@ int usbhapticdev_update(USBGenericHapticDevice* usbhapticdevice, SimData* simdat
     
     if (play != usbhapticdevice->state)
     {
-        if(play > .40)
+        if(play > playthreshhold)
         {
             fprintf(usbhapticdevice->handle, "%i\n", usbhapticdevice->value1);
             fflush(usbhapticdevice->handle);
@@ -90,9 +132,9 @@ int usbhapticdev_init(USBGenericHapticDevice* usbhapticdevice, DeviceSettings* d
     {
         usbhapticdevice->effecttype = EFFECT_TYRESLIP;
     }
-    if(ds->effect_type == EFFECT_WHEELLOCK)
+    if(ds->effect_type == EFFECT_TYRELOCK)
     {
-        usbhapticdevice->effecttype = EFFECT_WHEELLOCK;
+        usbhapticdevice->effecttype = EFFECT_TYRELOCK;
     }
 
     return error;
