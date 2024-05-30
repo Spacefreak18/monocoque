@@ -324,10 +324,10 @@ int tester(SimDevice* devices, int numdevices)
     simdata->rpms = 100;
     simdata->maxrpm = 8000;
     simdata->abs = 0;
-    simdata->wheelslip[0] = 0;
-    simdata->wheelslip[1] = 0;
-    simdata->wheelslip[2] = 0;
-    simdata->wheelslip[3] = 0;
+    simdata->wheelslip[0] = 1;
+    simdata->wheelslip[1] = 1;
+    simdata->wheelslip[2] = 1;
+    simdata->wheelslip[3] = 1;
     sleep(3);
 
     fprintf(stdout, "Setting rpms to 1000\n");
@@ -347,20 +347,20 @@ int tester(SimDevice* devices, int numdevices)
     sleep(3);
     simdata->abs = 0;
 
-    fprintf(stdout, "Setting Wheelslip to 1\n");
-    simdata->wheelslip[0] = 1;
-    simdata->wheelslip[1] = 1;
-    simdata->wheelslip[2] = 1;
-    simdata->wheelslip[3] = 1;
+    fprintf(stdout, "Setting Wheelslip to 0, no traction\n");
+    simdata->wheelslip[0] = 0;
+    simdata->wheelslip[1] = 0;
+    simdata->wheelslip[2] = 0;
+    simdata->wheelslip[3] = 0;
     for (int x = 0; x < numdevices; x++)
     {
         devices[x].update(&devices[x], simdata);
     }
     sleep(3);
-    simdata->wheelslip[0] = 0;
-    simdata->wheelslip[1] = 0;
-    simdata->wheelslip[2] = 0;
-    simdata->wheelslip[3] = 0;
+    simdata->wheelslip[0] = 1;
+    simdata->wheelslip[1] = 1;
+    simdata->wheelslip[2] = 1;
+    simdata->wheelslip[3] = 1;
 
     fprintf(stdout, "Shifting into first gear\n");
     simdata->gear = 2;

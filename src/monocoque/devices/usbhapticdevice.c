@@ -19,19 +19,19 @@ int usbhapticdev_update(USBGenericHapticDevice* usbhapticdevice, SimData* simdat
             {
                 if (usbhapticdevice->tyre == FRONTLEFT || usbhapticdevice->tyre == FRONTS || usbhapticdevice->tyre == ALLFOUR)
                 {
-                    play += simdata->wheelslip[0];
+                    play += (1.0 - simdata->wheelslip[0]);
                 }
                 if (usbhapticdevice->tyre == FRONTRIGHT || usbhapticdevice->tyre == FRONTS || usbhapticdevice->tyre == ALLFOUR)
                 {
-                    play += simdata->wheelslip[1];
+                    play += (1.0 - simdata->wheelslip[1]);
                 }
                 if (usbhapticdevice->tyre == REARLEFT || usbhapticdevice->tyre == REARS || usbhapticdevice->tyre == ALLFOUR)
                 {
-                    play += simdata->wheelslip[2];
+                    play += (1.0 - simdata->wheelslip[2]);
                 }
                 if (usbhapticdevice->tyre == REARRIGHT || usbhapticdevice->tyre == REARS || usbhapticdevice->tyre == ALLFOUR)
                 {
-                    play += simdata->wheelslip[3];
+                    play += (1.0 - simdata->wheelslip[3]);
                 }
             }
             break;
@@ -42,7 +42,7 @@ int usbhapticdev_update(USBGenericHapticDevice* usbhapticdevice, SimData* simdat
     
     if (play != usbhapticdevice->state)
     {
-        if(play > 0)
+        if(play > .40)
         {
             fprintf(usbhapticdevice->handle, "%i\n", usbhapticdevice->value1);
             fflush(usbhapticdevice->handle);
