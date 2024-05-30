@@ -92,5 +92,7 @@ USBDevice* new_usb_device(DeviceSettings* ds) {
         free(this);
         return NULL;
     }
+
+    this->m.initialized = true;
     return this;
 }

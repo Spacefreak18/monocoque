@@ -38,7 +38,7 @@ int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds)
             if (sim != NULL)
             {
                 simdevices[j] = sim->m;
-                simdevices[j].initialized = true;
+                //simdevices[j].initialized = true;
                 simdevices[j].type = SIMDEV_USB;
                 simdevices[j].tyre = ds[j].tyre;
                 devices++;

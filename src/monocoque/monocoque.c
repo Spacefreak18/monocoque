@@ -124,7 +124,12 @@ int main(int argc, char** argv)
         }
         else
         {
-            error = devinit(tachdev, 1, ds);
+            int devices = 0;
+            devices = devinit(tachdev, 1, ds);
+            if(devices < 1)
+            {
+                error = MONOCOQUE_ERROR_INVALID_DEV;
+            }
         }
 
         if (error != MONOCOQUE_ERROR_NONE)
@@ -136,7 +141,13 @@ int main(int argc, char** argv)
             slogi("configuring tachometer with max revs: %i, granularity: %i, saving to %s", p->max_revs, p->granularity, p->save_file);
             config_tachometer(p->max_revs, p->granularity, p->save_file, tachdev, sdata);
         }
-        devfree(tachdev, 1);
+
+        slogt("freeing devices if necessary");
+        if(tachdev->initialized == true)
+        {
+            slogt("freeing tachmoeter device");
+            tachdev->free(tachdev);
+        }
         //free(tachdev);
         free(sdata);
         free(ds);
