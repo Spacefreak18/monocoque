@@ -80,32 +80,45 @@ int sounddev_tyrelock_update(SimDevice* this, SimData* simdata)
     {
         if (this->tyre == FRONTLEFT || this->tyre == FRONTS || this->tyre == ALLFOUR)
         {
-            play += simdata->wheelspeed[0];
+            if(simdata->wheelspeed[0])
+            {
+                play++;
+            }
         }
         if (this->tyre == FRONTRIGHT || this->tyre == FRONTS || this->tyre == ALLFOUR)
         {
+            if(simdata->wheelspeed[1])
+            {
+                play++;
+            }
             play += simdata->wheelspeed[1];
         }
         if (this->tyre == REARLEFT || this->tyre == REARS || this->tyre == ALLFOUR)
         {
+            if(simdata->wheelspeed[2])
+            {
+                play++;
+            }
             play += simdata->wheelspeed[2];
         }
         if (this->tyre == REARRIGHT || this->tyre == REARS || this->tyre == ALLFOUR)
         {
-            play += simdata->wheelspeed[3];
+            if(simdata->wheelspeed[3])
+            {
+                play++;
+            }
         }
     }
 
     if (play > 0)
     {
-        sounddevice->sounddata.curr_frequency = 0;
-        sounddevice->sounddata.curr_duration = 0;
-
+        sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency * play;
+        sounddevice->sounddata.curr_duration = sounddevice->sounddata.duration;
     }
     else
     {
-        sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency * play;
-        sounddevice->sounddata.curr_duration = sounddevice->sounddata.duration;
+        sounddevice->sounddata.curr_frequency = 0;
+        sounddevice->sounddata.curr_duration = 0;
     }
 }
 

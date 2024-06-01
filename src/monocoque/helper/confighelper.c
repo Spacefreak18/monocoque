@@ -72,6 +72,10 @@ int strtoeffecttype(const char* effect, DeviceSettings* ds)
     {
         ds->effect_type = EFFECT_TYRESLIP;
     }
+    if ((strcicmp(effect, "LOCK") == 0) || (strcicmp(effect, "TYRELOCK") == 0) || (strcicmp(effect, "TIRELOCK") == 0))
+    {
+        ds->effect_type = EFFECT_TYRELOCK;
+    }
 
     ds->is_valid = true;
     return MONOCOQUE_ERROR_NONE;
