@@ -43,22 +43,22 @@ int sounddev_tyreslip_update(SimDevice* this, SimData* simdata)
     SoundDevice* sounddevice = (void *) this->derived;
 
     double play = 0;
-    if (this->tyre == FRONTLEFT || this->tyre == FRONTS || this->tyre == ALLFOUR)
-    {
-        play += (1.0 - simdata->wheelslip[0]);
-    }
-    if (this->tyre == FRONTRIGHT || this->tyre == FRONTS || this->tyre == ALLFOUR)
-    {
-        play += (1.0 - simdata->wheelslip[1]);
-    }
-    if (this->tyre == REARLEFT || this->tyre == REARS || this->tyre == ALLFOUR)
-    {
-        play += (1.0 - simdata->wheelslip[2]);
-    }
-    if (this->tyre == REARRIGHT || this->tyre == REARS || this->tyre == ALLFOUR)
-    {
-        play += (1.0 - simdata->wheelslip[3]);
-    }
+    //if (this->tyre == FRONTLEFT || this->tyre == FRONTS || this->tyre == ALLFOUR)
+    //{
+    //    play += (1.0 - simdata->wheelslip[0]);
+    //}
+    //if (this->tyre == FRONTRIGHT || this->tyre == FRONTS || this->tyre == ALLFOUR)
+    //{
+    //    play += (1.0 - simdata->wheelslip[1]);
+    //}
+    //if (this->tyre == REARLEFT || this->tyre == REARS || this->tyre == ALLFOUR)
+    //{
+    //    play += (1.0 - simdata->wheelslip[2]);
+    //}
+    //if (this->tyre == REARRIGHT || this->tyre == REARS || this->tyre == ALLFOUR)
+    //{
+    //    play += (1.0 - simdata->wheelslip[3]);
+    //}
     if (play > .40)
     {
         sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency * play;
@@ -76,39 +76,39 @@ int sounddev_tyrelock_update(SimDevice* this, SimData* simdata)
     SoundDevice* sounddevice = (void *) this->derived;
 
     double play = 0;
-    if (simdata->velocity > 0)
-    {
-        if (this->tyre == FRONTLEFT || this->tyre == FRONTS || this->tyre == ALLFOUR)
-        {
-            if(simdata->wheelspeed[0])
-            {
-                play++;
-            }
-        }
-        if (this->tyre == FRONTRIGHT || this->tyre == FRONTS || this->tyre == ALLFOUR)
-        {
-            if(simdata->wheelspeed[1])
-            {
-                play++;
-            }
-            play += simdata->wheelspeed[1];
-        }
-        if (this->tyre == REARLEFT || this->tyre == REARS || this->tyre == ALLFOUR)
-        {
-            if(simdata->wheelspeed[2])
-            {
-                play++;
-            }
-            play += simdata->wheelspeed[2];
-        }
-        if (this->tyre == REARRIGHT || this->tyre == REARS || this->tyre == ALLFOUR)
-        {
-            if(simdata->wheelspeed[3])
-            {
-                play++;
-            }
-        }
-    }
+    //if (simdata->velocity > 0)
+    //{
+    //    if (this->tyre == FRONTLEFT || this->tyre == FRONTS || this->tyre == ALLFOUR)
+    //    {
+    //        if(simdata->wheelspeed[0])
+    //        {
+    //            play++;
+    //        }
+    //    }
+    //    if (this->tyre == FRONTRIGHT || this->tyre == FRONTS || this->tyre == ALLFOUR)
+    //    {
+    //        if(simdata->wheelspeed[1])
+    //        {
+    //            play++;
+    //        }
+    //        play += simdata->wheelspeed[1];
+    //    }
+    //    if (this->tyre == REARLEFT || this->tyre == REARS || this->tyre == ALLFOUR)
+    //    {
+    //        if(simdata->wheelspeed[2])
+    //        {
+    //            play++;
+    //        }
+    //        play += simdata->wheelspeed[2];
+    //    }
+    //    if (this->tyre == REARRIGHT || this->tyre == REARS || this->tyre == ALLFOUR)
+    //    {
+    //        if(simdata->wheelspeed[3])
+    //        {
+    //            play++;
+    //        }
+    //    }
+    //}
 
     if (play > 0)
     {

@@ -200,6 +200,7 @@ int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdat
         {
             simdata->rpms=100;
         }
+
         for (int x = 0; x < numdevices; x++)
         {
             devices[x].update(&devices[x], simdata);
@@ -238,6 +239,10 @@ int looper(SimDevice* devices, int numdevices, Parameters* p)
 
     SimData* simdata = malloc(sizeof(SimData));
     SimMap* simmap = malloc(sizeof(SimMap));
+    simdata->tyrediameter[0] = -1;
+    simdata->tyrediameter[1] = -1;
+    simdata->tyrediameter[2] = -1;
+    simdata->tyrediameter[3] = -1;
 
     struct termios newsettings, canonicalmode;
     tcgetattr(0, &canonicalmode);
@@ -324,14 +329,6 @@ int tester(SimDevice* devices, int numdevices)
     simdata->rpms = 100;
     simdata->maxrpm = 8000;
     simdata->abs = 0;
-    simdata->wheelslip[0] = 1;
-    simdata->wheelslip[1] = 1;
-    simdata->wheelslip[2] = 1;
-    simdata->wheelslip[3] = 1;
-    simdata->wheelspeed[0] = 100;
-    simdata->wheelspeed[1] = 100;
-    simdata->wheelspeed[2] = 100;
-    simdata->wheelspeed[3] = 100;
     sleep(3);
 
     fprintf(stdout, "Setting rpms to 1000\n");
@@ -341,30 +338,6 @@ int tester(SimDevice* devices, int numdevices)
         devices[x].update(&devices[x], simdata);
     }
     sleep(3);
-
-    fprintf(stdout, "Setting ABS to 1\n");
-    simdata->abs = 1;
-    for (int x = 0; x < numdevices; x++)
-    {
-        devices[x].update(&devices[x], simdata);
-    }
-    sleep(3);
-    simdata->abs = 0;
-
-    fprintf(stdout, "Setting Wheelslip to 0, no traction\n");
-    simdata->wheelslip[0] = 0;
-    simdata->wheelslip[1] = 0;
-    simdata->wheelslip[2] = 0;
-    simdata->wheelslip[3] = 0;
-    for (int x = 0; x < numdevices; x++)
-    {
-        devices[x].update(&devices[x], simdata);
-    }
-    sleep(3);
-    simdata->wheelslip[0] = 1;
-    simdata->wheelslip[1] = 1;
-    simdata->wheelslip[2] = 1;
-    simdata->wheelslip[3] = 1;
 
     fprintf(stdout, "Shifting into first gear\n");
     simdata->gear = 2;
@@ -397,22 +370,6 @@ int tester(SimDevice* devices, int numdevices)
         devices[x].update(&devices[x], simdata);
     }
     sleep(3);
-
-    fprintf(stdout, "Setting Wheelspeed to 0, wheels locked at speed.\n");
-    simdata->wheelspeed[0] = 0;
-    simdata->wheelspeed[1] = 0;
-    simdata->wheelspeed[2] = 0;
-    simdata->wheelspeed[3] = 0;
-    for (int x = 0; x < numdevices; x++)
-    {
-        devices[x].update(&devices[x], simdata);
-    }
-    sleep(3);
-    simdata->wheelspeed[0] = 100;
-    simdata->wheelspeed[1] = 100;
-    simdata->wheelspeed[2] = 100;
-    simdata->wheelspeed[3] = 100;
-
 
     fprintf(stdout, "Shifting into third gear\n");
     simdata->gear = 4;
