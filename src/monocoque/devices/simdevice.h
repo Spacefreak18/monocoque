@@ -95,6 +95,7 @@ typedef struct
     int id;
     SoundType type;
     VibrationEffectType effecttype;
+    double slipthreshold;
     SoundData sounddata;
 #ifdef USE_PULSEAUDIO
     pa_stream *stream;

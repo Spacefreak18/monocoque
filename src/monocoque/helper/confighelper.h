@@ -121,13 +121,17 @@ typedef struct
     bool is_valid;
     DeviceType dev_type;
     DeviceSubType dev_subtype;
+    // to get really fancy move the effect information to it's own structure that would be a member of
+    // any device settings member structure that can carry an effect
     VibrationEffectType effect_type;
+    MonocoqueTyreIdentifier tyre;
+    double threshold;
     // union?
     TachometerSettings tachsettings;
     SerialDeviceSettings serialdevsettings;
     SoundDeviceSettings sounddevsettings;
     USBDeviceSettings usbdevsettings;
-    MonocoqueTyreIdentifier tyre;
+
 }
 DeviceSettings;
 

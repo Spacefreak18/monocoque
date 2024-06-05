@@ -1,3 +1,4 @@
+#include <dirent.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
@@ -357,11 +358,13 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         const char* effect;
         config_setting_lookup_string(device_settings, "effect", &effect);
         strtoeffecttype(effect, ds);
-        if (ds->effect_type == EFFECT_TYRESLIP || ds->effect_type == EFFECT_TYRELOCK)
+        if (ds->effect_type == EFFECT_TYRESLIP || ds->effect_type == EFFECT_TYRELOCK || ds->effect_type == EFFECT_ABSBRAKES)
         {
             gettyre(device_settings, ds);
+            ds->threshold = .75;
+            int found = config_setting_lookup_float(device_settings, "threshold", &ds->threshold);
         }
-        
+
         if (ds->dev_type == SIMDEV_SOUND)
         {
             slogi("reading configured sound device settings");

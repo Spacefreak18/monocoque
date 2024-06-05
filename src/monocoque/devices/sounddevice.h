@@ -20,6 +20,7 @@ typedef struct
     int last_gear;
     int volume;
     int frequency;
+
     double duration;
     int curr_frequency;
     double curr_duration;

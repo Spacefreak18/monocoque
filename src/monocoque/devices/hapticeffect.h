@@ -3,6 +3,6 @@
 
 #include "../simulatorapi/simapi/simapi/simdata.h"
 
-int slipeffect(SimData* simdata, int effecttype, int tyre, double threshhold);
+int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold);
 
 #endif

@@ -9,12 +9,11 @@
 #include "../../simulatorapi/simapi/simapi/simdata.h"
 #include "../../slog/slog.h"
 
-#define slipthreshold 0.75
 
 int usbhapticdev_update(USBGenericHapticDevice* usbhapticdevice, SimData* simdata)
 {
 
-    int play = slipeffect(simdata, usbhapticdevice->effecttype, usbhapticdevice->tyre, slipthreshold);
+    int play = slipeffect(simdata, usbhapticdevice->effecttype, usbhapticdevice->tyre, usbhapticdevice->threshold);
 
     
     if (play != usbhapticdevice->state)
@@ -54,6 +53,7 @@ int usbhapticdev_init(USBGenericHapticDevice* usbhapticdevice, DeviceSettings* d
     usbhapticdevice->state = usbhapticdevice->value0;
     usbhapticdevice->tyre = ds->tyre;
     usbhapticdevice->effecttype = ds->effect_type;
+    usbhapticdevice->threshold = ds->threshold;
 
     usbhapticdevice->handle = fopen(usbhapticdevice->dev, "w");
     if(usbhapticdevice->handle == 0)

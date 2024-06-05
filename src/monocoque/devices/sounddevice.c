@@ -14,8 +14,6 @@
 #include "../helper/parameters.h"
 #include "../slog/slog.h"
 
-#define slipthreshold 0.75
-
 int gear_sound_set(SoundDevice* sounddevice, SimData* simdata)
 {
     if (sounddevice->sounddata.last_gear != simdata->gear && simdata->gear > 1)
@@ -44,7 +42,7 @@ int sounddev_tyreslip_update(SimDevice* this, SimData* simdata)
 {
     SoundDevice* sounddevice = (void *) this->derived;
 
-    int play = slipeffect(simdata, sounddevice->effecttype, this->tyre, slipthreshold);
+    int play = slipeffect(simdata, sounddevice->effecttype, this->tyre, sounddevice->slipthreshold);
 
     if (play > 0)
     {
@@ -62,7 +60,7 @@ int sounddev_tyrelock_update(SimDevice* this, SimData* simdata)
 {
     SoundDevice* sounddevice = (void *) this->derived;
 
-    int play = slipeffect(simdata, sounddevice->effecttype, this->tyre, slipthreshold);
+    int play = slipeffect(simdata, sounddevice->effecttype, this->tyre, sounddevice->slipthreshold);
 
     if (play > 0)
     {
@@ -110,7 +108,7 @@ int sounddev_free(SimDevice* this)
     return 0;
 }
 
-int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int frequency, int pan, double duration)
+int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int frequency, int pan, double duration, double threshold)
 {
     slogi("initializing standalone sound device...");
 
@@ -147,7 +145,14 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int
         case (EFFECT_TYRESLIP):
             sounddevice->sounddata.duration = duration;
             sounddevice->sounddata.curr_duration = duration;
+            sounddevice->slipthreshold = threshold;
             streamname = "TyreSlip";
+            break;
+        case (EFFECT_TYRELOCK):
+            sounddevice->sounddata.duration = duration;
+            sounddevice->sounddata.curr_duration = duration;
+            sounddevice->slipthreshold = threshold;
+            streamname = "TyreLock";
             break;
         case (EFFECT_ABSBRAKES):
             sounddevice->sounddata.duration = duration;
@@ -212,7 +217,7 @@ SoundDevice* new_sound_device(DeviceSettings* ds) {
 
     slogt("Attempting to use device %s", ds->sounddevsettings.dev);
 
-    int error = sounddev_init(this, ds->sounddevsettings.dev, ds->sounddevsettings.volume, ds->sounddevsettings.frequency, ds->sounddevsettings.pan, ds->sounddevsettings.duration);
+    int error = sounddev_init(this, ds->sounddevsettings.dev, ds->sounddevsettings.volume, ds->sounddevsettings.frequency, ds->sounddevsettings.pan, ds->sounddevsettings.duration, ds->threshold);
     if (error != 0)
     {
         free(this);

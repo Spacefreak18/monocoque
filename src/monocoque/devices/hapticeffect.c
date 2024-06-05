@@ -42,7 +42,7 @@ void getTyreDiameter(SimData* simdata)
 }
 
 
-int slipeffect(SimData* simdata, int effecttype, int tyre, double threshhold)
+int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold)
 {
     int play = 0;
     double wheelslip[4];
@@ -91,28 +91,28 @@ int slipeffect(SimData* simdata, int effecttype, int tyre, double threshhold)
 
             if (tyre == FRONTLEFT || tyre == FRONTS || tyre == ALLFOUR)
             {
-                if(wheelslip[0] < -.5)
+                if(wheelslip[0] < -threshold)
                 {
                     play++;
                 }
             }
             if (tyre == FRONTRIGHT || tyre == FRONTS || tyre == ALLFOUR)
             {
-                if(wheelslip[1] < -.5)
+                if(wheelslip[1] < -threshold)
                 {
                     play++;
                 }
             }
             if (tyre == REARLEFT || tyre == REARS || tyre == ALLFOUR)
             {
-                if(wheelslip[2] < -.5)
+                if(wheelslip[2] < -threshold)
                 {
                     play++;
                 }
             }
             if (tyre == REARRIGHT || tyre == REARS || tyre == ALLFOUR)
             {
-                if(wheelslip[3] < -.5)
+                if(wheelslip[3] < -threshold)
                 {
                     play++;
                 }
@@ -123,28 +123,28 @@ int slipeffect(SimData* simdata, int effecttype, int tyre, double threshhold)
         case (EFFECT_TYRELOCK):
             if (tyre == FRONTLEFT || tyre == FRONTS || tyre == ALLFOUR)
             {
-                if(wheelslip[0] > .75)
+                if(wheelslip[0] > threshold)
                 {
                     play++;
                 }
             }
             if (tyre == FRONTRIGHT || tyre == FRONTS || tyre == ALLFOUR)
             {
-                if(wheelslip[1] > .75)
+                if(wheelslip[1] > threshold)
                 {
                     play++;
                 }
             }
             if (tyre == REARLEFT || tyre == REARS || tyre == ALLFOUR)
             {
-                if(wheelslip[2] > .75)
+                if(wheelslip[2] > threshold)
                 {
                     play++;
                 }
             }
             if (tyre == REARRIGHT || tyre == REARS || tyre == ALLFOUR)
             {
-                if(wheelslip[3] > .75)
+                if(wheelslip[3] > threshold)
                 {
                     play++;
                 }

@@ -18,6 +18,7 @@ typedef struct
     int id;
     HapticType type;
     double state;
+    double threshold;
     int value0;
     int value1;
     VibrationEffectType effecttype;
