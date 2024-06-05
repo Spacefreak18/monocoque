@@ -11,6 +11,8 @@ set(devices_source_files
   tachdevice.c
   usbhapticdevice.h
   usbhapticdevice.c
+  hapticeffect.h
+  hapticeffect.c
   sound.h
   sound.c
   usb/revburner.h

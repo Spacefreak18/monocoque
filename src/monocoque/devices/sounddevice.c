@@ -8,11 +8,13 @@
 #include "sound.h"
 #include "simdevice.h"
 #include "sounddevice.h"
+#include "hapticeffect.h"
 #include "sound/usb_generic_shaker.h"
 #include "../simulatorapi/simapi/simapi/simdata.h"
 #include "../helper/parameters.h"
 #include "../slog/slog.h"
 
+#define slipthreshold 0.75
 
 int gear_sound_set(SoundDevice* sounddevice, SimData* simdata)
 {
@@ -42,24 +44,9 @@ int sounddev_tyreslip_update(SimDevice* this, SimData* simdata)
 {
     SoundDevice* sounddevice = (void *) this->derived;
 
-    double play = 0;
-    //if (this->tyre == FRONTLEFT || this->tyre == FRONTS || this->tyre == ALLFOUR)
-    //{
-    //    play += (1.0 - simdata->wheelslip[0]);
-    //}
-    //if (this->tyre == FRONTRIGHT || this->tyre == FRONTS || this->tyre == ALLFOUR)
-    //{
-    //    play += (1.0 - simdata->wheelslip[1]);
-    //}
-    //if (this->tyre == REARLEFT || this->tyre == REARS || this->tyre == ALLFOUR)
-    //{
-    //    play += (1.0 - simdata->wheelslip[2]);
-    //}
-    //if (this->tyre == REARRIGHT || this->tyre == REARS || this->tyre == ALLFOUR)
-    //{
-    //    play += (1.0 - simdata->wheelslip[3]);
-    //}
-    if (play > .40)
+    int play = slipeffect(simdata, sounddevice->effecttype, this->tyre, slipthreshold);
+
+    if (play > 0)
     {
         sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency * play;
         sounddevice->sounddata.curr_duration = sounddevice->sounddata.duration;
@@ -75,40 +62,7 @@ int sounddev_tyrelock_update(SimDevice* this, SimData* simdata)
 {
     SoundDevice* sounddevice = (void *) this->derived;
 
-    double play = 0;
-    //if (simdata->velocity > 0)
-    //{
-    //    if (this->tyre == FRONTLEFT || this->tyre == FRONTS || this->tyre == ALLFOUR)
-    //    {
-    //        if(simdata->wheelspeed[0])
-    //        {
-    //            play++;
-    //        }
-    //    }
-    //    if (this->tyre == FRONTRIGHT || this->tyre == FRONTS || this->tyre == ALLFOUR)
-    //    {
-    //        if(simdata->wheelspeed[1])
-    //        {
-    //            play++;
-    //        }
-    //        play += simdata->wheelspeed[1];
-    //    }
-    //    if (this->tyre == REARLEFT || this->tyre == REARS || this->tyre == ALLFOUR)
-    //    {
-    //        if(simdata->wheelspeed[2])
-    //        {
-    //            play++;
-    //        }
-    //        play += simdata->wheelspeed[2];
-    //    }
-    //    if (this->tyre == REARRIGHT || this->tyre == REARS || this->tyre == ALLFOUR)
-    //    {
-    //        if(simdata->wheelspeed[3])
-    //        {
-    //            play++;
-    //        }
-    //    }
-    //}
+    int play = slipeffect(simdata, sounddevice->effecttype, this->tyre, slipthreshold);
 
     if (play > 0)
     {
