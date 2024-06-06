@@ -8,8 +8,8 @@
 
 typedef enum
 {
-    HAPTIC_UNKNOWN     = 0,
-    HAPTIC_GENERIC     = 1
+    HAPTIC_UNKNOWN        = 0,
+    HAPTIC_CSLELITEV3     = 1
 }
 HapticType;
 

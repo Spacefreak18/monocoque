@@ -17,6 +17,8 @@ set(devices_source_files
   sound.c
   usb/revburner.h
   usb/revburner.c
+  usb/cslelitev3.h
+  usb/cslelitev3.c
   sound/usb_generic_shaker.h
   sound/usb_generic_shaker.c
   sound/usb_generic_shaker_pulse.c

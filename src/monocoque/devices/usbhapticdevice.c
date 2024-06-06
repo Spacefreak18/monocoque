@@ -5,6 +5,7 @@
 
 #include "usbhapticdevice.h"
 #include "hapticeffect.h"
+#include "usb/cslelitev3.h"
 #include "../../helper/confighelper.h"
 #include "../../simulatorapi/simapi/simapi/simdata.h"
 #include "../../slog/slog.h"
@@ -14,20 +15,16 @@ int usbhapticdev_update(USBGenericHapticDevice* usbhapticdevice, SimData* simdat
 {
 
     int play = slipeffect(simdata, usbhapticdevice->effecttype, usbhapticdevice->tyre, usbhapticdevice->threshold);
-
     
     if (play != usbhapticdevice->state)
     {
         if(play > 0)
         {
-          fprintf(usbhapticdevice->handle, "%i\n", usbhapticdevice->value1);
-            fflush(usbhapticdevice->handle);
+            cslelitev3_update(usbhapticdevice, usbhapticdevice->value1);
         }
         else
         {
-            fprintf(usbhapticdevice->handle, "%i\n", usbhapticdevice->value0);
-            fflush(usbhapticdevice->handle);
-
+            cslelitev3_update(usbhapticdevice, usbhapticdevice->value0);
         }
         usbhapticdevice->state = play;
     }
@@ -37,9 +34,7 @@ int usbhapticdev_update(USBGenericHapticDevice* usbhapticdevice, SimData* simdat
 int usbhapticdev_free(USBGenericHapticDevice* usbhapticdevice)
 {
     slogt("closing usb haptic device");
-    fflush(usbhapticdevice->handle);
-    fclose(usbhapticdevice->handle);
-    free(usbhapticdevice->dev);
+    cslelitev3_free(usbhapticdevice);
     return 0;
 }
 
@@ -47,7 +42,6 @@ int usbhapticdev_init(USBGenericHapticDevice* usbhapticdevice, DeviceSettings* d
 {
     int error = 0;
     usbhapticdevice->state = 0;
-    usbhapticdevice->dev = strdup(ds->usbdevsettings.dev);
     usbhapticdevice->value0 = ds->usbdevsettings.value0;
     usbhapticdevice->value1 = ds->usbdevsettings.value1;
     usbhapticdevice->state = usbhapticdevice->value0;
@@ -55,14 +49,27 @@ int usbhapticdev_init(USBGenericHapticDevice* usbhapticdevice, DeviceSettings* d
     usbhapticdevice->effecttype = ds->effect_type;
     usbhapticdevice->threshold = ds->threshold;
 
-    usbhapticdevice->handle = fopen(usbhapticdevice->dev, "w");
+    if(ds->effect_type == EFFECT_TYRESLIP)
+    {
+        usbhapticdevice->effecttype = EFFECT_TYRESLIP;
+    }
+    if(ds->effect_type == EFFECT_TYRELOCK)
+    {
+        usbhapticdevice->effecttype = EFFECT_TYRELOCK;
+    }
+
+    slogi("initializing standalone usb haptic device...");
+    // detection of usb device model
+    usbhapticdevice->type = HAPTIC_UNKNOWN;
+    usbhapticdevice->type = HAPTIC_CSLELITEV3;
+    error = cslelitev3_init(usbhapticdevice);
+
     if(usbhapticdevice->handle == 0)
     {
         error = MONOCOQUE_ERROR_INVALID_DEV;
         return error;
     }
 
-    slogt("Initializing standalone usb haptic device");
     if(ds->effect_type == EFFECT_TYRESLIP)
     {
         usbhapticdevice->effecttype = EFFECT_TYRESLIP;
