@@ -20,7 +20,7 @@ int usbdev_update(SimDevice* this, SimData* simdata)
             tachdev_update(&usbdevice->u.tachdevice, simdata);
             break;
         case USBDEV_GENERICHAPTIC :
-            usbhapticdev_update(&usbdevice->u.hapticdevice, simdata);
+            usbhapticdev_update(&usbdevice->u.hapticdevice, simdata, this->tyre, &this->configcheck);
             break;
     }
 

@@ -42,7 +42,7 @@ void getTyreDiameter(SimData* simdata)
 }
 
 
-int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold)
+int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int* configcheck)
 {
     int play = 0;
     double wheelslip[4];
@@ -60,7 +60,12 @@ int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold)
 
             if(hasTyreDiameter(simdata)==false)
             {
+                // check for saved tyre diameter in config file
+                // if not saved version exists get tyre diameter and save it
+                // use config check variable to track if the config check has been performed
+                // avoid many opens of the same file
                 getTyreDiameter(simdata);
+                *configcheck = 1;
             }
             if(hasTyreDiameter(simdata)==true)
             {
@@ -152,6 +157,39 @@ int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold)
 
             break;
         case (EFFECT_ABSBRAKES):
+            threshold = simdata->abs + threshold;
+            if (tyre == FRONTLEFT || tyre == FRONTS || tyre == ALLFOUR)
+            {
+                if(wheelslip[0] > threshold)
+                {
+                    play++;
+                }
+            }
+            if (tyre == FRONTRIGHT || tyre == FRONTS || tyre == ALLFOUR)
+            {
+                if(wheelslip[1] > threshold)
+                {
+                    play++;
+                }
+            }
+            if (tyre == REARLEFT || tyre == REARS || tyre == ALLFOUR)
+            {
+                if(wheelslip[2] > threshold)
+                {
+                    play++;
+                }
+            }
+            if (tyre == REARRIGHT || tyre == REARS || tyre == ALLFOUR)
+            {
+                if(wheelslip[3] > threshold)
+                {
+                    play++;
+                }
+            }
+            if(simdata->abs <= 0)
+            {
+                play = 0;
+            }
             break;
     }
     

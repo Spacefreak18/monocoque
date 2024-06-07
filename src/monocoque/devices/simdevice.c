@@ -41,6 +41,7 @@ int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds)
                 //simdevices[j].initialized = true;
                 simdevices[j].type = SIMDEV_USB;
                 simdevices[j].tyre = ds[j].tyre;
+                simdevices[j].configcheck = 0;
                 devices++;
             }
             else
@@ -59,6 +60,7 @@ int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds)
                 simdevices[j].initialized = true;
                 simdevices[j].type = SIMDEV_SOUND;
                 simdevices[j].tyre = ds[j].tyre;
+                simdevices[j].configcheck = 0;
                 devices++;
             }
             else

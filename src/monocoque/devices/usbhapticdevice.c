@@ -11,10 +11,10 @@
 #include "../../slog/slog.h"
 
 
-int usbhapticdev_update(USBGenericHapticDevice* usbhapticdevice, SimData* simdata)
+int usbhapticdev_update(USBGenericHapticDevice* usbhapticdevice, SimData* simdata, int tyre, int* configcheck)
 {
 
-    int play = slipeffect(simdata, usbhapticdevice->effecttype, usbhapticdevice->tyre, usbhapticdevice->threshold);
+    int play = slipeffect(simdata, usbhapticdevice->effecttype, tyre, usbhapticdevice->threshold, configcheck);
     
     if (play != usbhapticdevice->state)
     {
@@ -45,7 +45,6 @@ int usbhapticdev_init(USBGenericHapticDevice* usbhapticdevice, DeviceSettings* d
     usbhapticdevice->value0 = ds->usbdevsettings.value0;
     usbhapticdevice->value1 = ds->usbdevsettings.value1;
     usbhapticdevice->state = usbhapticdevice->value0;
-    usbhapticdevice->tyre = ds->tyre;
     usbhapticdevice->effecttype = ds->effect_type;
     usbhapticdevice->threshold = ds->threshold;
 
@@ -56,6 +55,10 @@ int usbhapticdev_init(USBGenericHapticDevice* usbhapticdevice, DeviceSettings* d
     if(ds->effect_type == EFFECT_TYRELOCK)
     {
         usbhapticdevice->effecttype = EFFECT_TYRELOCK;
+    }
+    if(ds->effect_type == EFFECT_ABSBRAKES)
+    {
+        usbhapticdevice->effecttype = EFFECT_ABSBRAKES;
     }
 
     slogi("initializing standalone usb haptic device...");
@@ -68,15 +71,6 @@ int usbhapticdev_init(USBGenericHapticDevice* usbhapticdevice, DeviceSettings* d
     {
         error = MONOCOQUE_ERROR_INVALID_DEV;
         return error;
-    }
-
-    if(ds->effect_type == EFFECT_TYRESLIP)
-    {
-        usbhapticdevice->effecttype = EFFECT_TYRESLIP;
-    }
-    if(ds->effect_type == EFFECT_TYRELOCK)
-    {
-        usbhapticdevice->effecttype = EFFECT_TYRELOCK;
     }
 
     return error;

@@ -23,7 +23,9 @@ struct SimDevice
     int id;
     bool initialized;
     DeviceType type;
+    // possibly move these to a haptic effect struct
     MonocoqueTyreIdentifier tyre;
+    int configcheck;
 };
 
 typedef struct {
@@ -94,6 +96,7 @@ typedef struct
     SimDevice m;
     int id;
     SoundType type;
+    int configcheck;
     VibrationEffectType effecttype;
     double slipthreshold;
     SoundData sounddata;

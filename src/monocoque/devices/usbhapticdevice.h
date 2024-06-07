@@ -22,14 +22,13 @@ typedef struct
     int value0;
     int value1;
     VibrationEffectType effecttype;
-    MonocoqueTyreIdentifier tyre;
     FILE* handle;
     char* dev;
 }
 USBGenericHapticDevice;
 
 
-int usbhapticdev_update(USBGenericHapticDevice* hapticdevice, SimData* simdata);
+int usbhapticdev_update(USBGenericHapticDevice* hapticdevice, SimData* simdata, int tyre, int* configcheck);
 int usbhapticdev_init(USBGenericHapticDevice* hapticdevice, DeviceSettings* ds);
 int usbhapticdev_free(USBGenericHapticDevice* hapticdevice);
 
