@@ -7,6 +7,7 @@
 
 #include "../slog/slog.h"
 
+const char* SYSFSRUMBLEPATH = "/sys/module/hid_fanatec/drivers/hid:ftec_csl_elite/0003:0EB7:183B.*/rumble";
 
 
 int cslelitev3_update(USBGenericHapticDevice* usbhapticdevice, int value)
@@ -41,11 +42,11 @@ int cslelitev3_init(USBGenericHapticDevice* usbhapticdevice)
 
     glob_t globlist;
     int i = 0;
-    if (glob("/sys/module/hid_fanatec/drivers/hid:fanatec/0003:0EB7:0005.*/rumble", GLOB_PERIOD, NULL, &globlist) == GLOB_NOSPACE || glob("/sys/module/hid_fanatec/drivers/hid:fanatec/0003:0EB7:0005.*/rumble", GLOB_PERIOD, NULL, &globlist) == GLOB_NOMATCH)
+    if (glob(SYSFSRUMBLEPATH, GLOB_PERIOD, NULL, &globlist) == GLOB_NOSPACE || glob(SYSFSRUMBLEPATH, GLOB_PERIOD, NULL, &globlist) == GLOB_NOMATCH)
     {
         res = 1;
     }
-    if (glob("/sys/module/hid_fanatec/drivers/hid:fanatec/0003:0EB7:0005.*/rumble", GLOB_PERIOD, NULL, &globlist) == GLOB_ABORTED)
+    if (glob(SYSFSRUMBLEPATH, GLOB_PERIOD, NULL, &globlist) == GLOB_ABORTED)
     {
         res = 2;
     }
