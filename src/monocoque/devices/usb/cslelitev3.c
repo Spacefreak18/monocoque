@@ -5,15 +5,34 @@
 
 #include "usbhapticdevice.h"
 
+#include "../../helper/confighelper.h"
 #include "../slog/slog.h"
 
 const char* SYSFSRUMBLEPATH = "/sys/module/hid_fanatec/drivers/hid:ftec_csl_elite/0003:0EB7:183B.*/rumble";
 
 
-int cslelitev3_update(USBGenericHapticDevice* usbhapticdevice, int value)
+int cslelitev3_update(USBGenericHapticDevice* usbhapticdevice, int effecttype, int play)
 {
 
     int res = 0;
+    int value = 0;
+
+    if (play > 0)
+    {
+        switch (effecttype)
+        {
+            case (EFFECT_TYRESLIP):
+                value = 0xff0000;
+                break;
+            case (EFFECT_TYRELOCK):
+                value = 0xff00;
+                break;
+            case (EFFECT_ABSBRAKES):
+                value = 0xffff00;
+                break;
+        }
+    }
+
 
     fprintf(usbhapticdevice->handle, "%i\n", value);
     fflush(usbhapticdevice->handle);

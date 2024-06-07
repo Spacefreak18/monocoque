@@ -333,25 +333,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
 
     if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC)
     {
-        if (device_settings != NULL)
-        {
-            ds->usbdevsettings.value0 = 0;
-            ds->usbdevsettings.value1 = 1;
-
-            const char* temp;
-            int found = config_setting_lookup_string(device_settings, "devpath", &temp);
-            if (found == 0)
-            {
-                ds->usbdevsettings.dev = NULL;
-            }
-            else
-            {
-                ds->usbdevsettings.dev = strdup(temp);
-            }
-            
-            config_setting_lookup_int(device_settings, "value0", &ds->usbdevsettings.value0);
-            config_setting_lookup_int(device_settings, "value1", &ds->usbdevsettings.value1);
-        }
+        // logic for different devices
     }
 
     if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC || ds->dev_type == SIMDEV_SOUND) {
@@ -433,12 +415,5 @@ int settingsfree(DeviceSettings ds)
         }
     }
 
-    if (ds.dev_type == SIMDEV_USB)
-    {
-        if (ds.usbdevsettings.dev != NULL )
-        {
-            free(ds.usbdevsettings.dev);
-        }
-    }
     return 0;
 }

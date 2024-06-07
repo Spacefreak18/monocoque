@@ -20,11 +20,11 @@ int usbhapticdev_update(USBGenericHapticDevice* usbhapticdevice, SimData* simdat
     {
         if(play > 0)
         {
-            cslelitev3_update(usbhapticdevice, usbhapticdevice->value1);
+            cslelitev3_update(usbhapticdevice, usbhapticdevice->effecttype, play);
         }
         else
         {
-            cslelitev3_update(usbhapticdevice, usbhapticdevice->value0);
+            cslelitev3_update(usbhapticdevice, usbhapticdevice->effecttype, play);
         }
         usbhapticdevice->state = play;
     }
