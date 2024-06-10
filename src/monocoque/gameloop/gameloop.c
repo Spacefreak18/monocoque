@@ -329,6 +329,10 @@ int tester(SimDevice* devices, int numdevices)
     simdata->rpms = 100;
     simdata->maxrpm = 8000;
     simdata->abs = 0;
+    simdata->tyrediameter[0] = -1;
+    simdata->tyrediameter[1] = -1;
+    simdata->tyrediameter[2] = -1;
+    simdata->tyrediameter[3] = -1;
     sleep(3);
 
     fprintf(stdout, "Setting rpms to 1000\n");
