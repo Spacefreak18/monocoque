@@ -11,10 +11,10 @@
 #include "../../slog/slog.h"
 
 
-int usbhapticdev_update(USBGenericHapticDevice* usbhapticdevice, SimData* simdata, int tyre, int* configcheck)
+int usbhapticdev_update(USBGenericHapticDevice* usbhapticdevice, SimData* simdata, int tyre, int useconfig, int* configcheck, FILE* configfile)
 {
 
-    int play = slipeffect(simdata, usbhapticdevice->effecttype, tyre, usbhapticdevice->threshold, configcheck);
+    int play = slipeffect(simdata, usbhapticdevice->effecttype, tyre, usbhapticdevice->threshold, useconfig, configcheck, configfile);
     
     if (play != usbhapticdevice->state)
     {

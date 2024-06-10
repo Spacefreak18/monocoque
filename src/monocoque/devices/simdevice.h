@@ -25,7 +25,9 @@ struct SimDevice
     DeviceType type;
     // possibly move these to a haptic effect struct
     MonocoqueTyreIdentifier tyre;
-    int configcheck;
+    int useconfig;
+    int* configcheck;
+    FILE* tyrediameterconfig;
 };
 
 typedef struct {
@@ -122,7 +124,7 @@ int update(SimDevice* simdevice, SimData* simdata);
 
 int devupdate(SimDevice* simdevice, SimData* simdata);
 
-int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds);
+int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds, MonocoqueSettings* ms);
 
 int devfree(SimDevice* simdevices, int numdevices);
 

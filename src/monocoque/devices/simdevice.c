@@ -24,7 +24,7 @@ int devupdate(SimDevice* this, SimData* simdata)
     return 0;
 }
 
-int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds)
+int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds, MonocoqueSettings* ms)
 {
     slogi("initializing simdevices...");
     int devices = 0;
@@ -41,7 +41,9 @@ int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds)
                 //simdevices[j].initialized = true;
                 simdevices[j].type = SIMDEV_USB;
                 simdevices[j].tyre = ds[j].tyre;
-                simdevices[j].configcheck = 0;
+                simdevices[j].useconfig = ms->useconfig;
+                simdevices[j].configcheck = &ms->configcheck;
+                simdevices[j].tyrediameterconfig = ms->tyre_diameter_config;
                 devices++;
             }
             else
@@ -60,7 +62,9 @@ int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds)
                 simdevices[j].initialized = true;
                 simdevices[j].type = SIMDEV_SOUND;
                 simdevices[j].tyre = ds[j].tyre;
-                simdevices[j].configcheck = 0;
+                simdevices[j].useconfig = ms->useconfig;
+                simdevices[j].configcheck = &ms->configcheck;
+                simdevices[j].tyrediameterconfig = ms->tyre_diameter_config;
                 devices++;
             }
             else

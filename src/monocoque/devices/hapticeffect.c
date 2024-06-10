@@ -1,7 +1,9 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#include <jansson.h>
 
 #include "usbhapticdevice.h"
 #include "../../helper/confighelper.h"
@@ -15,6 +17,7 @@
 #define maxthrottle  0
 #define maxXvelocity 0.001
 
+
 bool hasTyreDiameter(SimData* simdata)
 {
     if (simdata->tyrediameter[0] == -1 || simdata->tyrediameter[1] == -1 || simdata->tyrediameter[2] == -1 || simdata->tyrediameter[3] == -1)
@@ -22,6 +25,145 @@ bool hasTyreDiameter(SimData* simdata)
         return false;
     }
     return true;
+}
+
+void loadtyreconfig(SimData* simdata, FILE* configfile)
+{
+    json_t *root;
+    json_error_t error;
+
+    root = json_loadf(configfile, 0, NULL);
+
+    if(!root)
+    {
+        slogw("could not open config file for tyre diameters");
+        return;
+    }
+
+    if(!json_is_object(root))
+    {
+        slogw("Malformed content (1) in tyre diameters config");
+        json_decref(root);
+        return;
+    }
+
+    json_t* cararray = json_object_get(root, "cars");
+    if(!json_is_array(cararray))
+    {
+        slogw("Malformed content (2) in tyre diameters config");
+        json_decref(root);
+        json_decref(cararray);
+        return;
+    }
+
+    for(int i = 0; i < json_array_size(cararray); i++)
+    {
+        json_t *data, *sha, *commit, *message;
+        const char *message_text;
+
+        data = json_array_get(cararray, i);
+        if(!json_is_object(data))
+        {
+            slogw("Malformed content (3) in tyre diameters config");
+            break;
+        }
+        json_t* jcar = json_object_get(data, "car");
+
+        if(!json_is_string(jcar))
+        {
+            slogw("Malformed content (4) in tyre diameters config");
+
+            json_decref(data);
+            json_decref(jcar);
+            break;
+        }
+        const char* car = json_string_value(jcar);
+
+        json_t* jtyre0 = json_object_get(data, "tyre0");
+        json_t* jtyre1 = json_object_get(data, "tyre1");
+        json_t* jtyre2 = json_object_get(data, "tyre2");
+        json_t* jtyre3 = json_object_get(data, "tyre3");
+
+        double diameter0 = json_real_value(jtyre0);
+        double diameter1 = json_real_value(jtyre1);
+        double diameter2 = json_real_value(jtyre2);
+        double diameter3 = json_real_value(jtyre3);
+
+        slogt("car is: %s", car);
+        slogt("diameter 0 is %f", diameter0);
+        slogt("diameter 1 is %f", diameter1);
+        slogt("diameter 2 is %f", diameter2);
+        slogt("diameter 3 is %f", diameter3);
+
+        json_decref(data);
+        json_decref(jcar);
+        json_decref(jtyre0);
+        json_decref(jtyre1);
+        json_decref(jtyre2);
+        json_decref(jtyre3);
+
+        if(simdata->car != NULL)
+        {
+            if (strcicmp(car, simdata->car) == 0)
+            {
+                simdata->tyrediameter[0] = diameter0;
+                simdata->tyrediameter[1] = diameter1;
+                simdata->tyrediameter[2] = diameter2;
+                simdata->tyrediameter[3] = diameter3;
+                break;
+            }
+        }
+    }
+
+    json_decref(root);
+    json_decref(cararray);
+}
+
+void savetyreconfig(SimData* simdata, FILE* configfile)
+{
+
+    json_t* object = json_object();
+    json_t* array = json_array();
+    json_t* car = json_string(simdata->car);
+    json_t* tyre0 = json_real(simdata->tyrediameter[0]);
+    json_t* tyre1 = json_real(simdata->tyrediameter[1]);
+    json_t* tyre2 = json_real(simdata->tyrediameter[2]);
+    json_t* tyre3 = json_real(simdata->tyrediameter[3]);
+    json_object_set_new(object, "car", car);
+    json_object_set_new(object, "tyre0", tyre0);
+    json_object_set_new(object, "tyre1", tyre1);
+    json_object_set_new(object, "tyre2", tyre2);
+    json_object_set_new(object, "tyre3", tyre3);
+
+    json_array_append(array, object);
+
+    json_t* file = json_loadf(configfile, 0, NULL);
+
+    if(!file)
+    {
+        slogw("could not open config file for tyre diameters");
+        return;
+    }
+
+    if(!json_is_object(file))
+    {
+        json_object_set_new(file, "cars", array);
+    }
+    else
+    {
+        json_t* cararray = json_object_get(file, "cars");
+        json_array_append(cararray, array);
+    }
+
+    json_dumpf(file, configfile, 0);
+
+    json_decref(tyre0);
+    json_decref(tyre1);
+    json_decref(tyre2);
+    json_decref(tyre3);
+    json_decref(car);
+    json_decref(object);
+    json_decref(array);
 }
 
 void getTyreDiameter(SimData* simdata)
@@ -42,7 +184,7 @@ void getTyreDiameter(SimData* simdata)
 }
 
 
-int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int* configcheck)
+int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int useconfig, int* configcheck, FILE* configfile)
 {
     int play = 0;
     double wheelslip[4];
@@ -50,7 +192,6 @@ int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int
     wheelslip[1] = 0;
     wheelslip[2] = 0;
     wheelslip[3] = 0;
-
 
     switch (effecttype)
     {
@@ -64,8 +205,19 @@ int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int
                 // if not saved version exists get tyre diameter and save it
                 // use config check variable to track if the config check has been performed
                 // avoid many opens of the same file
-                getTyreDiameter(simdata);
-                *configcheck = 1;
+                if(useconfig == 1 && configfile != NULL && *configcheck == 0)
+                {
+                    loadtyreconfig(simdata, configfile);
+                    *configcheck = 1;
+                }
+
+                if(hasTyreDiameter(simdata)==false)
+                {
+                    getTyreDiameter(simdata);
+                    if(useconfig == 1)
+                    {
+                    }
+                }
             }
             if(hasTyreDiameter(simdata)==true)
             {

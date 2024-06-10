@@ -42,7 +42,7 @@ int sounddev_tyreslip_update(SimDevice* this, SimData* simdata)
 {
     SoundDevice* sounddevice = (void *) this->derived;
 
-    int play = slipeffect(simdata, sounddevice->effecttype, this->tyre, sounddevice->slipthreshold, &this->configcheck);
+    int play = slipeffect(simdata, sounddevice->effecttype, this->tyre, sounddevice->slipthreshold, this->useconfig, this->configcheck, this->tyrediameterconfig);
 
     if (play > 0)
     {
@@ -60,7 +60,7 @@ int sounddev_tyrelock_update(SimDevice* this, SimData* simdata)
 {
     SoundDevice* sounddevice = (void *) this->derived;
 
-    int play = slipeffect(simdata, sounddevice->effecttype, this->tyre, sounddevice->slipthreshold, &this->configcheck);
+    int play = slipeffect(simdata, sounddevice->effecttype, this->tyre, sounddevice->slipthreshold, this->useconfig, this->configcheck, this->tyrediameterconfig);
 
     if (play > 0)
     {

@@ -63,12 +63,17 @@ int main(int argc, char** argv)
     create_user_dir("/.config/");
     create_user_dir("/.cache/");
     char* config_file_str = ( char* ) malloc(1 + strlen(home_dir_str) + strlen("/.config/") + strlen("monocoque/monocoque.config"));
+    size_t diameters_file_sz = 1 + strlen(home_dir_str) + strlen("/.config/") + strlen("monocoque/diameters.json");
+    char* diameters_file_str = ( char* ) malloc(1 + strlen(home_dir_str) + strlen("/.config/") + strlen("monocoque/diameters.json"));
+    snprintf(diameters_file_str, diameters_file_sz, "%s/.config/monocoque/diameters.json", home_dir_str);
+
     char* cache_dir_str = ( char* ) malloc(1 + strlen(home_dir_str) + strlen("/.cache/monocoque/"));
     strcpy(config_file_str, home_dir_str);
     strcat(config_file_str, "/.config/");
     strcpy(cache_dir_str, home_dir_str);
     strcat(cache_dir_str, "/.cache/monocoque/");
     strcat(config_file_str, "monocoque/monocoque.config");
+
 
     slog_config_t slgCfg;
     slog_config_get(&slgCfg);
@@ -92,11 +97,19 @@ int main(int argc, char** argv)
         slog_disable(SLOG_DEBUG);
     }
 
+    ms->tyre_diameter_config = fopen(diameters_file_str, "r");
+    ms->useconfig = 1;
+    if (ms->tyre_diameter_config == NULL)
+    {
+        slogw("Could not initialize tyre diameters save file.");
+    }
+    ms->configcheck = 0;
+    free(diameters_file_str);
+
     slogi("Loading configuration file: %s", config_file_str);
     config_t cfg;
     config_init(&cfg);
     config_setting_t* config_devices = NULL;
-
     if (!config_read_file(&cfg, config_file_str))
     {
         fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
@@ -125,7 +138,7 @@ int main(int argc, char** argv)
         else
         {
             int devices = 0;
-            devices = devinit(tachdev, 1, ds);
+            devices = devinit(tachdev, 1, ds, ms);
             if(devices < 1)
             {
                 error = MONOCOQUE_ERROR_INVALID_DEV;
@@ -198,7 +211,7 @@ int main(int argc, char** argv)
 
         setupsound();
         SimDevice* devices = malloc(numdevices * sizeof(SimDevice));
-        int initdevices = devinit(devices, configureddevices, ds);
+        int initdevices = devinit(devices, configureddevices, ds, ms);
 
         if (p->program_action == A_PLAY)
         {
@@ -265,6 +278,8 @@ configcleanup:
     config_destroy(&cfg);
 
 cleanup_final:
+
+    fclose(ms->tyre_diameter_config);
     free(ms);
     free(p);
     exit(0);
