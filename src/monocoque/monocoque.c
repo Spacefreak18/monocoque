@@ -212,6 +212,7 @@ int main(int argc, char** argv)
         setupsound();
         SimDevice* devices = malloc(numdevices * sizeof(SimDevice));
         int initdevices = devinit(devices, configureddevices, ds, ms);
+        bool pulseaudio = false;
 
         if (p->program_action == A_PLAY)
         {
@@ -223,6 +224,7 @@ int main(int argc, char** argv)
             //}
 #ifdef USE_PULSEAUDIO
             pa_threaded_mainloop_unlock(mainloop);
+            pulseaudio = true;
 #endif
 
             error = looper(devices, initdevices, p);
@@ -241,6 +243,7 @@ int main(int argc, char** argv)
 
 #ifdef USE_PULSEAUDIO
             pa_threaded_mainloop_unlock(mainloop);
+            pulseaudio = true;
 #endif
 
             error = tester(devices, initdevices);
@@ -261,6 +264,10 @@ int main(int argc, char** argv)
             {
                 devices[x].free(&devices[x]);
             }
+        }
+        if(pulseaudio == true)
+        {
+            freesound();
         }
 
         i = 0;
