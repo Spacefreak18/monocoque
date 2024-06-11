@@ -63,9 +63,9 @@ int main(int argc, char** argv)
     create_user_dir("/.config/");
     create_user_dir("/.cache/");
     char* config_file_str = ( char* ) malloc(1 + strlen(home_dir_str) + strlen("/.config/") + strlen("monocoque/monocoque.config"));
-    size_t diameters_file_sz = 1 + strlen(home_dir_str) + strlen("/.config/") + strlen("monocoque/diameters.json");
+    size_t diameters_file_sz = 1 + strlen(home_dir_str) + strlen("/.config/") + strlen("monocoque/diameters.config");
     char* diameters_file_str = ( char* ) malloc(1 + strlen(home_dir_str) + strlen("/.config/") + strlen("monocoque/diameters.json"));
-    snprintf(diameters_file_str, diameters_file_sz, "%s/.config/monocoque/diameters.json", home_dir_str);
+    snprintf(diameters_file_str, diameters_file_sz, "%s/.config/monocoque/diameters.config", home_dir_str);
 
     char* cache_dir_str = ( char* ) malloc(1 + strlen(home_dir_str) + strlen("/.cache/monocoque/"));
     strcpy(config_file_str, home_dir_str);
