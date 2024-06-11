@@ -97,12 +97,8 @@ int main(int argc, char** argv)
         slog_disable(SLOG_DEBUG);
     }
 
-    ms->tyre_diameter_config = fopen(diameters_file_str, "r");
+    ms->tyre_diameter_config = strdup(diameters_file_str);
     ms->useconfig = 1;
-    if (ms->tyre_diameter_config == NULL)
-    {
-        slogw("Could not initialize tyre diameters save file.");
-    }
     ms->configcheck = 0;
     free(diameters_file_str);
 
@@ -286,7 +282,10 @@ configcleanup:
 
 cleanup_final:
 
-    fclose(ms->tyre_diameter_config);
+    if(ms->tyre_diameter_config != NULL)
+    {
+        free(ms->tyre_diameter_config);
+    }
     free(ms);
     free(p);
     exit(0);

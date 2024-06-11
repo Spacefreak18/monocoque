@@ -27,7 +27,7 @@ struct SimDevice
     MonocoqueTyreIdentifier tyre;
     int useconfig;
     int* configcheck;
-    FILE* tyrediameterconfig;
+    char* tyrediameterconfig;
 };
 
 typedef struct {

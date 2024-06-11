@@ -4,6 +4,6 @@
 #include <stdio.h>
 #include "../simulatorapi/simapi/simapi/simdata.h"
 
-int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int useconfig, int* configcheck, FILE* configfile);
+int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int useconfig, int* configcheck, char* configfile);
 
 #endif

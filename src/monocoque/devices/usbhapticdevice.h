@@ -28,7 +28,7 @@ typedef struct
 USBGenericHapticDevice;
 
 
-int usbhapticdev_update(USBGenericHapticDevice* hapticdevice, SimData* simdata, int tyre, int useconfig, int* configcheck, FILE* configfile);
+int usbhapticdev_update(USBGenericHapticDevice* hapticdevice, SimData* simdata, int tyre, int useconfig, int* configcheck, char* configfile);
 int usbhapticdev_init(USBGenericHapticDevice* hapticdevice, DeviceSettings* ds);
 int usbhapticdev_free(USBGenericHapticDevice* hapticdevice);
 

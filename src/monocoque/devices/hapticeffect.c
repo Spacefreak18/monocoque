@@ -27,12 +27,12 @@ bool hasTyreDiameter(SimData* simdata)
     return true;
 }
 
-void loadtyreconfig(SimData* simdata, FILE* configfile)
+void loadtyreconfig(SimData* simdata, char* configfile)
 {
     json_t *root;
     json_error_t error;
 
-    root = json_loadf(configfile, 0, NULL);
+    root = json_load_file(configfile, 0, NULL);
 
     if(!root)
     {
@@ -119,7 +119,7 @@ void loadtyreconfig(SimData* simdata, FILE* configfile)
     json_decref(cararray);
 }
 
-void savetyreconfig(SimData* simdata, FILE* configfile)
+void savetyreconfig(SimData* simdata, char* configfile)
 {
 
     json_t* object = json_object();
@@ -137,7 +137,7 @@ void savetyreconfig(SimData* simdata, FILE* configfile)
 
     json_array_append(array, object);
 
-    json_t* file = json_loadf(configfile, 0, NULL);
+    json_t* file = json_load_file(configfile, 0, NULL);
 
     if(!file)
     {
@@ -155,7 +155,7 @@ void savetyreconfig(SimData* simdata, FILE* configfile)
         json_array_append(cararray, array);
     }
 
-    json_dumpf(file, configfile, 0);
+    json_dump_file(file, configfile, 0);
 
     json_decref(tyre0);
     json_decref(tyre1);
@@ -184,7 +184,7 @@ void getTyreDiameter(SimData* simdata)
 }
 
 
-int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int useconfig, int* configcheck, FILE* configfile)
+int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int useconfig, int* configcheck, char* configfile)
 {
     int play = 0;
     double wheelslip[4];

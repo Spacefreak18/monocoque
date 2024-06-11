@@ -79,7 +79,7 @@ typedef struct
     Simulator sim_name;
     int configcheck;
     int useconfig;
-    FILE* tyre_diameter_config;
+    char* tyre_diameter_config;
 }
 MonocoqueSettings;
 
