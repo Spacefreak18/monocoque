@@ -223,7 +223,7 @@ int main(int argc, char** argv)
             pulseaudio = true;
 #endif
 
-            error = looper(devices, initdevices, p);
+            error = looper(devices, numdevices, p);
             if (error == MONOCOQUE_ERROR_NONE)
             {
                 slogi("Game loop exited succesfully with error code: %i", error);
@@ -242,7 +242,7 @@ int main(int argc, char** argv)
             pulseaudio = true;
 #endif
 
-            error = tester(devices, initdevices);
+            error = tester(devices, numdevices);
             if (error == MONOCOQUE_ERROR_NONE)
             {
                 slogi("Test exited succesfully with error code: %i", error);

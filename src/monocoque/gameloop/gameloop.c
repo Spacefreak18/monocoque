@@ -203,7 +203,10 @@ int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdat
 
         for (int x = 0; x < numdevices; x++)
         {
-            devices[x].update(&devices[x], simdata);
+            if (devices[x].initialized == true)
+            {
+                devices[x].update(&devices[x], simdata);
+            }
         }
 
     	if( poll(&mypoll, 1, 1000.0/update_rate) )
@@ -220,7 +223,10 @@ int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdat
     simdata->rpms = 100;
     for (int x = 0; x < numdevices; x++)
     {
-        devices[x].update(&devices[x], simdata);
+        if (devices[x].initialized == true)
+        {
+            devices[x].update(&devices[x], simdata);
+        }
     }
 
     fprintf(stdout, "\n");
@@ -339,7 +345,10 @@ int tester(SimDevice* devices, int numdevices)
     simdata->rpms = 1000;
     for (int x = 0; x < numdevices; x++)
     {
-        devices[x].update(&devices[x], simdata);
+        if (devices[x].initialized == true)
+        {
+            devices[x].update(&devices[x], simdata);
+        }
     }
     sleep(3);
 
@@ -347,7 +356,10 @@ int tester(SimDevice* devices, int numdevices)
     simdata->gear = 2;
     for (int x = 0; x < numdevices; x++)
     {
-        devices[x].update(&devices[x], simdata);
+        if (devices[x].initialized == true)
+        {
+            devices[x].update(&devices[x], simdata);
+        }
     }
     sleep(3);
 
@@ -355,7 +367,10 @@ int tester(SimDevice* devices, int numdevices)
     simdata->velocity = 100;
     for (int x = 0; x < numdevices; x++)
     {
-        devices[x].update(&devices[x], simdata);
+        if (devices[x].initialized == true)
+        {
+            devices[x].update(&devices[x], simdata);
+        }
     }
     sleep(3);
 
@@ -363,7 +378,10 @@ int tester(SimDevice* devices, int numdevices)
     simdata->gear = 3;
     for (int x = 0; x < numdevices; x++)
     {
-        devices[x].update(&devices[x], simdata);
+        if (devices[x].initialized == true)
+        {
+            devices[x].update(&devices[x], simdata);
+        }
     }
     sleep(3);
 
@@ -371,7 +389,10 @@ int tester(SimDevice* devices, int numdevices)
     simdata->velocity = 200;
     for (int x = 0; x < numdevices; x++)
     {
-        devices[x].update(&devices[x], simdata);
+        if (devices[x].initialized == true)
+        {
+            devices[x].update(&devices[x], simdata);
+        }
     }
     sleep(3);
 
@@ -379,7 +400,10 @@ int tester(SimDevice* devices, int numdevices)
     simdata->gear = 4;
     for (int x = 0; x < numdevices; x++)
     {
-        devices[x].update(&devices[x], simdata);
+        if (devices[x].initialized == true)
+        {
+            devices[x].update(&devices[x], simdata);
+        }
     }
     sleep(3);
 
@@ -387,7 +411,10 @@ int tester(SimDevice* devices, int numdevices)
     simdata->rpms = 2000;
     for (int x = 0; x < numdevices; x++)
     {
-        devices[x].update(&devices[x], simdata);
+        if (devices[x].initialized == true)
+        {
+            devices[x].update(&devices[x], simdata);
+        }
     }
     sleep(3);
 
@@ -395,7 +422,10 @@ int tester(SimDevice* devices, int numdevices)
     simdata->rpms = 4000;
     for (int x = 0; x < numdevices; x++)
     {
-        devices[x].update(&devices[x], simdata);
+        if (devices[x].initialized == true)
+        {
+            devices[x].update(&devices[x], simdata);
+        }
     }
     sleep(3);
 
@@ -403,7 +433,10 @@ int tester(SimDevice* devices, int numdevices)
     simdata->gear = 5;
     for (int x = 0; x < numdevices; x++)
     {
-        devices[x].update(&devices[x], simdata);
+        if (devices[x].initialized == true)
+        {
+            devices[x].update(&devices[x], simdata);
+        }
     }
     sleep(3);
 
@@ -411,7 +444,10 @@ int tester(SimDevice* devices, int numdevices)
     simdata->velocity = 300;
     for (int x = 0; x < numdevices; x++)
     {
-        devices[x].update(&devices[x], simdata);
+        if (devices[x].initialized == true)
+        {
+            devices[x].update(&devices[x], simdata);
+        }
     }
     sleep(3);
 
@@ -419,7 +455,10 @@ int tester(SimDevice* devices, int numdevices)
     simdata->rpms = 8000;
     for (int x = 0; x < numdevices; x++)
     {
-        devices[x].update(&devices[x], simdata);
+        if (devices[x].initialized == true)
+        {
+            devices[x].update(&devices[x], simdata);
+        }
     }
     sleep(3);
 
@@ -427,7 +466,10 @@ int tester(SimDevice* devices, int numdevices)
     simdata->rpms = 100;
     for (int x = 0; x < numdevices; x++)
     {
-        devices[x].update(&devices[x], simdata);
+        if (devices[x].initialized == true)
+        {
+            devices[x].update(&devices[x], simdata);
+        }
     }
     sleep(1);
 
