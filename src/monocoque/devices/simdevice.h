@@ -6,6 +6,7 @@
 #include "usbdevice.h"
 #include "sounddevice.h"
 #include "serialdevice.h"
+#include "hapticeffect.h"
 #include "../helper/confighelper.h"
 #include "../simulatorapi/simapi/simapi/simdata.h"
 
@@ -50,6 +51,7 @@ typedef struct
     SerialType type;
     struct sp_port* port;
     SerialDeviceType devicetype;
+    HapticEffect hapticeffect;
     union
     {
         SimWindData simwinddata;

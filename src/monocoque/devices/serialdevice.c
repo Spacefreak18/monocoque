@@ -6,6 +6,7 @@
 
 #include "simdevice.h"
 #include "serialdevice.h"
+#include "hapticeffect.h"
 #include "serial/arduino.h"
 #include "../helper/parameters.h"
 #include "../simulatorapi/simapi/simapi/simdata.h"
@@ -58,6 +59,8 @@ int arduino_haptic_update(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
     int result = 1;
+
+    int play = slipeffect(simdata, serialdevice->hapticeffect.effecttype, this->tyre, serialdevice->hapticeffect.threshold, this->useconfig, this->configcheck, this->tyrediameterconfig);
 
     slogt("Updating arduino haptic device");
 
@@ -120,6 +123,12 @@ SerialDevice* new_serial_device(DeviceSettings* ds) {
             this->m.vtable = &arduino_haptic_vtable;
             slogi("Initializing arduino device for haptic effects.");
             break;
+    }
+
+    if(this->devicetype == ARDUINODEV__HAPTIC)
+    {
+        this->hapticeffect.threshold = ds->threshold;
+        this->hapticeffect.effecttype = ds->effect_type;
     }
 
     int error = serialdev_init(this, ds->serialdevsettings.portdev);
