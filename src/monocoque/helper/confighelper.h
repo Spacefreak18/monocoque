@@ -24,7 +24,8 @@ typedef enum
     SIMDEVTYPE_TACHOMETER        = 1,
     SIMDEVTYPE_USBHAPTIC         = 2,
     SIMDEVTYPE_SHIFTLIGHTS       = 3,
-    SIMDEVTYPE_SIMWIND           = 4
+    SIMDEVTYPE_SIMWIND           = 4,
+    SIMDEVTYPE_SERIALHAPTIC      = 5
 }
 DeviceSubType;
 

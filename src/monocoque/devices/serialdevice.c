@@ -54,6 +54,18 @@ int arduino_simwind_update(SimDevice* this, SimData* simdata)
     return result;
 }
 
+int arduino_haptic_update(SimDevice* this, SimData* simdata)
+{
+    SerialDevice* serialdevice = (void *) this->derived;
+    int result = 1;
+
+    slogt("Updating arduino haptic device");
+
+    arduino_update(serialdevice, simdata, sizeof(SimData));
+
+    return result;
+}
+
 int serialdev_free(SimDevice* this)
 {
     SerialDevice* serialdevice = (void *) this->derived;
@@ -80,6 +92,7 @@ int serialdev_init(SerialDevice* serialdevice, const char* portdev)
 static const vtable serial_simdevice_vtable = { &serialdev_update, &serialdev_free };
 static const vtable arduino_shiftlights_vtable = { &arduino_shiftlights_update, &serialdev_free };
 static const vtable arduino_simwind_vtable = { &arduino_simwind_update, &serialdev_free };
+static const vtable arduino_haptic_vtable = { &arduino_haptic_update, &serialdev_free };
 
 SerialDevice* new_serial_device(DeviceSettings* ds) {
 
@@ -101,6 +114,11 @@ SerialDevice* new_serial_device(DeviceSettings* ds) {
             this->devicetype = ARDUINODEV__SIMWIND;
             this->m.vtable = &arduino_simwind_vtable;
             slogi("Initializing arduino devices for sim wind.");
+            break;
+        case (SIMDEVTYPE_SERIALHAPTIC):
+            this->devicetype = ARDUINODEV__HAPTIC;
+            this->m.vtable = &arduino_haptic_vtable;
+            slogi("Initializing arduino device for haptic effects.");
             break;
     }
 

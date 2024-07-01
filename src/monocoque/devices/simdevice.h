@@ -60,6 +60,7 @@ SerialDevice;
 
 int arduino_shiftlights_update(SimDevice* this, SimData* simdata);
 int arduino_simwind_update(SimDevice* this, SimData* simdata);
+int arduino_haptic_update(SimDevice* this, SimData* simdata);
 int serialdev_free(SimDevice* this);
 
 SerialDevice* new_serial_device(DeviceSettings* ds);

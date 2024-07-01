@@ -110,6 +110,11 @@ int strtodevsubtype(const char* device_subtype, DeviceSettings* ds, int simdev)
                 ds->dev_subtype = SIMDEVTYPE_SIMWIND;
                 break;
             }
+            if (strcicmp(device_subtype, "SerialHaptic") == 0 || strcicmp(device_subtype, "Haptic") == 0)
+            {
+                ds->dev_subtype = SIMDEVTYPE_SERIALHAPTIC;
+                break;
+            }
         case SIMDEV_SOUND:
             ds->is_valid = true;
             break;
@@ -336,7 +341,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         // logic for different devices
     }
 
-    if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC || ds->dev_type == SIMDEV_SOUND) {
+    if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC || ds->dev_type == SIMDEV_SOUND || ds->dev_type == SIMDEVTYPE_SERIALHAPTIC ) {
         const char* effect;
         config_setting_lookup_string(device_settings, "effect", &effect);
         strtoeffecttype(effect, ds);
