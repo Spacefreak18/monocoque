@@ -20,7 +20,7 @@ int usbdev_update(SimDevice* this, SimData* simdata)
             tachdev_update(&usbdevice->u.tachdevice, simdata);
             break;
         case USBDEV_GENERICHAPTIC :
-            usbhapticdev_update(&usbdevice->u.hapticdevice, simdata, this->tyre, this->useconfig, this->configcheck, this->tyrediameterconfig);
+            usbhapticdev_update(&usbdevice->u.hapticdevice, simdata, this->hapticeffect.tyre, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
             break;
     }
 
@@ -70,7 +70,7 @@ int usbdev_init(USBDevice* usbdevice, DeviceSettings* ds)
 
 static const vtable usb_simdevice_vtable = { &usbdev_update, &usbdev_free };
 
-USBDevice* new_usb_device(DeviceSettings* ds) {
+USBDevice* new_usb_device(DeviceSettings* ds, MonocoqueSettings* ms) {
 
     USBDevice* this = (USBDevice*) malloc(sizeof(USBDevice));
 
@@ -79,9 +79,18 @@ USBDevice* new_usb_device(DeviceSettings* ds) {
     this->m.derived = this;
     this->m.vtable = &usb_simdevice_vtable;
 
+
+
+
     this->type = USBDEV_TACHOMETER;
     if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC)
     {
+        this->m.hapticeffect.threshold = ds->threshold;
+        this->m.hapticeffect.effecttype = ds->effect_type;
+        this->m.hapticeffect.tyre = ds->tyre;
+        this->m.hapticeffect.useconfig = ms->useconfig;
+        this->m.hapticeffect.configcheck = &ms->configcheck;
+        this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
         this->type = USBDEV_GENERICHAPTIC;
     }
 

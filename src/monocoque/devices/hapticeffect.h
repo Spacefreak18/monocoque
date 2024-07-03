@@ -9,6 +9,10 @@ typedef struct
 {
     double threshold;
     VibrationEffectType effecttype;
+    MonocoqueTyreIdentifier tyre;
+    int useconfig;
+    int* configcheck;
+    char* tyrediameterconfig;
 }
 HapticEffect;
 

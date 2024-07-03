@@ -42,7 +42,7 @@ int sounddev_tyreslip_update(SimDevice* this, SimData* simdata)
 {
     SoundDevice* sounddevice = (void *) this->derived;
 
-    int play = slipeffect(simdata, sounddevice->effecttype, this->tyre, sounddevice->slipthreshold, this->useconfig, this->configcheck, this->tyrediameterconfig);
+    int play = slipeffect(simdata, this->hapticeffect.effecttype, this->hapticeffect.tyre, this->hapticeffect.threshold, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
 
     if (play > 0)
     {
@@ -60,7 +60,7 @@ int sounddev_tyrelock_update(SimDevice* this, SimData* simdata)
 {
     SoundDevice* sounddevice = (void *) this->derived;
 
-    int play = slipeffect(simdata, sounddevice->effecttype, this->tyre, sounddevice->slipthreshold, this->useconfig, this->configcheck, this->tyrediameterconfig);
+    int play = slipeffect(simdata, this->hapticeffect.effecttype, this->hapticeffect.tyre, this->hapticeffect.threshold, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
 
     if (play > 0)
     {
@@ -131,7 +131,7 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int
 
 
     const char* streamname= "Engine";
-    switch (sounddevice->effecttype) {
+    switch (sounddevice->m.hapticeffect.effecttype) {
         case (EFFECT_GEARSHIFT):
 
             sounddevice->sounddata.last_gear = 0;
@@ -146,13 +146,11 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int
         case (EFFECT_TYRESLIP):
             sounddevice->sounddata.duration = duration;
             sounddevice->sounddata.curr_duration = duration;
-            sounddevice->slipthreshold = threshold;
             streamname = "TyreSlip";
             break;
         case (EFFECT_TYRELOCK):
             sounddevice->sounddata.duration = duration;
             sounddevice->sounddata.curr_duration = duration;
-            sounddevice->slipthreshold = threshold;
             streamname = "TyreLock";
             break;
         case (EFFECT_ABSBRAKES):
@@ -179,7 +177,7 @@ static const vtable tyreslip_sound_simdevice_vtable = { &sounddev_tyreslip_updat
 static const vtable tyrelock_sound_simdevice_vtable = { &sounddev_tyrelock_update, &sounddev_free };
 static const vtable absbrakes_sound_simdevice_vtable = { &sounddev_absbrakes_update, &sounddev_free };
 
-SoundDevice* new_sound_device(DeviceSettings* ds) {
+SoundDevice* new_sound_device(DeviceSettings* ds, MonocoqueSettings* ms) {
 
     SoundDevice* this = (SoundDevice*) malloc(sizeof(SoundDevice));
 
@@ -190,27 +188,30 @@ SoundDevice* new_sound_device(DeviceSettings* ds) {
     slogt("Attempting to configure sound device with subtype: %i", ds->effect_type);
     switch (ds->effect_type) {
         case (EFFECT_ENGINERPM):
-            this->effecttype = EFFECT_ENGINERPM;
+            this->m.hapticeffect.effecttype = EFFECT_ENGINERPM;
             this->m.vtable = &engine_sound_simdevice_vtable;
             slogi("Initializing sound device for engine vibrations.");
             break;
         case (EFFECT_GEARSHIFT):
-            this->effecttype = EFFECT_GEARSHIFT;
+            this->m.hapticeffect.effecttype = EFFECT_GEARSHIFT;
             this->m.vtable = &gear_sound_simdevice_vtable;
             slogi("Initializing sound device for gear shift vibrations.");
             break;
         case (EFFECT_TYRESLIP):
-            this->effecttype = EFFECT_TYRESLIP;
+            this->m.hapticeffect.effecttype = EFFECT_TYRESLIP;
+            this->m.hapticeffect.threshold = ds->threshold;
             this->m.vtable = &tyreslip_sound_simdevice_vtable;
             slogi("Initializing sound device for tyre slip vibrations.");
             break;
         case (EFFECT_TYRELOCK):
-            this->effecttype = EFFECT_TYRELOCK;
+            this->m.hapticeffect.effecttype = EFFECT_TYRELOCK;
+            this->m.hapticeffect.threshold = ds->threshold;
             this->m.vtable = &tyrelock_sound_simdevice_vtable;
             slogi("Initializing sound device for tyre slip vibrations.");
             break;
         case (EFFECT_ABSBRAKES):
-            this->effecttype = EFFECT_ABSBRAKES;
+            this->m.hapticeffect.effecttype = EFFECT_ABSBRAKES;
+            this->m.hapticeffect.threshold = ds->threshold;
             this->m.vtable = &absbrakes_sound_simdevice_vtable;
             slogi("Initializing sound device for abs vibrations.");
             break;

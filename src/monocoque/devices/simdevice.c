@@ -34,16 +34,12 @@ int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds, Monocoque
         simdevices[j].initialized = false;
 
         if (ds[j].dev_type == SIMDEV_USB) {
-            USBDevice* sim = new_usb_device(&ds[j]);
+            USBDevice* sim = new_usb_device(&ds[j], ms);
             if (sim != NULL)
             {
                 simdevices[j] = sim->m;
                 simdevices[j].initialized = true;
                 simdevices[j].type = SIMDEV_USB;
-                simdevices[j].tyre = ds[j].tyre;
-                simdevices[j].useconfig = ms->useconfig;
-                simdevices[j].configcheck = &ms->configcheck;
-                simdevices[j].tyrediameterconfig = ms->tyre_diameter_config;
                 devices++;
             }
             else
@@ -54,17 +50,13 @@ int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds, Monocoque
 
         if (ds[j].dev_type == SIMDEV_SOUND) {
 
-            SoundDevice* sim = new_sound_device(&ds[j]);
+            SoundDevice* sim = new_sound_device(&ds[j], ms);
             if (sim != NULL)
             {
 
                 simdevices[j] = sim->m;
                 simdevices[j].initialized = true;
                 simdevices[j].type = SIMDEV_SOUND;
-                simdevices[j].tyre = ds[j].tyre;
-                simdevices[j].useconfig = ms->useconfig;
-                simdevices[j].configcheck = &ms->configcheck;
-                simdevices[j].tyrediameterconfig = ms->tyre_diameter_config;
                 devices++;
             }
             else
@@ -75,7 +67,7 @@ int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds, Monocoque
 
         if (ds[j].dev_type == SIMDEV_SERIAL) {
 
-            SerialDevice* sim = new_serial_device(&ds[j]);
+            SerialDevice* sim = new_serial_device(&ds[j], ms);
             if (sim != NULL)
             {
                 simdevices[j] = sim->m;

@@ -24,11 +24,7 @@ struct SimDevice
     int id;
     bool initialized;
     DeviceType type;
-    // possibly move these to a haptic effect struct
-    MonocoqueTyreIdentifier tyre;
-    int useconfig;
-    int* configcheck;
-    char* tyrediameterconfig;
+    HapticEffect hapticeffect;
 };
 
 typedef struct {
@@ -51,7 +47,6 @@ typedef struct
     SerialType type;
     struct sp_port* port;
     SerialDeviceType devicetype;
-    HapticEffect hapticeffect;
     union
     {
         SimWindData simwinddata;
@@ -65,7 +60,7 @@ int arduino_simwind_update(SimDevice* this, SimData* simdata);
 int arduino_haptic_update(SimDevice* this, SimData* simdata);
 int serialdev_free(SimDevice* this);
 
-SerialDevice* new_serial_device(DeviceSettings* ds);
+SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms);
 
 /********* USB HID Devices *****/
 typedef enum
@@ -92,7 +87,7 @@ USBDevice;
 int usbdev_update(SimDevice* this, SimData* simdata);
 int usbdev_free(SimDevice* this);
 
-USBDevice* new_usb_device(DeviceSettings* ds);
+USBDevice* new_usb_device(DeviceSettings* ds, MonocoqueSettings* ms);
 
 
 /********* Sound Devices *****/
@@ -102,8 +97,6 @@ typedef struct
     int id;
     SoundType type;
     int configcheck;
-    VibrationEffectType effecttype;
-    double slipthreshold;
     SoundData sounddata;
 #ifdef USE_PULSEAUDIO
     pa_stream *stream;
@@ -119,7 +112,7 @@ int sounddev_gearshift_update(SimDevice* this, SimData* simdata);
 int sounddev_tyreslip_update(SimDevice* this, SimData* simdata);
 int sounddev_free(SimDevice* this);
 
-SoundDevice* new_sound_device(DeviceSettings* ds);
+SoundDevice* new_sound_device(DeviceSettings* ds, MonocoqueSettings* ms);
 
 /***** Generic Methods *********/
 

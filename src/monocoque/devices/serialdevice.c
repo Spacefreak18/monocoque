@@ -60,7 +60,7 @@ int arduino_haptic_update(SimDevice* this, SimData* simdata)
     SerialDevice* serialdevice = (void *) this->derived;
     int result = 1;
 
-    int play = slipeffect(simdata, serialdevice->hapticeffect.effecttype, this->tyre, serialdevice->hapticeffect.threshold, this->useconfig, this->configcheck, this->tyrediameterconfig);
+    int play = slipeffect(simdata, this->hapticeffect.effecttype, this->hapticeffect.tyre, this->hapticeffect.threshold, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
 
     slogt("Updating arduino haptic device");
 
@@ -97,7 +97,7 @@ static const vtable arduino_shiftlights_vtable = { &arduino_shiftlights_update, 
 static const vtable arduino_simwind_vtable = { &arduino_simwind_update, &serialdev_free };
 static const vtable arduino_haptic_vtable = { &arduino_haptic_update, &serialdev_free };
 
-SerialDevice* new_serial_device(DeviceSettings* ds) {
+SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
 
     SerialDevice* this = (SerialDevice*) malloc(sizeof(SerialDevice));
 
@@ -127,8 +127,12 @@ SerialDevice* new_serial_device(DeviceSettings* ds) {
 
     if(this->devicetype == ARDUINODEV__HAPTIC)
     {
-        this->hapticeffect.threshold = ds->threshold;
-        this->hapticeffect.effecttype = ds->effect_type;
+        this->m.hapticeffect.threshold = ds->threshold;
+        this->m.hapticeffect.effecttype = ds->effect_type;
+        this->m.hapticeffect.tyre = ds->tyre;
+        this->m.hapticeffect.useconfig = ms->useconfig;
+        this->m.hapticeffect.configcheck = &ms->configcheck;
+        this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
     }
 
     int error = serialdev_init(this, ds->serialdevsettings.portdev);
