@@ -82,7 +82,7 @@ make
 
 ### Uploading sketch to Arduino Uno
 ```
-cd src/arduino/{simwind/shiftlights} # Depending on the controller you have.
+cd ../src/arduino/{simwind/shiftlights} # Depending on the controller you have.
 make  # Make sure serial connection is the same as on the host pc and it have the right group permission to access the device without root
 ```
 
