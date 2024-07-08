@@ -80,7 +80,16 @@ ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL=true arduino-cli lib install --git-url htt
 make
 ```
 
+### Uploading sketch to Arduino Uno
+```
+cd src/arduino/{simwind/shiftlights} # Depending on the controller you have.
+make  # Make sure serial connection is the same as on the host pc and it have the right group permission to access the device without root
+```
+
 ## Testing
+```
+./monocoque test -vv # Make sure that ~/.config/monocque/monocoque.config only contains the devices you have connected.
+```
 
 ### Static Analysis
 ```
@@ -94,6 +103,9 @@ make
     cd build
     valgrind -v --leak-check=full --show-leak-kinds=all --suppressions=../.valgrindrc ./monocoque play
 ```
+
+### Logs file location
+`~/.cache/monocoque/*.log`
 
 ## ToDo
  - windows port
