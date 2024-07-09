@@ -53,6 +53,26 @@ VibrationEffectType;
 
 typedef enum
 {
+    MOTOR_1       = 0,
+    MOTOR_2       = 1,
+    MOTOR_3       = 2,
+    MOTOR_4       = 3,
+    MOTOR_1_4     = 4,
+    MOTOR_2_4     = 5,
+    MOTOR_3_4     = 6,
+    MOTOR_1_2     = 7,
+    MOTOR_1_3     = 8,
+    MOTOR_2_3     = 9,
+    MOTOR_1_2_3_4 = 10,
+    MOTOR_1_2_3   = 11,
+    MOTOR_2_3_4   = 12,
+    MOTOR_1_2_4   = 13,
+    MOTOR_1_3_4   = 14
+}
+MotorPosition;
+
+typedef enum
+{
     MONOCOQUE_ERROR_NONE          = 0,
     MONOCOQUE_ERROR_UNKNOWN       = 1,
     MONOCOQUE_ERROR_INVALID_SIM   = 2,
@@ -97,6 +117,7 @@ TachometerSettings;
 typedef struct
 {
     char* portdev;
+    MotorPosition motorsposition;
 }
 SerialDeviceSettings;
 

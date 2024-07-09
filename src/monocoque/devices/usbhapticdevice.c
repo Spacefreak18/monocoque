@@ -14,17 +14,19 @@
 int usbhapticdev_update(USBGenericHapticDevice* usbhapticdevice, SimData* simdata, int tyre, int useconfig, int* configcheck, char* configfile)
 {
 
-    int play = slipeffect(simdata, usbhapticdevice->effecttype, tyre, usbhapticdevice->threshold, useconfig, configcheck, configfile);
+    double play = slipeffect(simdata, usbhapticdevice->effecttype, tyre, usbhapticdevice->threshold, useconfig, configcheck, configfile);
     
     if (play != usbhapticdevice->state)
     {
+        int rplay = 0;
         if(play > 0)
         {
-            cslelitev3_update(usbhapticdevice, usbhapticdevice->effecttype, play);
+            rplay = 1;
+            cslelitev3_update(usbhapticdevice, usbhapticdevice->effecttype, rplay);
         }
         else
         {
-            cslelitev3_update(usbhapticdevice, usbhapticdevice->effecttype, play);
+            cslelitev3_update(usbhapticdevice, usbhapticdevice->effecttype, rplay);
         }
         usbhapticdevice->state = play;
     }

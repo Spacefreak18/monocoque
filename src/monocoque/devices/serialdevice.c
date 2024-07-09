@@ -55,14 +55,16 @@ int arduino_simwind_update(SimDevice* this, SimData* simdata)
     return result;
 }
 
-int arduino_haptic_update(SimDevice* this, SimData* simdata)
+int arduino_simhaptic_update(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
     int result = 1;
 
-    int play = slipeffect(simdata, this->hapticeffect.effecttype, this->hapticeffect.tyre, this->hapticeffect.threshold, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
+    double play = slipeffect(simdata, this->hapticeffect.effecttype, this->hapticeffect.tyre, this->hapticeffect.threshold, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
 
     slogt("Updating arduino haptic device");
+    serialdevice->u.simhapticdata.power = 0.6;
+    serialdevice->u.simhapticdata.motor = serialdevice->motorsposition;
 
     arduino_update(serialdevice, simdata, sizeof(SimData));
 
@@ -79,13 +81,15 @@ int serialdev_free(SimDevice* this)
     return 0;
 }
 
-int serialdev_init(SerialDevice* serialdevice, const char* portdev)
+int serialdev_init(SerialDevice* serialdevice, const char* portdev, int motorsposition)
 {
     slogi("initializing serial device...");
     int error = 0;
 
     serialdevice->type = SERIALDEV_UNKNOWN;
     serialdevice->type = SERIALDEV_ARDUINO;
+
+    serialdevice->motorsposition = motorsposition;
 
     error = arduino_init(serialdevice, portdev);
 
@@ -95,7 +99,7 @@ int serialdev_init(SerialDevice* serialdevice, const char* portdev)
 static const vtable serial_simdevice_vtable = { &serialdev_update, &serialdev_free };
 static const vtable arduino_shiftlights_vtable = { &arduino_shiftlights_update, &serialdev_free };
 static const vtable arduino_simwind_vtable = { &arduino_simwind_update, &serialdev_free };
-static const vtable arduino_haptic_vtable = { &arduino_haptic_update, &serialdev_free };
+static const vtable arduino_simhaptic_vtable = { &arduino_simhaptic_update, &serialdev_free };
 
 SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
 
@@ -120,7 +124,7 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
             break;
         case (SIMDEVTYPE_SERIALHAPTIC):
             this->devicetype = ARDUINODEV__HAPTIC;
-            this->m.vtable = &arduino_haptic_vtable;
+            this->m.vtable = &arduino_simhaptic_vtable;
             slogi("Initializing arduino device for haptic effects.");
             break;
     }
@@ -135,7 +139,7 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
         this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
     }
 
-    int error = serialdev_init(this, ds->serialdevsettings.portdev);
+    int error = serialdev_init(this, ds->serialdevsettings.portdev, ds->serialdevsettings.motorsposition);
 
     if (error != 0)
     {

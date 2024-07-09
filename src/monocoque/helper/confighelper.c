@@ -341,7 +341,8 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         // logic for different devices
     }
 
-    if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC || ds->dev_type == SIMDEV_SOUND || ds->dev_type == SIMDEVTYPE_SERIALHAPTIC ) {
+    if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC || ds->dev_type == SIMDEV_SOUND || ds->dev_type == SIMDEVTYPE_SERIALHAPTIC)
+    {
         const char* effect;
         config_setting_lookup_string(device_settings, "effect", &effect);
         strtoeffecttype(effect, ds);
@@ -388,14 +389,19 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         }
     }
 
-    if (ds->dev_subtype == SIMDEVTYPE_SIMWIND || ds->dev_subtype == SIMDEVTYPE_SHIFTLIGHTS)
+    if (ds->dev_subtype == SIMDEVTYPE_SIMWIND || ds->dev_subtype == SIMDEVTYPE_SHIFTLIGHTS || ds->dev_subtype == SIMDEVTYPE_SERIALHAPTIC)
     {
         if (device_settings != NULL)
         {
             const char* temp;
             config_setting_lookup_string(device_settings, "devpath", &temp);
             ds->serialdevsettings.portdev = strdup(temp);
+
+            int motorposition = 8;
+            config_setting_lookup_int(device_settings, "motors", &motorposition);
+            ds->serialdevsettings.motorsposition = motorposition;
         }
+
     }
 
     return error;
