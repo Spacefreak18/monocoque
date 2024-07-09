@@ -23,8 +23,10 @@ bool hasTyreDiameter(SimData* simdata)
 {
     if (simdata->tyrediameter[0] == -1 || simdata->tyrediameter[1] == -1 || simdata->tyrediameter[2] == -1 || simdata->tyrediameter[3] == -1)
     {
+        slogt("failed to find tyre diameter data");
         return false;
     }
+    slogt("tyre diameter data found");
     return true;
 }
 
@@ -292,12 +294,13 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
     wheelslip[2] = 0;
     wheelslip[3] = 0;
 
+    slogt("wheel vibration calculation");
+
     switch (effecttype)
     {
         case (EFFECT_TYRESLIP):
         case (EFFECT_TYRELOCK):
         case (EFFECT_ABSBRAKES):
-
             if(hasTyreDiameter(simdata)==false)
             {
                 // check for saved tyre diameter in config file
@@ -322,6 +325,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
             if(hasTyreDiameter(simdata)==true)
             {
                 double Speedms = kmhtoms * simdata->velocity;
+                slogt("attempting wheel slip calculation");
                 if (Speedms > minspeedinms)
                 {
                     for(int i = 0; i < 4; i++)
@@ -339,6 +343,8 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
 
             }
             break;
+        default:
+            slogt("Unknown effect type");
     }
 
     switch (effecttype)
@@ -444,7 +450,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
             }
             break;
     }
-    
+
     return play;
 }
 

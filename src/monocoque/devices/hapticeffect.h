@@ -16,6 +16,6 @@ typedef struct
 }
 HapticEffect;
 
-int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int useconfig, int* configcheck, char* configfile);
+double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int useconfig, int* configcheck, char* configfile);
 
 #endif

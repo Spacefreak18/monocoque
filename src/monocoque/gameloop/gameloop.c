@@ -339,6 +339,10 @@ int tester(SimDevice* devices, int numdevices)
     simdata->tyrediameter[1] = -1;
     simdata->tyrediameter[2] = -1;
     simdata->tyrediameter[3] = -1;
+    simdata->tyrediameter[0] = 0.638636385206394;
+    simdata->tyrediameter[1] = 0.633384434597093;
+    simdata->tyrediameter[2] = 0.710475735564615;
+    simdata->tyrediameter[3] = 0.710475735564615;
     sleep(3);
 
     fprintf(stdout, "Setting rpms to 1000\n");
@@ -363,6 +367,22 @@ int tester(SimDevice* devices, int numdevices)
     }
     sleep(3);
 
+    fprintf(stdout, "Testing wheel spin\n");
+    simdata->velocity = 20;
+    simdata->tyreRPS[0] = 133;
+    simdata->tyreRPS[1] = 133;
+    simdata->tyreRPS[2] = 133;
+    simdata->tyreRPS[3] = 133;
+    simdata->velocity = 100;
+    for (int x = 0; x < numdevices; x++)
+    {
+        if (devices[x].initialized == true)
+        {
+            devices[x].update(&devices[x], simdata);
+        }
+    }
+    sleep(3);
+
     fprintf(stdout, "Setting speed to 100\n");
     simdata->velocity = 100;
     for (int x = 0; x < numdevices; x++)
@@ -373,6 +393,21 @@ int tester(SimDevice* devices, int numdevices)
         }
     }
     sleep(3);
+
+    //fprintf(stdout, "Testing wheel spin\n");
+    //simdata->tyreRPS[0] = 8000;
+    //simdata->tyreRPS[1] = 8000;
+    //simdata->tyreRPS[2] = 8000;
+    //simdata->tyreRPS[3] = 8000;
+    //simdata->velocity = 100;
+    //for (int x = 0; x < numdevices; x++)
+    //{
+    //    if (devices[x].initialized == true)
+    //    {
+    //        devices[x].update(&devices[x], simdata);
+    //    }
+    //}
+    //sleep(3);
 
     fprintf(stdout, "Shifting into second gear\n");
     simdata->gear = 3;

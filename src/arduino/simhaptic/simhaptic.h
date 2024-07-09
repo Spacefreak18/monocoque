@@ -7,8 +7,7 @@
 typedef struct
 {
     int motor;
-    float effect;
-    float power;
+    int effect;
 }
 SimHapticData;
 

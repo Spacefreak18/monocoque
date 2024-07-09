@@ -12,7 +12,8 @@ Adafruit_DCMotor *myMotor3 = AFMS.getMotor(3);
 //Adafruit_DCMotor *myMotor4 = AFMS.getMotor(4);
 
 SimHapticData sd;
-int velocity = 0;
+int effect = 0;
+int motor = 15;
 
 void setup() {
     Serial.begin(9600);
@@ -20,7 +21,8 @@ void setup() {
         Serial.println("Could not find Motor Shield. Check wiring.");
         while (1);
     }
-    sd.velocity = 10;
+    sd.effect = 0;
+    sd.motor = 15;
 
     myMotor1->setSpeed(0);
     myMotor1->run(FORWARD);
@@ -42,43 +44,23 @@ void loop() {
     {
         Serial.readBytes(buff, BYTE_SIZE);
         memcpy(&sd, &buff, BYTE_SIZE);
-        velocity = sd.velocity;
+        effect = sd.effect;
+        motor = sd.motor;
     }
-    int v = ceil(effect * 255);
-    if (v >= 255)
-    {
-      v = 255;
-    }
-
-    MOTOR_1       = 0,
-    MOTOR_2       = 1,
-    MOTOR_3       = 2,
-    MOTOR_4       = 3,
-    MOTOR_1_4     = 4,
-    MOTOR_2_4     = 5,
-    MOTOR_3_4     = 6,
-    MOTOR_1_2     = 7,
-    MOTOR_1_3     = 8,
-    MOTOR_2_3     = 9,
-    MOTOR_1_2_3_4 = 10,
-    MOTOR_1_2_3   = 11,
-    MOTOR_2_3_4   = 12,
-    MOTOR_1_2_4   = 13,
-    MOTOR_1_3_4   = 14
 
     if (motor == 0 || motor == 4 || motor == 7 || motor == 8 || motor == 10 || motor == 11 || motor == 13 || motor == 14)
     {
-        myMotor1->setSpeed(v*POWER);
+        myMotor1->setSpeed(effect);
     }
-    //if (motor == 1 || motor == 5 || motor = 7 || motor == 9 || motor == 10 || motor == 11 || motor == 12 || motor = 13)
+    //if (motor == 1 || motor == 5 || motor == 7 || motor == 9 || motor == 10 || motor == 11 || motor == 12 || motor == 13)
     //{
     //    myMotor2->setSpeed(v*POWER);
     //}
-    if (motor == 2 || motor == 6 || motor = 8 || motor == 9 || motor == 10 || motor == 11 || motor == 12 || motor = 14)
+    if (motor == 2 || motor == 6 || motor == 8 || motor == 9 || motor == 10 || motor == 11 || motor == 12 || motor == 14)
     {
-        myMotor3->setSpeed(v*POWER);
+        myMotor3->setSpeed(effect);
     }
-    //if (motor == 3 || motor == 4 || motor = 5 || motor == 6 || motor == 10 || motor == 12 || motor == 13 || motor = 14)
+    //if (motor == 3 || motor == 4 || motor == 5 || motor == 6 || motor == 10 || motor == 12 || motor == 13 || motor == 14)
     //{
     //    myMotor4->setSpeed(v*POWER);
     //}

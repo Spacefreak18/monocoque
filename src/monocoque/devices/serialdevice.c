@@ -58,15 +58,25 @@ int arduino_simwind_update(SimDevice* this, SimData* simdata)
 int arduino_simhaptic_update(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
+
     int result = 1;
+
+    slogt("arduino haptic device updating");
 
     double play = slipeffect(simdata, this->hapticeffect.effecttype, this->hapticeffect.tyre, this->hapticeffect.threshold, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
 
-    slogt("Updating arduino haptic device");
-    serialdevice->u.simhapticdata.power = 0.6;
-    serialdevice->u.simhapticdata.motor = serialdevice->motorsposition;
+    if(play > 1.0)
+    {
+        play = 1.0;
+    }
 
-    arduino_update(serialdevice, simdata, sizeof(SimData));
+    int effectspeed = ceil( 255 * play );
+    serialdevice->u.simhapticdata.motor = serialdevice->motorsposition;
+    serialdevice->u.simhapticdata.effect = effectspeed;
+    slogt("Updating arduino haptic device speed %i motor code %i", serialdevice->u.simhapticdata.effect, serialdevice->u.simhapticdata.motor);
+    size_t size = sizeof(SimHapticData);
+
+    arduino_update(serialdevice, &serialdevice->u.simhapticdata, size);
 
     return result;
 }
@@ -133,6 +143,7 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
     {
         this->m.hapticeffect.threshold = ds->threshold;
         this->m.hapticeffect.effecttype = ds->effect_type;
+        slogt("Haptic effect: %i %i", this->m.hapticeffect.effecttype, ds->effect_type);
         this->m.hapticeffect.tyre = ds->tyre;
         this->m.hapticeffect.useconfig = ms->useconfig;
         this->m.hapticeffect.configcheck = &ms->configcheck;
