@@ -415,6 +415,18 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
             int motorposition = 8;
             config_setting_lookup_int(device_settings, "motors", &motorposition);
             ds->serialdevsettings.motorsposition = motorposition;
+
+            double ampfactor = 1.0;
+            ds->serialdevsettings.ampfactor = 1.0;
+            int found = config_setting_lookup_float(device_settings, "ampfactor", &ampfactor);
+            if(found == 0)
+            {
+                ds->serialdevsettings.ampfactor = 1.0;
+            }
+            else
+            {
+                ds->serialdevsettings.ampfactor = ampfactor;
+            }
         }
 
     }

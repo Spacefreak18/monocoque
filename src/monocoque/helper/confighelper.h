@@ -118,6 +118,7 @@ typedef struct
 {
     char* portdev;
     MotorPosition motorsposition;
+    float ampfactor;
 }
 SerialDeviceSettings;
 

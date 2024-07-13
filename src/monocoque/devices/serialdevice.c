@@ -66,11 +66,12 @@ int arduino_simhaptic_update(SimDevice* this, SimData* simdata)
     double play = slipeffect(simdata, this->hapticeffect.effecttype, this->hapticeffect.tyre, this->hapticeffect.threshold, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
 
     double rplay = play;
+    play = play * serialdevice->ampfactor;
     if(play > 1.0)
     {
         play = 1.0;
     }
-    int effectspeed = ceil( 255 * play );
+    int effectspeed = ceil(255 * play);
 
     int motor = serialdevice->motorsposition;
 
@@ -161,6 +162,7 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
             this->u.simhapticdata.effect3 = 0;
             this->u.simhapticdata.effect4 = 0;
             this->state = 0;
+            this->ampfactor = ds->serialdevsettings.ampfactor;
             slogi("Initializing arduino device for haptic effects.");
             break;
     }
