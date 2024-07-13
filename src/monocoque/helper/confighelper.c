@@ -426,6 +426,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
             else
             {
                 ds->serialdevsettings.ampfactor = ampfactor;
+                slogt("Set ampflication factor for motors to %f", ampfactor);
             }
         }
 
