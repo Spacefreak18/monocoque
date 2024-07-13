@@ -76,15 +76,23 @@ int arduino_simhaptic_update(SimDevice* this, SimData* simdata)
 
     if (motor == 0 || motor == 4 || motor == 7 || motor == 8 || motor == 10 || motor == 11 || motor == 13 || motor == 14)
     {
-        serialdevice->u.simhapticdata.effect1 = effectspeed;
-        serialdevice->u.simhapticdata.motor1 = 1;
-        slogt("Updating arduino haptic device speed motor speed %i on motor %i from original effect %f", serialdevice->u.simhapticdata.effect1, serialdevice->motorsposition, rplay);
+        if (play != serialdevice->state)
+        {
+            serialdevice->u.simhapticdata.effect1 = effectspeed;
+            serialdevice->u.simhapticdata.motor1 = 1;
+            slogt("Updating arduino haptic device speed motor speed %i on motor %i from original effect %f", serialdevice->u.simhapticdata.effect1, serialdevice->motorsposition, rplay);
+            serialdevice->state = play;
+        }
     }
     if (motor == 2 || motor == 6 || motor == 8 || motor == 9 || motor == 10 || motor == 11 || motor == 12 || motor == 14)
     {
-        serialdevice->u.simhapticdata.effect3 = effectspeed;
-        serialdevice->u.simhapticdata.motor3 = 1;
-        slogt("Updating arduino haptic device speed motor speed %i on motor %i from original effect %f", serialdevice->u.simhapticdata.effect3, serialdevice->motorsposition, rplay);
+        if (play != serialdevice->state)
+        {
+            serialdevice->u.simhapticdata.effect3 = effectspeed;
+            serialdevice->u.simhapticdata.motor3 = 1;
+            slogt("Updating arduino haptic device speed motor speed %i on motor %i from original effect %f", serialdevice->u.simhapticdata.effect3, serialdevice->motorsposition, rplay);
+            serialdevice->state = play;
+        }
     }
 
     size_t size = sizeof(SimHapticData);
@@ -156,6 +164,7 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
             this->u.simhapticdata.effect2 = 0;
             this->u.simhapticdata.effect3 = 0;
             this->u.simhapticdata.effect4 = 0;
+            this->state = 0;
             slogi("Initializing arduino device for haptic effects.");
             break;
     }

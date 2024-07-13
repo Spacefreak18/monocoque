@@ -47,8 +47,10 @@ typedef struct
     int id;
     SerialType type;
     struct sp_port* port;
-    int motorsposition;
     SerialDeviceType devicetype;
+    // move these two they only apply to the haptic device
+    int motorsposition;
+    double state;
     union
     {
         SimWindData simwinddata;
