@@ -74,25 +74,21 @@ int arduino_simhaptic_update(SimDevice* this, SimData* simdata)
 
     int motor = serialdevice->motorsposition;
 
-    if (motor == 0 || motor == 4 || motor == 7 || motor == 8 || motor == 10 || motor == 11 || motor == 13 || motor == 14)
+    if (play != serialdevice->state)
     {
-        if (play != serialdevice->state)
+        if (motor == 0 || motor == 4 || motor == 7 || motor == 8 || motor == 10 || motor == 11 || motor == 13 || motor == 14)
         {
             serialdevice->u.simhapticdata.effect1 = effectspeed;
             serialdevice->u.simhapticdata.motor1 = 1;
             slogt("Updating arduino haptic device speed motor speed %i on motor %i from original effect %f", serialdevice->u.simhapticdata.effect1, serialdevice->motorsposition, rplay);
-            serialdevice->state = play;
         }
-    }
-    if (motor == 2 || motor == 6 || motor == 8 || motor == 9 || motor == 10 || motor == 11 || motor == 12 || motor == 14)
-    {
-        if (play != serialdevice->state)
+        if (motor == 2 || motor == 6 || motor == 8 || motor == 9 || motor == 10 || motor == 11 || motor == 12 || motor == 14)
         {
             serialdevice->u.simhapticdata.effect3 = effectspeed;
             serialdevice->u.simhapticdata.motor3 = 1;
             slogt("Updating arduino haptic device speed motor speed %i on motor %i from original effect %f", serialdevice->u.simhapticdata.effect3, serialdevice->motorsposition, rplay);
-            serialdevice->state = play;
         }
+        serialdevice->state = play;
     }
 
     size_t size = sizeof(SimHapticData);

@@ -62,26 +62,20 @@ void loop() {
         effect4 = sd.effect4;
     }
 
-    //if (motor == 0 || motor == 4 || motor == 7 || motor == 8 || motor == 10 || motor == 11 || motor == 13 || motor == 14)
-    //{
     if (motor1 >= 1)
     {
         myMotor1->setSpeed(effect1);
     }
-    //}
-    //if (motor == 1 || motor == 5 || motor == 7 || motor == 9 || motor == 10 || motor == 11 || motor == 12 || motor == 13)
+    //if (motor2 >= 1)
     //{
-    //    myMotor2->setSpeed(motor2);
+    //    myMotor2->setSpeed(effect2);
     //}
-    //if (motor == 2 || motor == 6 || motor == 8 || motor == 9 || motor == 10 || motor == 11 || motor == 12 || motor == 14)
-    //{
     if (motor3 >= 1)
     {
         myMotor3->setSpeed(effect3);
     }
-    //}
-    //if (motor == 3 || motor == 4 || motor == 5 || motor == 6 || motor == 10 || motor == 12 || motor == 13 || motor == 14)
+    //if (motor4 >= 1)
     //{
-    //    myMotor4->setSpeed(motor4);
+    //    myMotor4->setSpeed(effect4);
     //}
 }
