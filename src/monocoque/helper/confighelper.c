@@ -364,7 +364,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         if (ds->effect_type == EFFECT_TYRESLIP || ds->effect_type == EFFECT_TYRELOCK || ds->effect_type == EFFECT_ABSBRAKES)
         {
             gettyre(device_settings, ds);
-            ds->threshold = .75;
+            ds->threshold = 0;
             int found = config_setting_lookup_float(device_settings, "threshold", &ds->threshold);
         }
 
