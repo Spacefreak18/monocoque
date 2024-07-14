@@ -82,9 +82,14 @@ make
 
 ### Uploading sketch to Arduino Uno
 ```
-cd ../src/arduino/{simwind/shiftlights} # Depending on the controller you have.
+cd ../src/arduino/{simwind/shiftlights/simhaptic} # Depending on the controller you have.
 make  # Make sure serial connection is the same as on the host pc and it have the right group permission to access the device without root
 ```
+
+### SimHaptic Ardunio Motor Connection
+- Acc Pedal Motor to be connected to M1 
+- Brake Pedal Motor to be connected to M3
+
 
 ## Testing
 ```
