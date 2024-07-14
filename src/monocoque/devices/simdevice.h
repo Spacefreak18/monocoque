@@ -11,6 +11,7 @@
 #include "../simulatorapi/simapi/simapi/simdata.h"
 
 #include "../../arduino/simwind/simwind.h"
+#include "../../arduino/simhaptic/simhaptic.h"
 #include "../../arduino/shiftlights/shiftlights.h"
 
 typedef struct SimDevice SimDevice;
@@ -47,9 +48,14 @@ typedef struct
     SerialType type;
     struct sp_port* port;
     SerialDeviceType devicetype;
+    // move these two they only apply to the haptic device
+    int motorsposition;
+    double ampfactor;
+    double state;
     union
     {
         SimWindData simwinddata;
+        SimHapticData simhapticdata;
         ShiftLightsData shiftlightsdata;
     } u;
 }
@@ -57,7 +63,7 @@ SerialDevice;
 
 int arduino_shiftlights_update(SimDevice* this, SimData* simdata);
 int arduino_simwind_update(SimDevice* this, SimData* simdata);
-int arduino_haptic_update(SimDevice* this, SimData* simdata);
+int arduino_simhaptic_update(SimDevice* this, SimData* simdata);
 int serialdev_free(SimDevice* this);
 
 SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms);

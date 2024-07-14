@@ -59,23 +59,36 @@ int strtoeffecttype(const char* effect, DeviceSettings* ds)
 
     if (strcicmp(effect, "Engine") == 0)
     {
+        ds->is_valid = true;
         ds->effect_type = EFFECT_ENGINERPM;
     }
     if (strcicmp(effect, "Gear") == 0)
     {
+        ds->is_valid = true;
         ds->effect_type = EFFECT_GEARSHIFT;
     }
     if (strcicmp(effect, "ABS") == 0)
     {
+        ds->is_valid = true;
+        slogt("found abas effect set");
         ds->effect_type = EFFECT_ABSBRAKES;
     }
     if ((strcicmp(effect, "SLIP") == 0) || (strcicmp(effect, "TYRESLIP") == 0) || (strcicmp(effect, "TIRESLIP") == 0))
     {
+        ds->is_valid = true;
+        slogt("found tyreslip effect set");
         ds->effect_type = EFFECT_TYRESLIP;
     }
     if ((strcicmp(effect, "LOCK") == 0) || (strcicmp(effect, "TYRELOCK") == 0) || (strcicmp(effect, "TIRELOCK") == 0))
     {
+        ds->is_valid = true;
+        slogt("found tyreslock effect set");
         ds->effect_type = EFFECT_TYRELOCK;
+    }
+
+    if (ds->is_valid == false)
+    {
+        slogw("effect %s is not a valid effect", effect);
     }
 
     ds->is_valid = true;
@@ -112,6 +125,7 @@ int strtodevsubtype(const char* device_subtype, DeviceSettings* ds, int simdev)
             }
             if (strcicmp(device_subtype, "SerialHaptic") == 0 || strcicmp(device_subtype, "Haptic") == 0)
             {
+                slogt("found serial haptic device settings");
                 ds->dev_subtype = SIMDEVTYPE_SERIALHAPTIC;
                 break;
             }
@@ -341,14 +355,16 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         // logic for different devices
     }
 
-    if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC || ds->dev_type == SIMDEV_SOUND || ds->dev_type == SIMDEVTYPE_SERIALHAPTIC ) {
+    if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC || ds->dev_type == SIMDEV_SOUND || ds->dev_subtype == SIMDEVTYPE_SERIALHAPTIC)
+    {
+        slogt("analysing haptic effect settings");
         const char* effect;
         config_setting_lookup_string(device_settings, "effect", &effect);
         strtoeffecttype(effect, ds);
         if (ds->effect_type == EFFECT_TYRESLIP || ds->effect_type == EFFECT_TYRELOCK || ds->effect_type == EFFECT_ABSBRAKES)
         {
             gettyre(device_settings, ds);
-            ds->threshold = .75;
+            ds->threshold = 0;
             int found = config_setting_lookup_float(device_settings, "threshold", &ds->threshold);
         }
 
@@ -388,14 +404,32 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         }
     }
 
-    if (ds->dev_subtype == SIMDEVTYPE_SIMWIND || ds->dev_subtype == SIMDEVTYPE_SHIFTLIGHTS)
+    if (ds->dev_subtype == SIMDEVTYPE_SIMWIND || ds->dev_subtype == SIMDEVTYPE_SHIFTLIGHTS || ds->dev_subtype == SIMDEVTYPE_SERIALHAPTIC)
     {
         if (device_settings != NULL)
         {
             const char* temp;
             config_setting_lookup_string(device_settings, "devpath", &temp);
             ds->serialdevsettings.portdev = strdup(temp);
+
+            int motorposition = 8;
+            config_setting_lookup_int(device_settings, "motors", &motorposition);
+            ds->serialdevsettings.motorsposition = motorposition;
+
+            double ampfactor = 1.0;
+            ds->serialdevsettings.ampfactor = 1.0;
+            int found = config_setting_lookup_float(device_settings, "ampfactor", &ampfactor);
+            if(found == 0)
+            {
+                ds->serialdevsettings.ampfactor = 1.0;
+            }
+            else
+            {
+                ds->serialdevsettings.ampfactor = ampfactor;
+                slogt("Set ampflication factor for motors to %f", ampfactor);
+            }
         }
+
     }
 
     return error;

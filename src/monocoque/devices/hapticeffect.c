@@ -4,6 +4,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <jansson.h>
+#include <math.h>
 
 #include "usbhapticdevice.h"
 #include "../../helper/confighelper.h"
@@ -22,8 +23,10 @@ bool hasTyreDiameter(SimData* simdata)
 {
     if (simdata->tyrediameter[0] == -1 || simdata->tyrediameter[1] == -1 || simdata->tyrediameter[2] == -1 || simdata->tyrediameter[3] == -1)
     {
+        slogt("failed to find tyre diameter data");
         return false;
     }
+    slogt("tyre diameter data found");
     return true;
 }
 
@@ -282,21 +285,22 @@ void getTyreDiameter(SimData* simdata)
 }
 
 
-int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int useconfig, int* configcheck, char* configfile)
+double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int useconfig, int* configcheck, char* configfile)
 {
-    int play = 0;
+    double play = 0;
     double wheelslip[4];
     wheelslip[0] = 0;
     wheelslip[1] = 0;
     wheelslip[2] = 0;
     wheelslip[3] = 0;
 
+    slogt("wheel vibration calculation");
+
     switch (effecttype)
     {
         case (EFFECT_TYRESLIP):
         case (EFFECT_TYRELOCK):
         case (EFFECT_ABSBRAKES):
-
             if(hasTyreDiameter(simdata)==false)
             {
                 // check for saved tyre diameter in config file
@@ -321,6 +325,7 @@ int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int
             if(hasTyreDiameter(simdata)==true)
             {
                 double Speedms = kmhtoms * simdata->velocity;
+                slogt("attempting wheel slip calculation");
                 if (Speedms > minspeedinms)
                 {
                     for(int i = 0; i < 4; i++)
@@ -338,6 +343,8 @@ int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int
 
             }
             break;
+        default:
+            slogt("Unknown effect type");
     }
 
     switch (effecttype)
@@ -349,28 +356,28 @@ int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int
             {
                 if(wheelslip[0] < -threshold)
                 {
-                    play++;
+                    play += fabs(wheelslip[0]) - fabs(threshold);
                 }
             }
             if (tyre == FRONTRIGHT || tyre == FRONTS || tyre == ALLFOUR)
             {
                 if(wheelslip[1] < -threshold)
                 {
-                    play++;
+                    play += fabs(wheelslip[1]) - fabs(threshold);
                 }
             }
             if (tyre == REARLEFT || tyre == REARS || tyre == ALLFOUR)
             {
                 if(wheelslip[2] < -threshold)
                 {
-                    play++;
+                    play += fabs(wheelslip[2]) - fabs(threshold);
                 }
             }
             if (tyre == REARRIGHT || tyre == REARS || tyre == ALLFOUR)
             {
                 if(wheelslip[3] < -threshold)
                 {
-                    play++;
+                    play += fabs(wheelslip[3]) - fabs(threshold);
                 }
             }
 
@@ -381,28 +388,28 @@ int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int
             {
                 if(wheelslip[0] > threshold)
                 {
-                    play++;
+                    play += wheelslip[0] - threshold;
                 }
             }
             if (tyre == FRONTRIGHT || tyre == FRONTS || tyre == ALLFOUR)
             {
                 if(wheelslip[1] > threshold)
                 {
-                    play++;
+                    play += wheelslip[1] - threshold;
                 }
             }
             if (tyre == REARLEFT || tyre == REARS || tyre == ALLFOUR)
             {
                 if(wheelslip[2] > threshold)
                 {
-                    play++;
+                    play += wheelslip[2] - threshold;
                 }
             }
             if (tyre == REARRIGHT || tyre == REARS || tyre == ALLFOUR)
             {
                 if(wheelslip[3] > threshold)
                 {
-                    play++;
+                    play += wheelslip[3] - threshold;
                 }
             }
 
@@ -413,28 +420,28 @@ int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int
             {
                 if(wheelslip[0] > threshold)
                 {
-                    play++;
+                    play += wheelslip[0] - threshold;
                 }
             }
             if (tyre == FRONTRIGHT || tyre == FRONTS || tyre == ALLFOUR)
             {
                 if(wheelslip[1] > threshold)
                 {
-                    play++;
+                    play += wheelslip[1] - threshold;
                 }
             }
             if (tyre == REARLEFT || tyre == REARS || tyre == ALLFOUR)
             {
                 if(wheelslip[2] > threshold)
                 {
-                    play++;
+                    play += wheelslip[2] - threshold;
                 }
             }
             if (tyre == REARRIGHT || tyre == REARS || tyre == ALLFOUR)
             {
                 if(wheelslip[3] > threshold)
                 {
-                    play++;
+                    play += wheelslip[3] - threshold;
                 }
             }
             if(simdata->abs <= 0)
@@ -443,7 +450,7 @@ int slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int
             }
             break;
     }
-    
+
     return play;
 }
 
