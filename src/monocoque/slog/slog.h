@@ -31,11 +31,12 @@ extern "C" {
 
 #include <inttypes.h>
 #include <pthread.h>
+#include <stdint.h>
 
 /* SLog version information */
 #define SLOG_VERSION_MAJOR      1
 #define SLOG_VERSION_MINOR      8
-#define SLOG_BUILD_NUM          26
+#define SLOG_BUILD_NUMBER       37
 
 /* Supported colors */
 #define SLOG_COLOR_NORMAL       "\x1B[0m"
@@ -73,19 +74,18 @@ extern "C" {
 #define SLOG_EMPTY              ""
 #define SLOG_NUL                '\0'
 
-typedef struct SLogDate
-{
+typedef struct slog_date {
     uint16_t nYear;
     uint8_t nMonth;
     uint8_t nDay;
     uint8_t nHour;
     uint8_t nMin;
     uint8_t nSec;
-    uint8_t nUsec;
+    uint16_t nUsec;
 } slog_date_t;
 
-uint8_t slog_get_usec();
-void slog_get_date(slog_date_t* pDate);
+uint16_t slog_get_usec();
+void slog_get_date(slog_date_t *pDate);
 
 /* Log level flags */
 typedef enum
@@ -100,7 +100,7 @@ typedef enum
     SLOG_FATAL = (1 << 7)
 } slog_flag_t;
 
-typedef int(*slog_cb_t)(const char* pLog, size_t nLength, slog_flag_t eFlag, void* pCtx);
+typedef int(*slog_cb_t)(const char *pLog, size_t nLength, slog_flag_t eFlag, void *pCtx);
 
 /* Output coloring control flags */
 typedef enum
@@ -117,32 +117,25 @@ typedef enum
     SLOG_DATE_FULL
 } slog_date_ctrl_t;
 
-#define slog(...) \
-    slog_display(SLOG_NOTAG, 1, __VA_ARGS__)
+/* Slog function definitions */
+#define slog(...) slog_display(SLOG_NOTAG, 1, __VA_ARGS__)
+#define slog_note(...) slog_display(SLOG_NOTE, 1, __VA_ARGS__)
+#define slog_info(...) slog_display(SLOG_INFO, 1, __VA_ARGS__)
+#define slog_warn(...) slog_display(SLOG_WARN, 1, __VA_ARGS__)
+#define slog_debug(...) slog_display(SLOG_DEBUG, 1, __VA_ARGS__)
+#define slog_error(...) slog_display(SLOG_ERROR, 1, __VA_ARGS__)
+#define slog_trace(...) slog_display(SLOG_TRACE, 1, SLOG_THROW_LOCATION __VA_ARGS__)
+#define slog_fatal(...) slog_display(SLOG_FATAL, 1, SLOG_THROW_LOCATION __VA_ARGS__)
 
-#define slogwn(...) \
-    slog_display(SLOG_NOTAG, 0, __VA_ARGS__)
-
-#define slog_note(...) \
-    slog_display(SLOG_NOTE, 1, __VA_ARGS__)
-
-#define slog_info(...) \
-    slog_display(SLOG_INFO, 1, __VA_ARGS__)
-
-#define slog_warn(...) \
-    slog_display(SLOG_WARN, 1, __VA_ARGS__)
-
-#define slog_debug(...) \
-    slog_display(SLOG_DEBUG, 1, __VA_ARGS__)
-
-#define slog_error(...) \
-    slog_display(SLOG_ERROR, 1, __VA_ARGS__)
-
-#define slog_trace(...) \
-    slog_display(SLOG_TRACE, 1, SLOG_THROW_LOCATION __VA_ARGS__)
-
-#define slog_fatal(...) \
-    slog_display(SLOG_FATAL, 1, SLOG_THROW_LOCATION __VA_ARGS__)
+/* No new line definitions */
+#define slog_wn(...) slog_display(SLOG_NOTAG, 0, __VA_ARGS__)
+#define slog_note_wn(...) slog_display(SLOG_NOTE, 0, __VA_ARGS__)
+#define slog_info_wn(...) slog_display(SLOG_INFO, 0, __VA_ARGS__)
+#define slog_warn_wn(...) slog_display(SLOG_WARN, 0, __VA_ARGS__)
+#define slog_debug_wn(...) slog_display(SLOG_DEBUG, 0, __VA_ARGS__)
+#define slog_error_wn(...) slog_display(SLOG_ERROR, 0, __VA_ARGS__)
+#define slog_trace_wn(...) slog_display(SLOG_TRACE, 0, SLOG_THROW_LOCATION __VA_ARGS__)
+#define slog_fatal_wn(...) slog_display(SLOG_FATAL, 0, SLOG_THROW_LOCATION __VA_ARGS__)
 
 /* Short name definitions */
 #define slogn(...) slog_note(__VA_ARGS__)
@@ -153,40 +146,50 @@ typedef enum
 #define slogt(...) slog_trace(__VA_ARGS__)
 #define slogf(...) slog_fatal(__VA_ARGS__)
 
-typedef struct SLogConfig
-{
-    slog_date_ctrl_t eDateControl;     // Display output with date format
-    slog_coloring_t eColorFormat;      // Output color format control
-    slog_cb_t logCallback;             // Log callback to collect logs
-    void* pCallbackCtx;                // Data pointer passed to log callback
+/* Short name definitions without new line */
+#define slogn_wn(...) slog_note_wn(__VA_ARGS__)
+#define slogi_wn(...) slog_info_wn(__VA_ARGS__)
+#define slogw_wn(...) slog_warn_wn(__VA_ARGS__)
+#define slogd_wn(...) slog_debug_wn( __VA_ARGS__)
+#define sloge_wn(...) slog_error_wn( __VA_ARGS__)
+#define slogt_wn(...) slog_trace_wn(__VA_ARGS__)
+#define slogf_wn(...) slog_fatal_wn(__VA_ARGS__)
 
-    uint8_t nTraceTid;                 // Trace thread ID and display in output
-    uint8_t nToScreen;                 // Enable screen logging
-    uint8_t nUseHeap;                  // Use dynamic allocation
-    uint8_t nToFile;                   // Enable file logging
-    uint8_t nIndent;                   // Enable indentations
-    uint8_t nFlush;                    // Flush stdout after screen log
-    uint16_t nFlags;                   // Allowed log level flags
+typedef struct SLogConfig {
+    slog_date_ctrl_t eDateControl;      // Display output with date format
+    slog_coloring_t eColorFormat;       // Output color format control
+    slog_cb_t logCallback;              // Log callback to collect logs
+    void* pCallbackCtx;                 // Data pointer passed to log callback
+
+    uint8_t nKeepOpen;                  // Keep file handle open for next file writes
+    uint8_t nTraceTid;                  // Trace thread ID and display in output
+    uint8_t nToScreen;                  // Enable screen logging
+    uint8_t nUseHeap;                   // Use dynamic allocation
+    uint8_t nToFile;                    // Enable file logging
+    uint8_t nIndent;                    // Enable indentations
+    uint8_t nRotate;                    // Enable log rotation
+    uint8_t nFlush;                     // Flush stdout after screen log
+    uint16_t nFlags;                    // Allowed log level flags
 
     char sSeparator[SLOG_NAME_MAX];     // Separator between info and log
     char sFileName[SLOG_NAME_MAX];      // Output file name for logs
     char sFilePath[SLOG_PATH_MAX];      // Output file path for logs
 } slog_config_t;
 
-size_t slog_version(char* pDest, size_t nSize, uint8_t nMin);
-void slog_config_get(slog_config_t* pCfg);
-void slog_config_set(slog_config_t* pCfg);
+const char* slog_version(uint8_t nShort);
+void slog_config_get(slog_config_t *pCfg);
+void slog_config_set(slog_config_t *pCfg);
 
-void slog_separator_set(const char* pFormat, ...);
-void slog_callback_set(slog_cb_t callback, void* pContext);
+void slog_separator_set(const char *pFormat, ...);
+void slog_callback_set(slog_cb_t callback, void *pContext);
 void slog_indent(uint8_t nEnable);
 
 void slog_enable(slog_flag_t eFlag);
 void slog_disable(slog_flag_t eFlag);
 
 void slog_init(const char* pName, uint16_t nFlags, uint8_t nTdSafe);
-void slog_display(slog_flag_t eFlag, uint8_t nNewLine, const char* pFormat, ...);
-void slog_destroy(); // Needed only if the slog_init() function argument nTdSafe > 0
+void slog_display(slog_flag_t eFlag, uint8_t nNewLine, char *pFormat, ...);
+void slog_destroy(); // Required only if (nTdSafe > 0 || nKeepOpen > 0)
 
 #ifdef __cplusplus
 }
