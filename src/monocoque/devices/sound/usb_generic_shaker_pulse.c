@@ -92,7 +92,7 @@ int usb_generic_shaker_free(SoundDevice* sounddevice)
     return err;
 }
 
-int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* mainloop, pa_context* context, const char* devname, int volume, int pan, const char* streamname)
+int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* mainloop, pa_context* context, const char* devname, int volume, int pan, int channels, const char* streamname)
 {
     pa_stream *stream;
 
@@ -100,12 +100,13 @@ int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* main
     pa_sample_spec sample_specifications;
     sample_specifications.format = FORMAT;
     sample_specifications.rate = SAMPLE_RATE;
-    sample_specifications.channels = 2;
+    sample_specifications.channels = channels;
 
 
     pa_channel_map channel_map;
-    pa_channel_map_init_stereo(&channel_map);
-    pa_channel_map_parse(&channel_map, "front-left,front-right");
+    pa_channel_map_init_auto(&channel_map, channels, PA_CHANNEL_MAP_DEFAULT);
+    //pa_channel_map_init_stereo(&channel_map);
+    //pa_channel_map_parse(&channel_map, "front-left,front-right");
 
 
     stream = pa_stream_new(context, streamname, &sample_specifications, &channel_map);
@@ -128,25 +129,24 @@ int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* main
     buffer_attr.prebuf = (uint32_t) -1;
     buffer_attr.minreq = (uint32_t) -1;
 
-    pa_cvolume cv;
+    pa_cvolume* cv;
+    pa_cvolume_mute(cv, channels);
     uint16_t pvolume =  ceil(((double) volume/100.0d)*65535);
     // Settings copied as per the chromium browser source
 
     pa_stream_flags_t stream_flags;
     stream_flags = PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_NOT_MONOTONIC | PA_STREAM_AUTO_TIMING_UPDATE | PA_STREAM_ADJUST_LATENCY | PA_STREAM_START_CORKED;
 
-    // Connect stream to the default audio output sink
-    pa_cvolume_set(&cv, sample_specifications.channels, pvolume);
 
-    pa_cvolume_set_balance(&cv, &channel_map, pan);
+    cv->values[pan] = pvolume;
 
-    assert(pa_stream_connect_playback(stream, devname, &buffer_attr, stream_flags, &cv, NULL) == 0);
+    assert(pa_stream_connect_playback(stream, devname, &buffer_attr, stream_flags, cv, NULL) == 0);
 
     // Wait for the stream to be ready
     for(;;) {
         pa_stream_state_t stream_state = pa_stream_get_state(stream);
         assert(PA_STREAM_IS_GOOD(stream_state));
-        if (stream_state == PA_STREAM_READY) break;
+    if (stream_state == PA_STREAM_READY) break;
         pa_threaded_mainloop_wait(mainloop);
     }
 

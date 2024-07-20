@@ -129,6 +129,7 @@ typedef struct
     int lowbound_frequency;
     int upperbound_frequency;
     int pan;
+    int channels;
     double duration;
     char* dev;
 }

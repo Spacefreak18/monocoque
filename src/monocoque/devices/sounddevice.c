@@ -109,7 +109,7 @@ int sounddev_free(SimDevice* this)
     return 0;
 }
 
-int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int frequency, int pan, double duration, double threshold)
+int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int frequency, int pan, int channels, double duration, double threshold)
 {
     slogi("initializing standalone sound device...");
 
@@ -117,6 +117,7 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int
     slogi("volume is: %i", volume);
     slogi("frequency is: %i", frequency);
     slogi("pan is: %i", pan);
+    slogi("channels is: %i", channels);
     slogi("duration is: %f", duration);
 
 
@@ -165,7 +166,7 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int
 
     //pa_threaded_mainloop* mainloop;
     //pa_context* context;
-    usb_generic_shaker_init(sounddevice, mainloop, context, devname, volume, pan, streamname);
+    usb_generic_shaker_init(sounddevice, mainloop, context, devname, volume, pan, channels, streamname);
 #else
     usb_generic_shaker_init(sounddevice);
 #endif
@@ -219,7 +220,7 @@ SoundDevice* new_sound_device(DeviceSettings* ds, MonocoqueSettings* ms) {
 
     slogt("Attempting to use device %s", ds->sounddevsettings.dev);
 
-    int error = sounddev_init(this, ds->sounddevsettings.dev, ds->sounddevsettings.volume, ds->sounddevsettings.frequency, ds->sounddevsettings.pan, ds->sounddevsettings.duration, ds->threshold);
+    int error = sounddev_init(this, ds->sounddevsettings.dev, ds->sounddevsettings.volume, ds->sounddevsettings.frequency, ds->sounddevsettings.pan, ds->sounddevsettings.channels, ds->sounddevsettings.duration, ds->threshold);
     if (error != 0)
     {
         free(this);

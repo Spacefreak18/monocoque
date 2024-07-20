@@ -376,6 +376,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
             ds->sounddevsettings.lowbound_frequency = -1;
             ds->sounddevsettings.upperbound_frequency = -1;
             ds->sounddevsettings.pan = 0;
+            ds->sounddevsettings.channels = 1;
             ds->sounddevsettings.duration = 2.0;
             if (ds->effect_type == EFFECT_GEARSHIFT)
             {
@@ -387,6 +388,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
                 config_setting_lookup_int(device_settings, "volume", &ds->sounddevsettings.volume);
                 config_setting_lookup_int(device_settings, "frequency", &ds->sounddevsettings.frequency);
                 config_setting_lookup_int(device_settings, "pan", &ds->sounddevsettings.pan);
+                config_setting_lookup_int(device_settings, "channels", &ds->sounddevsettings.channels);
                 config_setting_lookup_float(device_settings, "duration", &ds->sounddevsettings.duration);
 
                 const char* temp;
