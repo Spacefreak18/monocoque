@@ -50,6 +50,15 @@ to use the pulseaudio backend use this cmake command
 ```
 cmake -DUSE_PULSEAUDIO=YES ..
 ```
+## Bass Shaker Sound Devices
+
+When using pulseaudio it is necesarry to provide a devid in the configuration. You can find this with:
+
+```
+pacmd list-sinks
+pacmd list-sinks | grep name:
+```
+analyze the output to determine the appropriate hardware to which you would like to output the effects.
 
 ## Using Arduino Devices
 
@@ -89,7 +98,7 @@ make  # Make sure serial connection is the same as on the host pc and it have th
 ### SimHaptic Ardunio Motor Connection
 - Acc Pedal Motor to be connected to M1 
 - Brake Pedal Motor to be connected to M3
-
+- you can actually connect the motors how you wish, but you'd have to make the appropriate changes to the config and to the arduino sketch.
 
 ## Testing
 ```
