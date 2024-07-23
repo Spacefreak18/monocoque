@@ -105,12 +105,27 @@ int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* main
     pa_channel_map channel_map;
     pa_channel_map_init_auto(&channel_map, channels, PA_CHANNEL_MAP_DEFAULT);
     //pa_channel_map_init_stereo(&channel_map);
-    //pa_channel_map_parse(&channel_map, "front-left,front-right");
 
+    // not sure about what to do here
+    if(channels == 2)
+    {
+        pa_channel_map_parse(&channel_map, "front-left,front-right");
+    }
+    if(channels == 4)
+    {
+        pa_channel_map_parse(&channel_map, "front-left,front-right,rear-left,rear-right");
+    }
+    if(channels == 6)
+    {
+        pa_channel_map_parse(&channel_map, "front-left,front-right,rear-left,rear-right,front-center,lfe");
+    }
+    if(channels == 8)
+    {
+        pa_channel_map_parse(&channel_map, "front-left,front-right,rear-left,rear-right,front-center,lfe,side-left,side-right");
+    }
 
     stream = pa_stream_new(context, streamname, &sample_specifications, &channel_map);
     pa_stream_set_state_callback(stream, stream_state_cb, mainloop);
-
 
     if (sounddevice->m.hapticeffect.effecttype == EFFECT_GEARSHIFT)
     {
@@ -128,17 +143,19 @@ int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* main
     buffer_attr.prebuf = (uint32_t) -1;
     buffer_attr.minreq = (uint32_t) -1;
 
-    pa_cvolume* cv;
-    pa_cvolume_mute(cv, channels);
+    pa_cvolume cv;
+    pa_cvolume_mute(&cv, channels);
 
     pa_volume_t channel_volume = PA_CLAMP_VOLUME((pa_volume_t)((volume/100.d)*PA_VOLUME_NORM));
 
     pa_stream_flags_t stream_flags;
     stream_flags = PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_NOT_MONOTONIC | PA_STREAM_AUTO_TIMING_UPDATE | PA_STREAM_ADJUST_LATENCY | PA_STREAM_START_CORKED;
 
-    cv->values[pan] = channel_volume;
 
-    assert(pa_stream_connect_playback(stream, devname, &buffer_attr, stream_flags, cv, NULL) == 0);
+    // for now i'm only supporting playing on one specified channel which is the concept you should build your setups around
+    cv.values[pan] = channel_volume;
+
+    assert(pa_stream_connect_playback(stream, devname, &buffer_attr, stream_flags, &cv, NULL) == 0);
 
     // Wait for the stream to be ready
     for(;;) {
@@ -147,7 +164,6 @@ int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* main
     if (stream_state == PA_STREAM_READY) break;
         pa_threaded_mainloop_wait(mainloop);
     }
-
 
     //pa_threaded_mainloop_unlock(mainloop);
 
