@@ -232,7 +232,7 @@ int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdat
     }
 
     fprintf(stdout, "\n");
-    int r = simfree(simdata, simmap);
+    int r = simfree(simdata, simmap, p->sim);
     slogd("simfree returned %i", r);
 
     return 0;
@@ -314,7 +314,7 @@ int looper(SimDevice* devices, int numdevices, Parameters* p)
     fflush(stdout);
     tcsetattr(0, TCSANOW, &canonicalmode);
 
-    int r = simfree(simdata, simmap);
+    int r = simfree(simdata, simmap, p->sim);
     slogd("simfree returned %i", r);
     free(simdata);
     free(simmap);
