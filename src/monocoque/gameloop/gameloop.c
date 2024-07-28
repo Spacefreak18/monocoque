@@ -190,6 +190,7 @@ int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdat
     int t=0;
     int s=0;
     go2 = true;
+    slogd("game data found, starting game loop");
     while (go2 == true && simdata->simstatus > 1)
     {
         simdatamap(simdata, simmap, p->sim);
@@ -214,6 +215,7 @@ int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdat
     	    scanf("%c", &ch);
     	    if(ch == 'q')
     	    {
+                slogd("User gameloop exit requested.");
     	        go2 = false;
     	    }
     	}
@@ -230,6 +232,7 @@ int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdat
     }
 
     fprintf(stdout, "\n");
+    simfree(simdata, simmap);
 
     return 0;
 }
@@ -299,6 +302,7 @@ int looper(SimDevice* devices, int numdevices, Parameters* p)
                 scanf("%c", &ch);
                 if(ch == 'q')
                 {
+                    slogd("User application exit requested.");
                     go = false;
                 }
             }
@@ -309,6 +313,7 @@ int looper(SimDevice* devices, int numdevices, Parameters* p)
     fflush(stdout);
     tcsetattr(0, TCSANOW, &canonicalmode);
 
+    simfree(simdata, simmap);
     free(simdata);
     free(simmap);
 
