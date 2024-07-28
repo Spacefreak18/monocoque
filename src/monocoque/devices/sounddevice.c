@@ -124,13 +124,13 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int
     slogi("duration is: %f", duration);
 
 
-    sounddevice->sounddata.frequency = frequency;
+    sounddevice->sounddata.frequency = 0;
     //sounddevice->sounddata.pitch = 1;
     //sounddevice->sounddata.pitch = 261.626;
     //sounddevice->sounddata.amp = 32;
     //sounddevice->sounddata.left_phase = sounddevice->sounddata.right_phase = 0;
     //sounddevice->sounddata.table_size = 48000/(100/60);
-    sounddevice->sounddata.curr_frequency = 100/60;
+    sounddevice->sounddata.curr_frequency = 0;
 
 
 
