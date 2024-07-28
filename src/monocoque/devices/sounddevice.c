@@ -42,7 +42,8 @@ int sounddev_tyreslip_update(SimDevice* this, SimData* simdata)
 {
     SoundDevice* sounddevice = (void *) this->derived;
 
-    int play = slipeffect(simdata, this->hapticeffect.effecttype, this->hapticeffect.tyre, this->hapticeffect.threshold, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
+    double play = slipeffect(simdata, this->hapticeffect.effecttype, this->hapticeffect.tyre, this->hapticeffect.threshold, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
+    slogt("Updating sound device frequency from original effect %f", play);
 
     if (play > 0)
     {
@@ -54,13 +55,14 @@ int sounddev_tyreslip_update(SimDevice* this, SimData* simdata)
         sounddevice->sounddata.curr_frequency = 0;
         sounddevice->sounddata.curr_duration = 0;
     }
+
 }
 
 int sounddev_tyrelock_update(SimDevice* this, SimData* simdata)
 {
     SoundDevice* sounddevice = (void *) this->derived;
 
-    int play = slipeffect(simdata, this->hapticeffect.effecttype, this->hapticeffect.tyre, this->hapticeffect.threshold, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
+    double play = slipeffect(simdata, this->hapticeffect.effecttype, this->hapticeffect.tyre, this->hapticeffect.threshold, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
 
     if (play > 0)
     {
@@ -77,10 +79,11 @@ int sounddev_tyrelock_update(SimDevice* this, SimData* simdata)
 int sounddev_absbrakes_update(SimDevice* this, SimData* simdata)
 {
     SoundDevice* sounddevice = (void *) this->derived;
+    double play = slipeffect(simdata, this->hapticeffect.effecttype, this->hapticeffect.tyre, this->hapticeffect.threshold, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
 
-    if (simdata->abs > 0)
+    if (play > 0)
     {
-        sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency;
+        sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency * play;
         sounddevice->sounddata.curr_duration = sounddevice->sounddata.duration;
     }
     else
