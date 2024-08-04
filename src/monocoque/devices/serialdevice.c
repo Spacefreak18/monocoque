@@ -79,17 +79,26 @@ int arduino_simhaptic_update(SimDevice* this, SimData* simdata)
     {
         if (motor == 0 || motor == 4 || motor == 7 || motor == 8 || motor == 10 || motor == 11 || motor == 13 || motor == 14)
         {
-            serialdevice->u.simhapticdata.effect1 = effectspeed;
-            serialdevice->u.simhapticdata.motor1 = 1;
-            slogt("Updating arduino haptic device speed motor speed %i on motor %i from original effect %f", serialdevice->u.simhapticdata.effect1, serialdevice->motorsposition, rplay);
+            if(play != serialdevice->u.simhapticdata.motor1)
+            {
+                serialdevice->u.simhapticdata.effect1 = effectspeed;
+                slogt("Updating arduino haptic device with effect type %i speed motor speed %i on motor %i from original effect %f", this->hapticeffect.effecttype, serialdevice->u.simhapticdata.effect1, serialdevice->motorsposition, rplay);
+            }
         }
         if (motor == 2 || motor == 6 || motor == 8 || motor == 9 || motor == 10 || motor == 11 || motor == 12 || motor == 14)
         {
-            serialdevice->u.simhapticdata.effect3 = effectspeed;
-            serialdevice->u.simhapticdata.motor3 = 1;
-            slogt("Updating arduino haptic device speed motor speed %i on motor %i from original effect %f", serialdevice->u.simhapticdata.effect3, serialdevice->motorsposition, rplay);
+            if(play != serialdevice->u.simhapticdata.motor3)
+            {
+                serialdevice->u.simhapticdata.effect3 = effectspeed;
+                slogt("Updating arduino haptic device with effect type %i speed motor speed %i on motor %i from original effect %f", this->hapticeffect.effecttype, serialdevice->u.simhapticdata.effect3, serialdevice->motorsposition, rplay);
+            }
         }
+
         serialdevice->state = play;
+        serialdevice->u.simhapticdata.motor1 = play;
+        serialdevice->u.simhapticdata.motor2 = play;
+        serialdevice->u.simhapticdata.motor3 = play;
+        serialdevice->u.simhapticdata.motor4 = play;
     }
 
     size_t size = sizeof(SimHapticData);
