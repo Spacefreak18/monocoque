@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 
 #include <hidapi/hidapi.h>
 
@@ -22,7 +23,7 @@ int cammusc5_update(WheelDevice* wheeldevice, int maxrpm, int rpm, int gear, int
     // byte 2 is number of lit leds, assuming 9 available leds,
     // if we send 10, all leds will blink singling a gear change
     // attempting to build in a margin before the maxrpm is achieved
-    int rpmmargin = .05*maxrpm;
+    int rpmmargin = ceil(.05*maxrpm);
     int rpminterval = (maxrpm-rpmmargin) / (num_avail_leds+1);
 
     int litleds = 0;
