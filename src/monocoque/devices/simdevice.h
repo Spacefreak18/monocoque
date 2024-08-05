@@ -73,7 +73,8 @@ typedef enum
 {
     USBDEV_UNKNOWN       = 0,
     USBDEV_TACHOMETER    = 1,
-    USBDEV_GENERICHAPTIC = 2
+    USBDEV_GENERICHAPTIC = 2,
+    USBDEV_WHEEL         = 3
 }
 USBType;
 
@@ -85,6 +86,7 @@ typedef struct
     union
     {
         TachDevice tachdevice;
+        WheelDevice wheeldevice;
         USBGenericHapticDevice hapticdevice;
     } u;
 }

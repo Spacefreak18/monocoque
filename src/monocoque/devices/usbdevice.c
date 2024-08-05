@@ -19,6 +19,9 @@ int usbdev_update(SimDevice* this, SimData* simdata)
         case USBDEV_TACHOMETER :
             tachdev_update(&usbdevice->u.tachdevice, simdata);
             break;
+        case USBDEV_WHEEL :
+            wheeldev_update(&usbdevice->u.wheeldevice, simdata);
+            break;
         case USBDEV_GENERICHAPTIC :
             usbhapticdev_update(&usbdevice->u.hapticdevice, simdata, this->hapticeffect.tyre, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
             break;
@@ -37,6 +40,9 @@ int usbdev_free(SimDevice* this)
         case USBDEV_UNKNOWN :
         case USBDEV_TACHOMETER :
             tachdev_free(&usbdevice->u.tachdevice);
+            break;
+        case USBDEV_WHEEL :
+            wheeldev_free(&usbdevice->u.wheeldevice);
             break;
         case USBDEV_GENERICHAPTIC :
             usbhapticdev_free(&usbdevice->u.hapticdevice);
@@ -60,6 +66,9 @@ int usbdev_init(USBDevice* usbdevice, DeviceSettings* ds)
         case USBDEV_TACHOMETER :
             error = tachdev_init(&usbdevice->u.tachdevice, ds);
             break;
+        case USBDEV_WHEEL :
+            error = wheeldev_init(&usbdevice->u.wheeldevice, ds);
+            break;
         case USBDEV_GENERICHAPTIC :
             error = usbhapticdev_init(&usbdevice->u.hapticdevice, ds);
             break;
@@ -81,8 +90,17 @@ USBDevice* new_usb_device(DeviceSettings* ds, MonocoqueSettings* ms) {
 
 
 
-
+    // TODO: turn this into a switch when we get more devices
     this->type = USBDEV_TACHOMETER;
+    if(ds->dev_subtype == SIMDEVTYPE_USBWHEEL)
+    {
+        this->type = USBDEV_WHEEL;
+    }
+
+
+    // really generic haptic isn't and shouldn't be it's own type
+    // it's an attribute that is added to a device via composition
+    // same if that haptic device is a serial device
     if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC)
     {
         this->m.hapticeffect.threshold = ds->threshold;

@@ -9,6 +9,8 @@ set(devices_source_files
   serialdevice.c
   tachdevice.h
   tachdevice.c
+  wheeldevice.h
+  wheeldevice.c
   usbhapticdevice.h
   usbhapticdevice.c
   hapticeffect.h
@@ -19,6 +21,8 @@ set(devices_source_files
   usb/revburner.c
   usb/cslelitev3.h
   usb/cslelitev3.c
+  usb/wheels/cammusc5.h
+  usb/wheels/cammusc5.c
   sound/usb_generic_shaker.h
   sound/usb_generic_shaker.c
   sound/usb_generic_shaker_pulse.c
