@@ -27,15 +27,20 @@ int cammusc5_update(WheelDevice* wheeldevice, int maxrpm, int rpm, int gear, int
     // byte 2 is number of lit leds, assuming 9 available leds,
     // if we send 10, all leds will blink singling a gear change
     // attempting to build in a margin before the maxrpm is achieved
-    int rpmmargin = ceil(.05*maxrpm);
-    int rpminterval = (maxrpm-rpmmargin) / (num_avail_leds+1);
-
     int litleds = 0;
-    for (int l = 1; l <= (num_avail_leds+1); l++)
+
+    if(rpm > 0 && maxrpm > 0)
     {
-        if(rpm >= (rpminterval * l))
+        int rpmmargin = ceil(.05*maxrpm);
+        int rpminterval = (maxrpm-rpmmargin) / (num_avail_leds+1);
+
+
+        for (int l = 1; l <= (num_avail_leds+1); l++)
         {
-            litleds = l;
+            if(rpm >= (rpminterval * l))
+            {
+                litleds = l;
+            }
         }
     }
     bytes[1] = litleds;
@@ -48,10 +53,12 @@ int cammusc5_update(WheelDevice* wheeldevice, int maxrpm, int rpm, int gear, int
     }
 
     // byte 4 is gear
-    bytes[4] = gear-1;
+    if(gear > 0)
+    {
+        bytes[4] = gear-1;
+    }
 
-    slogt("writing bytes %x%x%x%x%x from rpm %i velocity %i gear %i", bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], rpm, velocity, gear);
-
+    slogt("writing bytes x%02xx%02xx%02xx%02xx%02x from rpm %i velocity %i gear %i", bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], rpm, velocity, gear);
     if (wheeldevice->handle)
     {
         res = hid_write(wheeldevice->handle, bytes, cammusc5_hidupdate_buf_size);
