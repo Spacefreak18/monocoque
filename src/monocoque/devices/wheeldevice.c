@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "wheels/cammusc5.h"
+#include "usb/wheels/cammusc5.h"
 #include "wheeldevice.h"
-#include "../../helper/confighelper.h"
-#include "../../simulatorapi/simapi/simapi/simdata.h"
-#include "../../slog/slog.h"
+#include "../helper/confighelper.h"
+#include "../simulatorapi/simapi/simapi/simdata.h"
+#include "../slog/slog.h"
 
 int wheeldev_update(WheelDevice* wheeldevice, SimData* simdata)
 {
