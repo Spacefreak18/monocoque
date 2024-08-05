@@ -16,6 +16,10 @@ int cammusc5_update(WheelDevice* wheeldevice, int maxrpm, int rpm, int gear, int
 
     unsigned char bytes[cammusc5_hidupdate_buf_size];
    
+    for (int x = 0; x < cammusc5_hidupdate_buf_size; x++)
+    {
+        bytes[x] = 0x00;
+    }
     // byte 1 must be fc it seems
     bytes[0] = 0xFC;
 
@@ -27,11 +31,11 @@ int cammusc5_update(WheelDevice* wheeldevice, int maxrpm, int rpm, int gear, int
     int rpminterval = (maxrpm-rpmmargin) / (num_avail_leds+1);
 
     int litleds = 0;
-    for (int x = 1; x <= (num_avail_leds+1); x++)
+    for (int l = 1; l <= (num_avail_leds+1); l++)
     {
-        if(rpm >= (rpminterval * x))
+        if(rpm >= (rpminterval * l))
         {
-            litleds = x;
+            litleds = l;
         }
     }
     bytes[1] = litleds;
