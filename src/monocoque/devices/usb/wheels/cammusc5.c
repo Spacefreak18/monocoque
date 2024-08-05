@@ -45,7 +45,7 @@ int cammusc5_update(WheelDevice* wheeldevice, int maxrpm, int rpm, int gear, int
     }
 
     // byte 4 is gear
-    bytes[4] = gear+1;
+    bytes[4] = gear-1;
 
 
     if (wheeldevice->handle)
