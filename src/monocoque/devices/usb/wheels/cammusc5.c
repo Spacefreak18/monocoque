@@ -39,12 +39,13 @@ int cammusc5_update(WheelDevice* wheeldevice, int maxrpm, int rpm, int gear, int
     // bytes 2 and 3 are a 16 bit velocity
     if ( velocity > 0 )
     {
-        bytes[3] = (velocity >> 8) & 0xFF;
-        bytes[2] = velocity & 0xFF;
+        bytes[2] = (velocity >> 8) & 0xFF;
+        bytes[3] = velocity & 0xFF;
+        slogd("velocity bytes are %x and %x", bytes[2], bytes[3]);
     }
 
     // byte 4 is gear
-    bytes[4] = gear;
+    bytes[4] = gear+1;
 
 
     if (wheeldevice->handle)
