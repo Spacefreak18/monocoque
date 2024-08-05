@@ -78,7 +78,7 @@ int cammusc5_init(WheelDevice* wheeldevice)
 
     res = hid_init();
 
-    wheeldevice->handle = hid_open(0x3416, 0x0301, NULL);
+    wheeldevice->handle = hid_open(0x3416, 0x1021, NULL);
 
     if (!wheeldevice->handle)
     {
