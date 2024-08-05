@@ -45,12 +45,12 @@ int cammusc5_update(WheelDevice* wheeldevice, int maxrpm, int rpm, int gear, int
     {
         bytes[2] = (velocity >> 8) & 0xFF;
         bytes[3] = velocity & 0xFF;
-        slogd("velocity bytes are %x and %x", bytes[2], bytes[3]);
     }
 
     // byte 4 is gear
     bytes[4] = gear-1;
 
+    slogt("writing bytes %x%x%x%x%x from rpm %i velocity %i gear %i", bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], rpm, velocity, gear);
 
     if (wheeldevice->handle)
     {
