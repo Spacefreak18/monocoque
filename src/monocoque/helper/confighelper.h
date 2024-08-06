@@ -74,6 +74,21 @@ MotorPosition;
 
 typedef enum
 {
+    MONOCOQUE_GEAR_REVERSE = 0,
+    MONOCOQUE_GEAR_NEUTRAL = 1,
+    MONOCOQUE_GEAR_ONE     = 2,
+    MONOCOQUE_GEAR_TWO     = 3,
+    MONOCOQUE_GEAR_THREE   = 4,
+    MONOCOQUE_GEAR_FOUR    = 5,
+    MONOCOQUE_GEAR_FIVE    = 6,
+    MONOCOQUE_GEAR_SIX     = 7,
+    MONOCOQUE_GEAR_SEVEN   = 8,
+    MONOCOQUE_GEAR_EIGHT   = 9,
+}
+MonocoqueGear;
+
+typedef enum
+{
     MONOCOQUE_ERROR_NONE          = 0,
     MONOCOQUE_ERROR_UNKNOWN       = 1,
     MONOCOQUE_ERROR_INVALID_SIM   = 2,

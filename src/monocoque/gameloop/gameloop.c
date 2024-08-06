@@ -223,7 +223,7 @@ int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdat
 
     simdata->velocity = 0;
     simdata->rpms = 100;
-    simdata->gear = -1;
+    simdata->gear = MONOCOQUE_GEAR_NEUTRAL;
     for (int x = 0; x < numdevices; x++)
     {
         if (devices[x].initialized == true)
@@ -338,7 +338,7 @@ int tester(SimDevice* devices, int numdevices)
     tcsetattr(0, TCSANOW, &newsettings);
 
     fprintf(stdout, "\n");
-    simdata->gear = 0;
+    simdata->gear = MONOCOQUE_GEAR_NEUTRAL;
     simdata->velocity = 16;
     simdata->rpms = 100;
     simdata->maxrpm = 8000;
@@ -543,7 +543,7 @@ int tester(SimDevice* devices, int numdevices)
 
     simdata->velocity = 0;
     simdata->rpms = 100;
-    simdata->gear = -1;
+    simdata->gear = MONOCOQUE_GEAR_NEUTRAL;
     for (int x = 0; x < numdevices; x++)
     {
         if (devices[x].initialized == true)
