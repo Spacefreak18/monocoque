@@ -106,7 +106,7 @@ int main(int argc, char** argv)
     free(diameters_file_str);
 
     slogi("Loading configuration file: %s", config_file_str);
-    slogd("using diameters file %s", ms->tyre_diameter_config);
+    slogd("using diameters file %s %i", ms->tyre_diameter_config, ms->configcheck);
     config_t cfg;
     config_init(&cfg);
     config_setting_t* config_devices = NULL;
@@ -246,6 +246,7 @@ int main(int argc, char** argv)
             pulseaudio = true;
 #endif
 
+            ms->useconfig = 0;
             error = tester(devices, numdevices);
             if (error == MONOCOQUE_ERROR_NONE)
             {

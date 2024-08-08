@@ -43,9 +43,17 @@ int loadtyreconfig(SimData* simdata, char* configfile)
         return 1;
     }
 
+
     config_cars = config_lookup(&cfg, "cars");
 
+    if(config_cars == NULL)
+    {
+        config_destroy(&cfg);
+        return 1;
+    }
+
     int cars = config_setting_length(config_cars);
+
     int i = 0;
     while (i<cars)
     {
@@ -76,6 +84,7 @@ int loadtyreconfig(SimData* simdata, char* configfile)
         }
         i++;
     }
+
 
     config_destroy(&cfg);
 
@@ -294,7 +303,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
     wheelslip[2] = 0;
     wheelslip[3] = 0;
 
-    slogt("wheel vibration calculation");
+    slogt("wheel vibration calculation with wheel config set to %i configchecked %i configfile %s", useconfig, *configcheck, configfile);
 
     switch (effecttype)
     {
@@ -309,8 +318,13 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
                 // avoid many opens of the same file
                 if(useconfig == 1 && configfile != NULL && *configcheck == 0)
                 {
+                    slogt("loading tyre config");
                     int error = loadtyreconfig(simdata, configfile);
                     *configcheck = 1;
+                }
+                else
+                {
+                    slogd("Skipping config check");
                 }
 
                 if(hasTyreDiameter(simdata)==false)
@@ -318,7 +332,12 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
                     getTyreDiameter(simdata);
                     if(useconfig == 1 && hasTyreDiameter(simdata)==true)
                     {
+                        slogt("saving tyre config");
                         savetyreconfig(simdata, configfile);
+                    }
+                    else
+                    {
+                        slogd("Skipping tyre diameter save");
                     }
                 }
             }
