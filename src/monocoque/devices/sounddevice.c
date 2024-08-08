@@ -124,13 +124,14 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int
     slogi("duration is: %f", duration);
 
 
-    sounddevice->sounddata.frequency = 0;
+    sounddevice->sounddata.frequency = frequency;
     //sounddevice->sounddata.pitch = 1;
     //sounddevice->sounddata.pitch = 261.626;
     //sounddevice->sounddata.amp = 32;
     //sounddevice->sounddata.left_phase = sounddevice->sounddata.right_phase = 0;
     //sounddevice->sounddata.table_size = 48000/(100/60);
     sounddevice->sounddata.curr_frequency = 0;
+    sounddevice->sounddata.curr_duration = 0;
 
 
 
@@ -144,22 +145,18 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int
             //sounddevice->sounddata.left_phase = sounddevice->sounddata.right_phase = 0;
             //sounddevice->sounddata.table_size = 48000/(1);
             sounddevice->sounddata.duration = duration;
-            sounddevice->sounddata.curr_duration = duration;
             streamname = "Gear";
             break;
         case (EFFECT_TYRESLIP):
             sounddevice->sounddata.duration = duration;
-            sounddevice->sounddata.curr_duration = duration;
             streamname = "TyreSlip";
             break;
         case (EFFECT_TYRELOCK):
             sounddevice->sounddata.duration = duration;
-            sounddevice->sounddata.curr_duration = duration;
             streamname = "TyreLock";
             break;
         case (EFFECT_ABSBRAKES):
             sounddevice->sounddata.duration = duration;
-            sounddevice->sounddata.curr_duration = duration;
             streamname = "ABS";
             break;
     }
@@ -204,24 +201,48 @@ SoundDevice* new_sound_device(DeviceSettings* ds, MonocoqueSettings* ms) {
         case (EFFECT_TYRESLIP):
             this->m.hapticeffect.effecttype = EFFECT_TYRESLIP;
             this->m.hapticeffect.threshold = ds->threshold;
+
+            this->m.hapticeffect.threshold = ds->threshold;
+            slogt("Haptic effect: %i %i", this->m.hapticeffect.effecttype, ds->effect_type);
+            this->m.hapticeffect.tyre = ds->tyre;
+            this->m.hapticeffect.useconfig = ms->useconfig;
+            this->m.hapticeffect.configcheck = &ms->configcheck;
+            this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
+
             this->m.vtable = &tyreslip_sound_simdevice_vtable;
             slogi("Initializing sound device for tyre slip vibrations.");
             break;
         case (EFFECT_TYRELOCK):
             this->m.hapticeffect.effecttype = EFFECT_TYRELOCK;
             this->m.hapticeffect.threshold = ds->threshold;
+
+            this->m.hapticeffect.threshold = ds->threshold;
+            slogt("Haptic effect: %i %i", this->m.hapticeffect.effecttype, ds->effect_type);
+            this->m.hapticeffect.tyre = ds->tyre;
+            this->m.hapticeffect.useconfig = ms->useconfig;
+            this->m.hapticeffect.configcheck = &ms->configcheck;
+            this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
+
             this->m.vtable = &tyrelock_sound_simdevice_vtable;
             slogi("Initializing sound device for tyre slip vibrations.");
             break;
         case (EFFECT_ABSBRAKES):
             this->m.hapticeffect.effecttype = EFFECT_ABSBRAKES;
             this->m.hapticeffect.threshold = ds->threshold;
+
+            this->m.hapticeffect.threshold = ds->threshold;
+            slogt("Haptic effect: %i %i", this->m.hapticeffect.effecttype, ds->effect_type);
+            this->m.hapticeffect.tyre = ds->tyre;
+            this->m.hapticeffect.useconfig = ms->useconfig;
+            this->m.hapticeffect.configcheck = &ms->configcheck;
+            this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
+
             this->m.vtable = &absbrakes_sound_simdevice_vtable;
             slogi("Initializing sound device for abs vibrations.");
             break;
     }
 
-    slogt("Attempting to use device %s", ds->sounddevsettings.dev);
+    slogt("Attempting to use sound device %s", ds->sounddevsettings.dev);
 
     int error = sounddev_init(this, ds->sounddevsettings.dev, ds->sounddevsettings.volume, ds->sounddevsettings.frequency, ds->sounddevsettings.pan, ds->sounddevsettings.channels, ds->sounddevsettings.duration, ds->threshold);
     if (error != 0)
