@@ -101,7 +101,7 @@ int main(int argc, char** argv)
     }
 
     ms->tyre_diameter_config = strdup(diameters_file_str);
-    ms->useconfig = 1;
+    ms->useconfig = 0;
     ms->configcheck = 0;
     free(diameters_file_str);
 
@@ -210,6 +210,11 @@ int main(int argc, char** argv)
         error = MONOCOQUE_ERROR_NONE;
 
         setupsound();
+
+        if (p->program_action == A_PLAY)
+        {
+            ms->useconfig = 1;
+        }
         SimDevice* devices = malloc(numdevices * sizeof(SimDevice));
         int initdevices = devinit(devices, configureddevices, ds, ms);
         bool pulseaudio = false;
