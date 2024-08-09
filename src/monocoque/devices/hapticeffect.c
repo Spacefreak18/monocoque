@@ -43,14 +43,15 @@ int loadtyreconfig(SimData* simdata, char* configfile)
         return 1;
     }
 
-
     config_cars = config_lookup(&cfg, "cars");
 
     if(config_cars == NULL)
     {
+        slogd("diameters config file corrupted");
         config_destroy(&cfg);
         return 1;
     }
+    slogt("parsing diameters config file");
 
     int cars = config_setting_length(config_cars);
 
@@ -183,7 +184,7 @@ int loadtyreconfig(SimData* simdata, char* configfile)
 //    json_decref(cararray);
 //}
 
-void savetyreconfig(SimData* simdata, char* configfile)
+int savetyreconfig(SimData* simdata, char* configfile)
 {
     config_t cfg;
     config_setting_t* root;
@@ -204,6 +205,7 @@ void savetyreconfig(SimData* simdata, char* configfile)
         array = config_lookup(&cfg, "cars");
     }
 
+    // TODO add check to not add same car-sim combination twice
     carobject = config_setting_add(array, "cars", CONFIG_TYPE_GROUP);
 
     setting = config_setting_add(carobject, "car", CONFIG_TYPE_STRING);
@@ -227,6 +229,8 @@ void savetyreconfig(SimData* simdata, char* configfile)
     slogi("New configuration successfully written to: %s\n", configfile);
 
     config_destroy(&cfg);
+
+    return 0;
 }
 
 //void savetyreconfig(SimData* simdata, char* configfile)
@@ -310,34 +314,29 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
         case (EFFECT_TYRESLIP):
         case (EFFECT_TYRELOCK):
         case (EFFECT_ABSBRAKES):
-            if(hasTyreDiameter(simdata)==false)
+
+            if(useconfig == 1 && configfile != NULL)
             {
                 // check for saved tyre diameter in config file
                 // if not saved version exists get tyre diameter and save it
                 // use config check variable to track if the config check has been performed
                 // avoid many opens of the same file
-                if(useconfig == 1 && configfile != NULL && *configcheck == 0)
+                int error = 0;
+                if(hasTyreDiameter(simdata)==false && *configcheck == 0)
                 {
-                    slogt("loading tyre config");
-                    int error = loadtyreconfig(simdata, configfile);
+                    slogi("attempting load of tyre diameter config");
+                    error = loadtyreconfig(simdata, configfile);
                     *configcheck = 1;
-                }
-                else
-                {
-                    slogd("Skipping config check");
                 }
 
                 if(hasTyreDiameter(simdata)==false)
                 {
+                    slogt("could not find tyre diameter in config file, attempting to calculate new");
                     getTyreDiameter(simdata);
-                    if(useconfig == 1 && hasTyreDiameter(simdata)==true)
+                    if(hasTyreDiameter(simdata)==true)
                     {
-                        slogt("saving tyre config");
-                        savetyreconfig(simdata, configfile);
-                    }
-                    else
-                    {
-                        slogd("Skipping tyre diameter save");
+                        slogi("saving tyre config");
+                        error = savetyreconfig(simdata, configfile);
                     }
                 }
             }
@@ -364,7 +363,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
             }
             break;
         default:
-            slogt("Unknown effect type");
+            slogd("Unknown effect type");
     }
 
     switch (effecttype)
