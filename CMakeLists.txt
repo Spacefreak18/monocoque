@@ -20,30 +20,30 @@ set(CMAKE_EXE_LINKER_FLAGS "-Wl,--no-as-needed -ldl")
 set(LIBUSB_INCLUDE_DIR /usr/include/libusb-1.0)
 set(LIBXML_INCLUDE_DIR /usr/include/libxml2)
 
-FIND_PATH(LIBUSB_INCLUDE_DIR libusb.h
-	HINTS $ENV{LIBUSB_ROOT}
-	PATHS ${PC_LIBUSB_INCLUDEDIR} ${PC_LIBUSB_INCLUDE_DIRS}
-	PATH_SUFFIXES include)
-
-FIND_LIBRARY(LIBUSB_LIBRARY NAMES usb-1.0
-	HINTS $ENV{LIBUSB_ROOT}
-	PATHS ${PC_LIBUSB_LIBDIR} ${PC_LIBUSB_LIBRARY_DIRS}
-	PATH_SUFFIXES lib)
-
-set(HIDAPI_WITH_LIBUSB TRUE) # surely will be used only on Linux
+#FIND_PATH(LIBUSB_INCLUDE_DIR libusb.h
+#	HINTS $ENV{LIBUSB_ROOT}
+#	PATHS ${PC_LIBUSB_INCLUDEDIR} ${PC_LIBUSB_INCLUDE_DIRS}
+#	PATH_SUFFIXES include)
+#
+#FIND_LIBRARY(LIBUSB_LIBRARY NAMES usb-1.0
+#	HINTS $ENV{LIBUSB_ROOT}
+#	PATHS ${PC_LIBUSB_LIBDIR} ${PC_LIBUSB_LIBRARY_DIRS}
+#	PATH_SUFFIXES lib)
+#
+set(HIDAPI_WITH_LIBUSB FALSE) # surely will be used only on Linux
 set(BUILD_SHARED_LIBS TRUE) # HIDAPI as static library on all platforms
 
 add_executable(monocoque src/monocoque/monocoque.c)
 if(USE_PULSEAUDIO)
     message("Using pulseaudio backend...")
     add_compile_definitions(USE_PULSEAUDIO=true)
-    target_link_libraries(monocoque m ${LIBUSB_LIBRARY} hidapi-libusb pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi)
+    target_link_libraries(monocoque m hidapi-hidraw pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi)
 else()
     message("Using portaudio backend...")
-    target_link_libraries(monocoque m ${LIBUSB_LIBRARY} hidapi-libusb portaudio serialport xml2 argtable2 config gameloop helper devices slog simulatorapi)
+    target_link_libraries(monocoque m hidapi-hidraw portaudio serialport xml2 argtable2 config gameloop helper devices slog simulatorapi)
 endif()
 
-target_include_directories(monocoque PUBLIC config ${LIBUSB_INCLUDE_DIR} ${LIBXML_INCLUDE_DIR})
+target_include_directories(monocoque PUBLIC config ${LIBXML_INCLUDE_DIR})
 
 add_subdirectory(src/monocoque/gameloop)
 add_subdirectory(src/monocoque/simulatorapi)
@@ -51,15 +51,15 @@ add_subdirectory(src/monocoque/helper)
 add_subdirectory(src/monocoque/devices)
 add_subdirectory(src/monocoque/slog)
 
-add_executable(listusb tests/testlibusb.c)
-target_include_directories(listusb PUBLIC ${LIBUSB_INCLUDE_DIR})
-target_link_libraries(listusb ${LIBUSB_LIBRARY} portaudio)
-add_test(listusb list-usb-devices listusb)
+#add_executable(listusb tests/testlibusb.c)
+#target_include_directories(listusb PUBLIC)
+#target_link_libraries(listusb portaudio hidapi-hidraw)
+#add_test(listusb list-usb-devices listusb)
 
-add_executable(testrevburner tests/testrevburner.c)
-target_include_directories(testrevburner PUBLIC ${LIBUSB_INCLUDE_DIR})
-target_link_libraries(testrevburner ${LIBUSB_LIBRARY})
-add_test(testrevburner testrevburner)
+#add_executable(testrevburner tests/testrevburner.c)
+#target_include_directories(testrevburner PUBLIC)
+#target_link_libraries(testrevburner hidapi-hidraw)
+#add_test(testrevburner testrevburner)
 
 add_executable(listsound tests/pa_devs.c)
 target_include_directories(listsound PUBLIC)
@@ -67,13 +67,13 @@ target_link_libraries(listsound m portaudio)
 add_test(list-sound-devices listsound)
 
 add_executable(longsine tests/patest_longsine.c)
-target_include_directories(longsine PUBLIC ${LIBUSB_INCLUDE_DIR} ${LIBXML_INCLUDE_DIR})
-target_link_libraries(longsine ${LIBUSB_LIBRARY} m portaudio)
+target_include_directories(longsine PUBLIC ${LIBXML_INCLUDE_DIR})
+target_link_libraries(longsine m portaudio)
 add_test(longsine longsine)
 
 add_executable(parserevburnerxml tests/revburnerparsetest.c)
 target_include_directories(parserevburnerxml PUBLIC ${LIBXML_INCLUDE_DIR})
-target_link_libraries(parserevburnerxml ${LIBUSB_LIBRARY} portaudio xml2)
+target_link_libraries(parserevburnerxml portaudio xml2)
 add_test(parserevburnerxml parserevburnerxml)
 
 add_executable(setmem tests/setmem.c)
@@ -92,8 +92,8 @@ target_link_libraries(setsimdata)
 add_test(setsimdata setsimdata)
 
 add_executable(hidtest tests/hidtest.c)
-target_include_directories(hidtest PUBLIC ${LIBUSB_INCLUDE_DIR})
-target_link_libraries(hidtest ${LIBUSB_LIBRARY} hidapi-libusb)
+target_include_directories(hidtest PUBLIC)
+target_link_libraries(hidtest hidapi-hidraw)
 add_test(hidtest hidtest)
 
 add_executable(simlighttest tests/simlighttest.c)
