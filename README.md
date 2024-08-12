@@ -18,6 +18,17 @@ Cross Platform device manager for driving and flight simulators, for use with co
 - The support for haptic bass shakers is limited and needs the most work. So far the engine rev is a simple sine wave, which I find convincing. The gear shift event works but not convincing enough for me.
 - Choice of Portaudio or Pulseaudio backend.
 
+## Suported Games
+  - Using [SimSHMBridge](https://github.com/spacefreak18/simshmbridge)
+    - Asseto Corsa
+    - Assetto Corsa Competizione
+    - Project Cars 2
+    - Automobilista 2
+  
+  - Using [scs-sdk-plugin](https://github.com/jackz314/scs-sdk-plugin/releases)
+    - Euro Truck Simuator 2
+    - American Truck Simulator
+
 ## Dependencies
 - libserialport - arduino serial devices
 - hidapi - usb hid devices
