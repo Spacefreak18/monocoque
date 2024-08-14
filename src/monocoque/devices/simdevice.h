@@ -37,7 +37,8 @@ typedef struct {
 typedef enum
 {
     SERIALDEV_UNKNOWN       = 0,
-    SERIALDEV_ARDUINO       = 1
+    SERIALDEV_ARDUINO       = 1,
+    SERIALDEV_MOZA          = 2,
 }
 SerialType;
 
