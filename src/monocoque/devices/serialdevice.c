@@ -8,6 +8,7 @@
 #include "serialdevice.h"
 #include "hapticeffect.h"
 #include "serial/arduino.h"
+#include "serial/moza.h"
 #include "../helper/parameters.h"
 #include "../simulatorapi/simapi/simapi/simdata.h"
 #include "../slog/slog.h"
@@ -18,9 +19,16 @@ int serialdev_update(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
 
+    switch (serialdevice->type)
+    {
+    case SERIALDEV_MOZA:
+        moza_update(serialdevice, simdata->maxrpm, simdata->rpms);
+        break;
 
+    default:
+        arduino_update(serialdevice, simdata, sizeof(SimData));
+    }
 
-    arduino_update(serialdevice, simdata, sizeof(SimData));
     return 0;
 }
 
@@ -126,7 +134,16 @@ int serialdev_free(SimDevice* this)
 {
     SerialDevice* serialdevice = (void *) this->derived;
 
-    arduino_free(serialdevice);
+    switch (serialdevice->type)
+    {
+    case SERIALDEV_MOZA:
+        moza_free(serialdevice);
+        break;
+
+    default:
+        arduino_free(serialdevice);
+    }
+
 
     free(serialdevice);
     return 0;
@@ -145,6 +162,15 @@ int serialdev_init(SerialDevice* serialdevice, const char* portdev, int motorspo
     serialdevice->baud = baud;
 
     error = arduino_init(serialdevice, portdev);
+    switch (serialdevice->type)
+    {
+    case SERIALDEV_MOZA:
+        error = moza_init(serialdevice, portdev);
+        break;
+
+    default:
+        error = arduino_init(serialdevice, portdev);
+    }
 
     return error;
 }
