@@ -111,6 +111,9 @@ make  # Make sure serial connection is the same as on the host pc and it have th
 - Brake Pedal Motor to be connected to M3
 - you can actually connect the motors how you wish, but you'd have to make the appropriate changes to the config and to the arduino sketch.
 
+## Getting car tyre diameter for rumbles to work
+- User needs to start monocoque and drive the new ca straight at 70 kmph and then stop steering, acc or brake input 
+
 ## Testing
 ```
 ./monocoque test -vv # Make sure that ~/.config/monocque/monocoque.config only contains the devices you have connected.
