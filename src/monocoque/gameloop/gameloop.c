@@ -7,8 +7,11 @@
 #include <poll.h>
 #include <termios.h>
 #include <signal.h>
+#include <uv.h>
 
 #include "gameloop.h"
+#include "loopdata.h"
+
 #include "../helper/parameters.h"
 #include "../helper/confighelper.h"
 #include "../devices/simdevice.h"
@@ -22,15 +25,17 @@ bool go = false;
 bool go2 = false;
 struct sigaction act;
 
-void sighandler(int signum, siginfo_t* info, void* ptr)
-{
-    sloge("caught signal");
-    go = false;
-    go2 = false;
-    //gfx_clear(pixels, pixels_len);
-    //gfx_swapbuffers();
-    //gfx_close();
-}
+
+uv_idle_t idler;
+uv_timer_t datachecktimer;
+uv_timer_t datamaptimer;
+
+bool doui = false;
+int appstate = 0;
+
+void shmdatamapcallback(uv_timer_t* handle);
+void datacheckcallback(uv_timer_t* handle);
+void startdatalogger(MonocoqueSettings* ms, loop_data* l);
 
 int showstats(SimData* simdata)
 {
@@ -181,26 +186,61 @@ int showstats(SimData* simdata)
     fflush(stdout);
 }
 
-
-int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdata, SimMap* simmap)
+void shmdatamapcallback(uv_timer_t* handle)
 {
-    struct pollfd mypoll = { STDIN_FILENO, POLLIN|POLLPRI };
-    double update_rate = DEFAULT_UPDATE_RATE;
-    char ch;
-    int t=0;
-    int s=0;
-    go2 = true;
-    slogd("game data found, starting game loop");
-    while (go2 == true && simdata->simstatus > 1)
+
+    void* b = uv_handle_get_data((uv_handle_t*) handle);
+    loop_data* f = (loop_data*) b;
+    SimData* simdata = f->simdata;
+    SimMap* simmap = f->simmap;
+    MonocoqueSettings* ms = f->ms;
+    //appstate = 2;
+    if (appstate == 2)
     {
-        simdatamap(simdata, simmap, p->sim);
-        showstats(simdata);
-        t++;
-        s++;
-        if(simdata->rpms<100)
+        simdatamap(simdata, simmap, f->sim);
+
+        if (doui == true)
         {
-            simdata->rpms=100;
+            slogi("looking for ui config %s", ms->config_str);
+            int confignum = getconfigtouse(ms->config_str, simdata->car, f->sim);
+            int configureddevices;
+            configcheck(ms->config_str, confignum, &configureddevices);
+
+            DeviceSettings* ds = malloc(configureddevices * sizeof(DeviceSettings));
+            slogd("loading confignum %i, with %i devices.", confignum, configureddevices);
+
+            f->numdevices = uiloadconfig(ms->config_str, confignum, configureddevices, ms, ds);
+
+            f->simdevices = malloc(f->numdevices * sizeof(SimDevice));
+            int initdevices = devinit(f->simdevices, configureddevices, ds, ms);
+            int i = 0;
+            for( i = 0; i < configureddevices; i++)
+            {
+                settingsfree(ds[i]);
+            }
+            free(ds);
+            doui = false;
         }
+        else
+        {
+            showstats(simdata);
+            SimDevice* devices = f->simdevices;
+            int numdevices = f->numdevices;
+            for (int x = 0; x < numdevices; x++)
+            {
+                if (devices[x].initialized == true)
+                {
+                    devices[x].update(&devices[x], simdata);
+                }
+            }
+        }
+    }
+
+    if (f->simstate == false || simdata->simstatus <= 1 || appstate <= 1)
+    {
+        f->uion = false;
+        SimDevice* devices = f->simdevices;
+        int numdevices = f->numdevices;
 
         for (int x = 0; x < numdevices; x++)
         {
@@ -209,51 +249,82 @@ int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdat
                 devices[x].update(&devices[x], simdata);
             }
         }
-
-    	if( poll(&mypoll, 1, 1000.0/update_rate) )
-    	{
-    	    scanf("%c", &ch);
-    	    if(ch == 'q')
-    	    {
-                slogd("User gameloop exit requested.");
-    	        go2 = false;
-    	    }
-    	}
-    }
-
-    simdata->velocity = 0;
-    simdata->rpms = 100;
-    simdata->gear = MONOCOQUE_GEAR_NEUTRAL;
-    for (int x = 0; x < numdevices; x++)
-    {
-        if (devices[x].initialized == true)
+        for (int x = 0; x < numdevices; x++)
         {
-            devices[x].update(&devices[x], simdata);
+            if (devices[x].initialized == true)
+            {
+                devices[x].free(&devices[x]);
+            }
+        }
+        free(devices);
+        int r = simfree(simdata, simmap, f->sim);
+        slogd("simfree returned %i", r);
+        f->numdevices = 0;
+        slogi("stopped mapping data, press q again to quit");
+        //stopui(ms->ui_type, f);
+        // free loop data
+        uv_timer_stop(handle);
+        uv_timer_start(&datachecktimer, datacheckcallback, 3000, 1000);
+    }
+}
+
+void datacheckcallback(uv_timer_t* handle)
+{
+
+    void* b = uv_handle_get_data((uv_handle_t*) handle);
+    loop_data* f = (loop_data*) b;
+    SimData* simdata = f->simdata;
+    SimMap* simmap = f->simmap;
+
+    if ( appstate == 1 )
+    {
+        getSim(simdata, simmap, &f->simstate, &f->sim);
+    }
+    if (f->simstate == true)
+    {
+        if ( appstate == 1 )
+        {
+            appstate++;
+            doui = true;
+            uv_timer_start(&datamaptimer, shmdatamapcallback, 2000, 16);
+            uv_timer_stop(handle);
         }
     }
 
-    fprintf(stdout, "\n");
-    int r = simfree(simdata, simmap, p->sim);
-    slogd("simfree returned %i", r);
-
-    return 0;
+    if (appstate == 0)
+    {
+        slogi("stopping checking for data");
+        uv_timer_stop(handle);
+    }
 }
 
-int looper(SimDevice* devices, int numdevices, Parameters* p)
+void cb(uv_poll_t* handle, int status, int events)
 {
-    memset(&act, 0, sizeof(act));
-    act.sa_sigaction = sighandler;
-    act.sa_flags = SA_SIGINFO;
-    sigaction(SIGTERM, &act, NULL);
-    sigaction(SIGINT, &act, NULL);
-    sigaction(SIGTSTP, &act, NULL);
+    char ch;
+    scanf("%c", &ch);
+    if (ch == 'q')
+    {
+        appstate--;
+        slogi("User requested stop appstate is now %i", appstate);
+        fprintf(stdout, "User requested stop appstate is now %i\n", appstate);
+        fflush(stdout);
+    }
+
+    if (appstate == 0)
+    {
+        slogi("Monocoque is exiting...");
+        uv_timer_stop(&datachecktimer);
+        uv_poll_stop(handle);
+    }
+}
+
+
+
+int monocoque_mainloop(MonocoqueSettings* ms)
+{
 
     SimData* simdata = malloc(sizeof(SimData));
     SimMap* simmap = malloc(sizeof(SimMap));
-    simdata->tyrediameter[0] = -1;
-    simdata->tyrediameter[1] = -1;
-    simdata->tyrediameter[2] = -1;
-    simdata->tyrediameter[3] = -1;
 
     struct termios newsettings, canonicalmode;
     tcgetattr(0, &canonicalmode);
@@ -265,63 +336,189 @@ int looper(SimDevice* devices, int numdevices, Parameters* p)
     char ch;
     struct pollfd mypoll = { STDIN_FILENO, POLLIN|POLLPRI };
 
+    uv_poll_t* poll = (uv_poll_t*) malloc(uv_handle_size(UV_POLL));
+
+    loop_data* baton = (loop_data*) malloc(sizeof(loop_data));
+    baton->simmap = simmap;
+    baton->simdata = simdata;
+    baton->ms = ms;
+    baton->simstate = false;
+    baton->uion = false;
+    baton->sim = 0;
+    baton->req.data = (void*) baton;
+    uv_handle_set_data((uv_handle_t*) &datachecktimer, (void*) baton);
+    uv_handle_set_data((uv_handle_t*) &datamaptimer, (void*) baton);
+    uv_handle_set_data((uv_handle_t*) poll, (void*) baton);
+    appstate = 1;
+    slogd("setting initial app state");
+    uv_timer_init(uv_default_loop(), &datachecktimer);
     fprintf(stdout, "Searching for sim data... Press q to quit...\n");
-    p->simon = false;
-    double update_rate = SIM_CHECK_RATE;
-    go = true;
-    while (go == true)
+    uv_timer_start(&datachecktimer, datacheckcallback, 1000, 1000);
+
+
+    if (0 != uv_poll_init(uv_default_loop(), poll, 0))
     {
-        p->simon = false;
-        getSim(simdata, simmap, &p->simon, &p->sim);
+        return 1;
+    };
+    if (0 != uv_poll_start(poll, UV_READABLE, cb))
+    {
+        return 2;
+    };
 
-        if (p->simon == true && simdata->simstatus > 1)
-        {
-            slogi("preparing game loop with %i devices...", numdevices);
 
+    uv_timer_init(uv_default_loop(), &datamaptimer);
 
-            slogi("sending initial data to devices");
-            simdata->velocity = 16;
-            simdata->rpms = 100;
-            for (int x = 0; x < numdevices; x++)
-            {
-                devices[x].update(&devices[x], simdata);
-            }
-            sleep(3);
-
-            clilooper(devices, numdevices, p, simdata, simmap);
-        }
-        if (p->simon == true)
-        {
-            p->simon = false;
-            fprintf(stdout, "Searching for sim data... Press q again to quit...\n");
-            sleep(2);
-        }
-
-        if (poll(&mypoll, 1, 1000.0/update_rate) )
-        {
-            if (go != false )
-            {
-                scanf("%c", &ch);
-                if(ch == 'q')
-                {
-                    slogd("User application exit requested.");
-                    go = false;
-                }
-            }
-        }
-    }
-
+    uv_run(uv_default_loop(), UV_RUN_DEFAULT);
     fprintf(stdout, "\n");
     fflush(stdout);
     tcsetattr(0, TCSANOW, &canonicalmode);
 
-    int r = simfree(simdata, simmap, p->sim);
-    slogd("simfree returned %i", r);
     free(simdata);
     free(simmap);
 
     return 0;
 }
+
+//int clilooper(SimDevice* devices, int numdevices, Parameters* p, SimData* simdata, SimMap* simmap)
+//{
+//    struct pollfd mypoll = { STDIN_FILENO, POLLIN|POLLPRI };
+//    double update_rate = DEFAULT_UPDATE_RATE;
+//    char ch;
+//    int t=0;
+//    int s=0;
+//    go2 = true;
+//    slogd("game data found, starting game loop");
+//    while (go2 == true && simdata->simstatus > 1)
+//    {
+//        simdatamap(simdata, simmap, p->sim);
+//        showstats(simdata);
+//        t++;
+//        s++;
+//        if(simdata->rpms<100)
+//        {
+//            simdata->rpms=100;
+//        }
+//
+//        for (int x = 0; x < numdevices; x++)
+//        {
+//            if (devices[x].initialized == true)
+//            {
+//                devices[x].update(&devices[x], simdata);
+//            }
+//        }
+//
+//    	if( poll(&mypoll, 1, 1000.0/update_rate) )
+//    	{
+//    	    scanf("%c", &ch);
+//    	    if(ch == 'q')
+//    	    {
+//                slogd("User gameloop exit requested.");
+//    	        go2 = false;
+//    	    }
+//    	}
+//    }
+//
+//    simdata->velocity = 0;
+//    simdata->rpms = 100;
+//    simdata->gear = MONOCOQUE_GEAR_NEUTRAL;
+//    for (int x = 0; x < numdevices; x++)
+//    {
+//        if (devices[x].initialized == true)
+//        {
+//            devices[x].update(&devices[x], simdata);
+//        }
+//    }
+//
+//    fprintf(stdout, "\n");
+//    int r = simfree(simdata, simmap, p->sim);
+//    slogd("simfree returned %i", r);
+//
+//    return 0;
+//}
+
+//int looper(SimDevice* devices, int numdevices, Parameters* p)
+//{
+//    memset(&act, 0, sizeof(act));
+//    act.sa_sigaction = sighandler;
+//    act.sa_flags = SA_SIGINFO;
+//    sigaction(SIGTERM, &act, NULL);
+//    sigaction(SIGINT, &act, NULL);
+//    sigaction(SIGTSTP, &act, NULL);
+//
+//    SimData* simdata = malloc(sizeof(SimData));
+//    SimMap* simmap = malloc(sizeof(SimMap));
+//    simdata->tyrediameter[0] = -1;
+//    simdata->tyrediameter[1] = -1;
+//    simdata->tyrediameter[2] = -1;
+//    simdata->tyrediameter[3] = -1;
+//
+//    struct termios newsettings, canonicalmode;
+//    tcgetattr(0, &canonicalmode);
+//    newsettings = canonicalmode;
+//    newsettings.c_lflag &= (~ICANON & ~ECHO);
+//    newsettings.c_cc[VMIN] = 1;
+//    newsettings.c_cc[VTIME] = 0;
+//    tcsetattr(0, TCSANOW, &newsettings);
+//    char ch;
+//    struct pollfd mypoll = { STDIN_FILENO, POLLIN|POLLPRI };
+//
+//    fprintf(stdout, "Searching for sim data... Press q to quit...\n");
+//    p->simon = false;
+//    double update_rate = SIM_CHECK_RATE;
+//    go = true;
+//    while (go == true)
+//    {
+//        p->simon = false;
+//        getSim(simdata, simmap, &p->simon, &p->sim);
+//
+//        if (p->simon == true && simdata->simstatus > 1)
+//        {
+//            slogi("preparing game loop with %i devices...", numdevices);
+//
+//
+//            slogi("sending initial data to devices");
+//            simdata->velocity = 16;
+//            simdata->rpms = 100;
+//            for (int x = 0; x < numdevices; x++)
+//            {
+//                devices[x].update(&devices[x], simdata);
+//            }
+//            sleep(3);
+//
+//            clilooper(devices, numdevices, p, simdata, simmap);
+//        }
+//        if (p->simon == true)
+//        {
+//            p->simon = false;
+//            fprintf(stdout, "Searching for sim data... Press q again to quit...\n");
+//            sleep(2);
+//        }
+//
+//        if (poll(&mypoll, 1, 1000.0/update_rate) )
+//        {
+//            if (go != false )
+//            {
+//                scanf("%c", &ch);
+//                if(ch == 'q')
+//                {
+//                    slogd("User application exit requested.");
+//                    go = false;
+//                }
+//            }
+//        }
+//    }
+//
+//    fprintf(stdout, "\n");
+//    fflush(stdout);
+//    tcsetattr(0, TCSANOW, &canonicalmode);
+//
+//    int r = simfree(simdata, simmap, p->sim);
+//    slogd("simfree returned %i", r);
+//    free(simdata);
+//    free(simmap);
+//
+//    return 0;
+//}
 
 int tester(SimDevice* devices, int numdevices)
 {

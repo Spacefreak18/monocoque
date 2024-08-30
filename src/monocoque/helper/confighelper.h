@@ -117,6 +117,9 @@ typedef struct
     int configcheck;
     int useconfig;
     char* tyre_diameter_config;
+    char* config_str;
+    char* log_filename_str;
+    char* log_dirname_str;
 }
 MonocoqueSettings;
 
@@ -185,5 +188,11 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
 int settingsfree(DeviceSettings ds);
 
 int strcicmp(char const *a, char const *b);
+
+int getconfigtouse(const char* config_file_str, char* car, int sim);
+
+int configcheck(const char* config_file_str, int confignum, int* devices);
+
+int uiloadconfig(const char* config_file_str, int confignum, int configureddevices, MonocoqueSettings* ms, DeviceSettings* ds);
 
 #endif

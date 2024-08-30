@@ -13,6 +13,36 @@
 
 #include <string.h>
 
+void create_dir(char* dir)
+{
+    struct stat st = {0};
+    if (stat(dir, &st) == -1)
+    {
+        mkdir(dir, 0700);
+    }
+}
+
+void create_xdg_dir(const char* dir)
+{
+    struct stat st = {0};
+    if (stat(dir, &st) == -1)
+    {
+        mkdir(dir, 0700);
+    }
+}
+
+char* create_user_dir(char* home_dir_str, const char* dirtype, const char* programname)
+{
+    // +3 for slashes
+    size_t ss = (4 + strlen(home_dir_str) + strlen(dirtype) + strlen(programname));
+    char* config_dir_str = malloc(ss);
+
+    snprintf (config_dir_str, ss, "%s/%s/%s/", home_dir_str, dirtype, programname);
+
+    create_dir(config_dir_str);
+    return config_dir_str;
+}
+
 char* gethome()
 {
     char* homedir = getenv("HOME");
@@ -175,28 +205,67 @@ void restrict_folders_to_cache(char* path, int cachesize)
 
 }
 
-bool does_directory_exist(char* path, char* dirname)
+bool does_directory_exist(char* path)
 {
-    struct dirent* de;
-    DIR* dr = opendir(path);
-
-    if (dr == NULL)
+    DIR* dir = opendir(path);
+    if (dir)
     {
-        printf("Could not open current directory");
+        // Directory exists
+        closedir(dir);
+        return true;
+    }
+    else
+    {
+        // Directory does not exist or cannot be opened
         return false;
     }
-
-    // Refer http://pubs.opengroup.org/onlinepubs/7990989775/xsh/readdir.html
-    bool answer = false;
-    while ((de = readdir(dr)) != NULL)
-    {
-        if (strcmp(dirname,de->d_name) == 0)
-        {
-            answer = true;
-        }
-    }
-
-    closedir(dr);
-    return answer;
 }
 
+bool does_file_exist(const char* file)
+{
+    if (file == NULL)
+    {
+        return false;
+    }
+#if defined(OS_WIN)
+#if defined(WIN_API)
+    // if you want the WinAPI, versus CRT
+    if (strnlen(file, MAX_PATH+1) > MAX_PATH)
+    {
+        // ... throw error here or ...
+        return false;
+    }
+    DWORD res = GetFileAttributesA(file);
+    return (res != INVALID_FILE_ATTRIBUTES &&
+            !(res& FILE_ATTRIBUTE_DIRECTORY));
+#else
+    // Use Win CRT
+    struct stat fi;
+    if (_stat(file, &fi) == 0)
+    {
+#if defined(S_ISSOCK)
+        // sockets come back as a 'file' on some systems
+        // so make sure it's not a socket or directory
+        // (in other words, make sure it's an actual file)
+        return !(S_ISDIR(fi.st_mode)) &&
+               !(S_ISSOCK(fi.st_mode));
+#else
+        return !(S_ISDIR(fi.st_mode));
+#endif
+    }
+    return false;
+#endif
+#else
+    struct stat fi;
+    if (stat(file, &fi) == 0)
+    {
+#if defined(S_ISSOCK)
+        return !(S_ISDIR(fi.st_mode)) &&
+               !(S_ISSOCK(fi.st_mode));
+#else
+        return !(S_ISDIR(fi.st_mode));
+#endif
+    }
+    return false;
+#endif
+}

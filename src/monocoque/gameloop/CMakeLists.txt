@@ -3,6 +3,7 @@ set(gameloop_source_files
   gameloop.h
   tachconfig.c
   tachconfig.h
+  loopdata.h
 )
 
 set(LIBXML_INCLUDE_DIR /usr/include/libxml2)

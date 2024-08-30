@@ -104,8 +104,7 @@ int sounddev_free(SimDevice* this)
 {
     SoundDevice* sounddevice = (void *) this->derived;
 
-    //figure out why this is causing problems
-    //usb_generic_shaker_free(sounddevice);
+    usb_generic_shaker_free(sounddevice);
 
     free(sounddevice);
 

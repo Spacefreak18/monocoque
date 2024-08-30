@@ -176,6 +176,55 @@ int strtodev(const char* device_type, const char* device_subtype, DeviceSettings
     return MONOCOQUE_ERROR_NONE;
 }
 
+int getconfigtouse(const char* config_file_str, char* car, int sim)
+{
+    config_t cfg;
+    config_init(&cfg);
+    if (!config_read_file(&cfg, config_file_str))
+    {
+        fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
+        return -1;
+    }
+    config_setting_t* config = NULL;
+    config_setting_t* config_widgets = NULL;
+    config = config_lookup(&cfg, "configs");
+    int configs = config_setting_length(config);
+
+    const char* temp;
+    config_setting_t* config_config = NULL;
+    int j = 0;
+    if ( configs == 1 )
+    {
+        return 0;
+    }
+    int confignum = 0;
+    for (j = 0; j < configs; j++)
+    {
+        config_config = config_setting_get_elem(config, j);
+
+        int found = 0;
+        int csim = 0;
+        config_setting_lookup_int(config_config, "sim", &csim);
+        if (csim != sim && csim != 0)
+        {
+            continue;
+        }
+        found = config_setting_lookup_string(config_config, "car", &temp);
+        if(strcicmp("default", car) == 0)
+        {
+            confignum = j;
+        }
+        if(strcicmp(temp, car) != 0)
+        {
+            continue;
+        }
+        confignum = j;
+
+        break;
+    }
+    return confignum;
+}
+
 int loadtachconfig(const char* config_file, DeviceSettings* ds)
 {
 
@@ -312,6 +361,28 @@ int loadconfig(const char* config_file, DeviceSettings* ds)
     return 0;
 }
 
+int configcheck(const char* config_file_str, int confignum, int* devices)
+{
+    slogt("ui config check");
+    config_t cfg;
+    config_init(&cfg);
+    if (!config_read_file(&cfg, config_file_str))
+    {
+        fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
+    }
+
+    config_setting_t* config = NULL;
+    config = config_lookup(&cfg, "configs");
+    config_setting_t* selectedconfig = config_setting_get_elem(config, confignum);
+    slogt("selected num %i", confignum);
+    config_setting_t* config_devices = NULL;
+    config_devices = config_setting_lookup(selectedconfig, "devices");
+    *devices = config_setting_length(config_devices);
+    config_destroy(&cfg);
+    return 0;
+    //return cfg;
+}
+
 int devsetup(const char* device_type, const char* device_subtype, const char* config_file, MonocoqueSettings* ms, DeviceSettings* ds, config_setting_t* device_settings)
 {
     int error = MONOCOQUE_ERROR_NONE;
@@ -440,6 +511,69 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
     }
 
     return error;
+}
+
+int uiloadconfig(const char* config_file_str, int confignum, int configureddevices, MonocoqueSettings* ms, DeviceSettings* ds)
+{
+    int numdevices = 0;
+    config_t cfg;
+    config_init(&cfg);
+    if (!config_read_file(&cfg, config_file_str))
+    {
+        fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
+    }
+    else
+    {
+        slogi("Parsing config file");
+
+
+
+        config_setting_t* config = NULL;
+        config = config_lookup(&cfg, "configs");
+        config_setting_t* selectedconfig = config_setting_get_elem(config, confignum);
+        config_setting_t* config_devices = NULL;
+        config_devices = config_setting_lookup(selectedconfig, "devices");
+
+        int i = 0;
+
+        int error = MONOCOQUE_ERROR_NONE;
+        while (i<configureddevices)
+        {
+            error = MONOCOQUE_ERROR_NONE;
+            DeviceSettings settings;
+
+            config_setting_t* config_device = config_setting_get_elem(config_devices, i);
+            const char* device_type;
+            const char* device_subtype;
+            const char* device_config_file;
+            config_setting_lookup_string(config_device, "device", &device_type);
+            config_setting_lookup_string(config_device, "type", &device_subtype);
+            config_setting_lookup_string(config_device, "config", &device_config_file);
+
+            //slogt("device type: %s", device_type);
+            //slogt("device sub type: %s", device_subtype);
+            //slogt("device config file: %s", device_config_file);
+            if (error == MONOCOQUE_ERROR_NONE)
+            {
+                error = devsetup(device_type, device_subtype, device_config_file, ms, &settings, config_device);
+            }
+            if (error == MONOCOQUE_ERROR_NONE)
+            {
+                numdevices++;
+            }
+            ds[i] = settings;
+
+            i++;
+
+        }
+
+
+    }
+
+
+    config_destroy(&cfg);
+
+    return numdevices;
 }
 
 int settingsfree(DeviceSettings ds)

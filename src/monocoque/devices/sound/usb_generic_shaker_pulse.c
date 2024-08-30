@@ -78,15 +78,12 @@ void stream_state_cb(pa_stream *s, void *mainloop) {
 int usb_generic_shaker_free(SoundDevice* sounddevice)
 {
     int err = 0;
-    //err = Pa_CloseStream( sounddevice->stream );
-    //if( err != paNoError )
-    //{
-    //    err = Pa_Terminate();
-    //}
     if (sounddevice->stream)
     {
+        pa_stream_disconnect(sounddevice->stream);
         pa_stream_unref(sounddevice->stream);
-        pa_xfree(sounddevice->stream);
+        // why is this wrong
+        //pa_xfree(sounddevice->stream);
     }
     return err;
 }

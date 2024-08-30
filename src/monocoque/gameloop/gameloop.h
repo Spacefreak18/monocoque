@@ -3,3 +3,5 @@
 
 int tester(SimDevice* devices, int numdevices);
 int looper(SimDevice* devices, int numdevices, Parameters* p);
+
+int monocoque_mainloop(MonocoqueSettings* ms);

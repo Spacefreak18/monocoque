@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
-
+#include <basedir_fs.h>
 #include <libconfig.h>
+
 #include "gameloop/gameloop.h"
 #include "gameloop/tachconfig.h"
 #include "devices/simdevice.h"
@@ -14,27 +15,7 @@
 #include "simulatorapi/simapi/simapi/simdata.h"
 #include "slog/slog.h"
 
-
-int create_dir(char* dir)
-{
-    struct stat st = {0};
-    if (stat(dir, &st) == -1)
-    {
-        mkdir(dir, 0700);
-    }
-}
-
-char* create_user_dir(char* dirtype)
-{
-    char* home_dir_str = gethome();
-    char* config_dir_str = ( char* ) malloc(1 + strlen(home_dir_str) + strlen(dirtype) + strlen("monocoque/"));
-    strcpy(config_dir_str, home_dir_str);
-    strcat(config_dir_str, dirtype);
-    strcat(config_dir_str, "monocoque");
-
-    create_dir(config_dir_str);
-    free(config_dir_str);
-}
+#define PROGRAM_NAME "monocoque"
 
 void display_banner()
 {
@@ -45,10 +26,57 @@ void display_banner()
     printf("/_/  /_/  \\____/ /_/ |_/  \\____/ \\____/  \\____/ \\___\\_\\\\____/  /_____/   \n");
 }
 
+void SetSettingsFromParameters(Parameters* p, MonocoqueSettings* ms, char* configdir_str, char* cachedir_str)
+{
+
+    if(p->user_specified_config_file == true && does_file_exist(p->config_filepath))
+    {
+        ms->config_str = strdup(p->config_filepath);
+    }
+    else
+    {
+        if(p->user_specified_config_dir == true && does_directory_exist(p->config_dirpath))
+        {
+            asprintf(&ms->config_str, "%s/%s", p->config_dirpath, "monocoque.config");
+        }
+        else
+        {
+            asprintf(&ms->config_str, "%s%s", configdir_str, "monocoque.config");
+        }
+    }
+
+    if(p->user_specified_log_file == true && does_file_exist(p->log_fullfilename_str))
+    {
+        ms->log_dirname_str = strdup(p->log_dirname_str);
+        ms->log_filename_str = strdup(p->log_filename_str);
+    }
+    else
+    {
+        ms->log_dirname_str = strdup(cachedir_str);
+        ms->log_filename_str = strdup("monocoque.log");
+    }
+
+    ms->program_action = A_TEST;
+    if (p->program_action == A_PLAY)
+    {
+        ms->program_action = A_PLAY;
+    }
+    if (p->program_action == A_CONFIG_TACH)
+    {
+        ms->program_action = A_CONFIG_TACH;
+    }
+}
+
 int main(int argc, char** argv)
 {
     display_banner();
 
+    char* home_dir_str = gethome();
+    if(home_dir_str == NULL)
+    {
+        fprintf(stderr, "You need a home directory");
+        return 0;
+    }
     Parameters* p = malloc(sizeof(Parameters));
     MonocoqueSettings* ms = malloc(sizeof(MonocoqueSettings));;
 
@@ -57,33 +85,47 @@ int main(int argc, char** argv)
     {
         goto cleanup_final;
     }
-    ms->program_action = p->program_action;
 
-    char* home_dir_str = gethome();
-    create_user_dir("/.config/");
-    create_user_dir("/.cache/");
-    char* config_file_str = ( char* ) malloc(1 + strlen(home_dir_str) + strlen("/.config/") + strlen("monocoque/monocoque.config"));
+    xdgHandle xdg;
+    if(!xdgInitHandle(&xdg))
+    {
+        fprintf(stderr, "Function xdgInitHandle() failed, is $HOME unset?");
+    }
+
+    const char* config_home_str = xdgConfigHome(&xdg);
+    const char* cache_home_str = xdgCacheHome(&xdg);
+
+    char* cachedir_str = NULL;
+    char* configdir_str = NULL;
+
+    if(p->user_specified_config_file == false && p->user_specified_config_dir == false)
+    {
+        create_xdg_dir(config_home_str);
+        configdir_str = create_user_dir(home_dir_str, ".config", PROGRAM_NAME);
+    }
+    if(p->user_specified_log_file == false)
+    {
+        create_xdg_dir(cache_home_str);
+        cachedir_str = create_user_dir(home_dir_str, ".cache", PROGRAM_NAME);
+    }
+
+    SetSettingsFromParameters(p, ms, configdir_str, cachedir_str);
+    freeparams(p);
+    free(p);
+
+    //char* config_file_str = ( char* ) malloc(1 + strlen(home_dir_str) + strlen("/.config/") + strlen("monocoque/monocoque.config"));
 
     size_t diameters_file_sz = snprintf(NULL, 0, "%s/.config/monocoque/diameters.config", home_dir_str);
     diameters_file_sz += 1;
     char* diameters_file_str = ( char* ) malloc(diameters_file_sz);
     snprintf(diameters_file_str, diameters_file_sz, "%s/.config/monocoque/diameters.config", home_dir_str);
 
-
-    char* cache_dir_str = ( char* ) malloc(1 + strlen(home_dir_str) + strlen("/.cache/monocoque/"));
-    strcpy(config_file_str, home_dir_str);
-    strcat(config_file_str, "/.config/");
-    strcpy(cache_dir_str, home_dir_str);
-    strcat(cache_dir_str, "/.cache/monocoque/");
-    strcat(config_file_str, "monocoque/monocoque.config");
-
-
     slog_config_t slgCfg;
     slog_config_get(&slgCfg);
     slgCfg.eColorFormat = SLOG_COLORING_TAG;
     slgCfg.eDateControl = SLOG_TIME_ONLY;
-    strcpy(slgCfg.sFileName, "monocoque.log");
-    strcpy(slgCfg.sFilePath, cache_dir_str);
+    strcpy(slgCfg.sFileName, ms->log_filename_str);
+    strcpy(slgCfg.sFilePath, ms->log_dirname_str);
     slgCfg.nTraceTid = 0;
     slgCfg.nToScreen = 1;
     slgCfg.nUseHeap = 0;
@@ -105,24 +147,22 @@ int main(int argc, char** argv)
     ms->configcheck = 0;
     free(diameters_file_str);
 
-    slogi("Loading configuration file: %s", config_file_str);
+    slogi("Loading configuration file: %s", ms->config_str);
     slogd("using diameters file %s %i", ms->tyre_diameter_config, ms->configcheck);
     config_t cfg;
     config_init(&cfg);
     config_setting_t* config_devices = NULL;
-    if (!config_read_file(&cfg, config_file_str))
+    if (!config_read_file(&cfg, ms->config_str))
     {
         fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
+        goto cleanup_final;
     }
     else
     {
         slogi("Openend monocoque configuration file");
-        config_devices = config_lookup(&cfg, "devices");
     }
-    free(config_file_str);
-    free(cache_dir_str);
 
-    if (p->program_action == A_CONFIG_TACH)
+    if (ms->program_action == A_CONFIG_TACH)
     {
         int error = 0;
         SimDevice* tachdev = malloc(sizeof(SimDevice));
@@ -169,70 +209,25 @@ int main(int argc, char** argv)
     {
 
         int error = 0;
-
-        int configureddevices = config_setting_length(config_devices);
-        int numdevices = 0;
-        DeviceSettings ds[configureddevices];
-        slogi("found %i devices in configuration", configureddevices);
-        int i = 0;
         error = MONOCOQUE_ERROR_NONE;
-        while (i<configureddevices)
-        {
-            DeviceSettings settings;
-
-            config_setting_t* config_device = config_setting_get_elem(config_devices, i);
-            const char* device_type;
-            const char* device_subtype;
-            const char* device_config_file;
-            config_setting_lookup_string(config_device, "device", &device_type);
-            config_setting_lookup_string(config_device, "type", &device_subtype);
-            config_setting_lookup_string(config_device, "config", &device_config_file);
-
-            //slogt("device type: %s", device_type);
-            //slogt("device sub type: %s", device_subtype);
-            //slogt("device config file: %s", device_config_file);
-            if (error == MONOCOQUE_ERROR_NONE)
-            {
-                error = devsetup(device_type, device_subtype, device_config_file, ms, &settings, config_device);
-            }
-            if (error == MONOCOQUE_ERROR_NONE)
-            {
-                numdevices++;
-            }
-            ds[i] = settings;
-
-            i++;
-
-        }
-
-        i = 0;
-        int j = 0;
-        error = MONOCOQUE_ERROR_NONE;
-
         setupsound();
 
-        if (p->program_action == A_PLAY)
+        if (ms->program_action == A_PLAY)
         {
             ms->useconfig = 1;
         }
-        SimDevice* devices = malloc(numdevices * sizeof(SimDevice));
-        int initdevices = devinit(devices, configureddevices, ds, ms);
-        bool pulseaudio = false;
 
-        if (p->program_action == A_PLAY)
+        bool pulseaudio = false;
+        if (ms->program_action == A_PLAY)
         {
             slogi("running monocoque in gameloop mode..");
-            //error = strtogame(p->sim_string, ms);
-            //if (error != MONOCOQUE_ERROR_NONE)
-            //{
-            //    goto cleanup_final;
-            //}
 #ifdef USE_PULSEAUDIO
             pa_threaded_mainloop_unlock(mainloop);
             pulseaudio = true;
 #endif
 
-            error = looper(devices, numdevices, p);
+            //error = looper(devices, numdevices, p);
+            error = monocoque_mainloop(ms);
             if (error == MONOCOQUE_ERROR_NONE)
             {
                 slogi("Game loop exited succesfully with error code: %i", error);
@@ -252,7 +247,23 @@ int main(int argc, char** argv)
 #endif
 
             ms->useconfig = 0;
-            error = tester(devices, numdevices);
+
+            int confignum = getconfigtouse(ms->config_str, "default", 0);
+            int configureddevices;
+            configcheck(ms->config_str, confignum, &configureddevices);
+
+            DeviceSettings* ds = malloc(configureddevices * sizeof(DeviceSettings));
+            slogd("loading confignum %i, with %i devices.", confignum, configureddevices);
+
+            int numdevices = uiloadconfig(ms->config_str, confignum, configureddevices, ms, ds);
+            SimDevice* simdevices = malloc(numdevices * sizeof(SimDevice));
+            int initdevices = devinit(simdevices, configureddevices, ds, ms);
+            for( int i = 0; i < configureddevices; i++)
+            {
+                settingsfree(ds[i]);
+            }
+            free(ds);
+            error = tester(simdevices, numdevices);
             if (error == MONOCOQUE_ERROR_NONE)
             {
                 slogi("Test exited succesfully with error code: %i", error);
@@ -261,34 +272,21 @@ int main(int argc, char** argv)
             {
                 sloge("Test exited with error code: %i", error);
             }
-        }
-
-
-        for (int x = 0; x < numdevices; x++)
-        {
-            if (devices[x].initialized == true)
+            for (int x = 0; x < numdevices; x++)
             {
-                devices[x].free(&devices[x]);
+                if (simdevices[x].initialized == true)
+                {
+                    simdevices[x].free(&simdevices[x]);
+                }
             }
         }
         if(pulseaudio == true)
         {
             freesound();
         }
-
-        i = 0;
-        // improve the api around the config helper
-        // i don't like that i stack allocated but hid a malloc inside
-        for( i = 0; i < configureddevices; i++)
-        {
-            settingsfree(ds[i]);
-        }
     }
 
 
-
-configcleanup:
-    config_destroy(&cfg);
 
 cleanup_final:
 
@@ -297,7 +295,6 @@ cleanup_final:
         free(ms->tyre_diameter_config);
     }
     free(ms);
-    free(p);
     exit(0);
 }
 

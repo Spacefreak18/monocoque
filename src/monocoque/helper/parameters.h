@@ -15,6 +15,16 @@ typedef struct
 
     Simulator sim;
     bool simon;
+
+    char* config_filepath;
+    char* config_dirpath;
+    bool user_specified_config_file;
+    bool user_specified_config_dir;
+    bool user_specified_log_file;
+
+    char* log_filename_str;
+    char* log_fullfilename_str;
+    char* log_dirname_str;
 }
 Parameters;
 
@@ -35,6 +45,7 @@ typedef enum
 }
 ConfigError;
 
+int freeparams(Parameters* p);
 ConfigError getParameters(int argc, char** argv, Parameters* p);
 
 struct _errordesc
