@@ -147,7 +147,7 @@ int main(int argc, char** argv)
     ms->configcheck = 0;
     free(diameters_file_str);
 
-    slogi("Loading configuration file: %s", ms->config_str);
+    slogi("Testing monocoque config file: %s", ms->config_str);
     slogd("using diameters file %s %i", ms->tyre_diameter_config, ms->configcheck);
     config_t cfg;
     config_init(&cfg);
