@@ -15,6 +15,7 @@ typedef struct loop_data
     Simulator sim;
     bool simstate;
     bool uion;
+    bool releasing;
     int numdevices;
     MonocoqueSettings* ms;
     SimData* simdata;

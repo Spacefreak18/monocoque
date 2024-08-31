@@ -188,7 +188,6 @@ int showstats(SimData* simdata)
 
 void shmdatamapcallback(uv_timer_t* handle)
 {
-
     void* b = uv_handle_get_data((uv_handle_t*) handle);
     loop_data* f = (loop_data*) b;
     SimData* simdata = f->simdata;
@@ -238,39 +237,45 @@ void shmdatamapcallback(uv_timer_t* handle)
 
     if (f->simstate == false || simdata->simstatus <= 1 || appstate <= 1)
     {
-        f->uion = false;
-        SimDevice* devices = f->simdevices;
-        int numdevices = f->numdevices;
+        if(f->releasing == false)
+        {
+            f->releasing = true;
+            uv_timer_stop(handle);
+            slogi("releasing devices, please wait");
+            f->uion = false;
+            SimDevice* devices = f->simdevices;
+            int numdevices = f->numdevices;
 
-        for (int x = 0; x < numdevices; x++)
-        {
-            if (devices[x].initialized == true)
+            for (int x = 0; x < numdevices; x++)
             {
-                devices[x].update(&devices[x], simdata);
+                if (devices[x].initialized == true)
+                {
+                    devices[x].update(&devices[x], simdata);
+                }
             }
-        }
-        for (int x = 0; x < numdevices; x++)
-        {
-            if (devices[x].initialized == true)
+            for (int x = 0; x < numdevices; x++)
             {
-                devices[x].free(&devices[x]);
+                if (devices[x].initialized == true)
+                {
+                    devices[x].free(&devices[x]);
+                }
             }
+            free(devices);
+            int r = simfree(simdata, simmap, f->sim);
+            slogd("simfree returned %i", r);
+            f->numdevices = 0;
+            slogi("stopped mapping data, press q again to quit");
+            //stopui(ms->ui_type, f);
+            // free loop data
+
+            uv_timer_start(&datachecktimer, datacheckcallback, 1000, 1000);
+            f->releasing = false;
         }
-        free(devices);
-        int r = simfree(simdata, simmap, f->sim);
-        slogd("simfree returned %i", r);
-        f->numdevices = 0;
-        slogi("stopped mapping data, press q again to quit");
-        //stopui(ms->ui_type, f);
-        // free loop data
-        uv_timer_stop(handle);
-        uv_timer_start(&datachecktimer, datacheckcallback, 3000, 1000);
     }
 }
 
 void datacheckcallback(uv_timer_t* handle)
 {
-
     void* b = uv_handle_get_data((uv_handle_t*) handle);
     loop_data* f = (loop_data*) b;
     SimData* simdata = f->simdata;
@@ -300,14 +305,19 @@ void datacheckcallback(uv_timer_t* handle)
 
 void cb(uv_poll_t* handle, int status, int events)
 {
+    void* b = uv_handle_get_data((uv_handle_t*) handle);
+    loop_data* f = (loop_data*) b;
     char ch;
     scanf("%c", &ch);
     if (ch == 'q')
     {
-        appstate--;
-        slogi("User requested stop appstate is now %i", appstate);
-        fprintf(stdout, "User requested stop appstate is now %i\n", appstate);
-        fflush(stdout);
+        if(f->releasing == false)
+        {
+            appstate--;
+            slogi("User requested stop appstate is now %i", appstate);
+            fprintf(stdout, "User requested stop appstate is now %i\n", appstate);
+            fflush(stdout);
+        }
     }
 
     if (appstate == 0)
@@ -344,6 +354,7 @@ int monocoque_mainloop(MonocoqueSettings* ms)
     baton->ms = ms;
     baton->simstate = false;
     baton->uion = false;
+    baton->releasing = false;
     baton->sim = 0;
     baton->req.data = (void*) baton;
     uv_handle_set_data((uv_handle_t*) &datachecktimer, (void*) baton);
