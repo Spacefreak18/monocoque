@@ -358,7 +358,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
                         wheelslip[i] = 0;
                     }
                 }
-                slogt("wheelslip values are %f %f %f %f", simdata->tyrediameter[0], simdata->tyrediameter[1], simdata->tyrediameter[2], simdata->tyrediameter[3]);
+                slogt("wheelslip values are %f %f %f %f", wheelslip[0], wheelslip[1], wheelslip[2], wheelslip[3]);
 
             }
             break;
