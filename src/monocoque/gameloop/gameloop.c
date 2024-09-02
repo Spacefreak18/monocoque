@@ -246,6 +246,9 @@ void shmdatamapcallback(uv_timer_t* handle)
             SimDevice* devices = f->simdevices;
             int numdevices = f->numdevices;
 
+            // help things spin down
+            simdata->rpms = 0;
+            simdata->velocity = 0;
             for (int x = 0; x < numdevices; x++)
             {
                 if (devices[x].initialized == true)
@@ -298,6 +301,10 @@ void datacheckcallback(uv_timer_t* handle)
         {
             appstate++;
             doui = true;
+            simdata->tyrediameter[0] = -1;
+            simdata->tyrediameter[1] = -1;
+            simdata->tyrediameter[2] = -1;
+            simdata->tyrediameter[3] = -1;
             uv_timer_start(&datamaptimer, shmdatamapcallback, 2000, 125);
             uv_timer_stop(handle);
         }
