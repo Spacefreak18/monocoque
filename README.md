@@ -121,6 +121,9 @@ make  # Make sure serial connection is the same as on the host pc and it have th
 ### Logs file location
 `~/.cache/monocoque/*.log`
 
+## Join the Discussion
+[Sim Racing Matrix Space](https://matrix.to/#/#simracing:matrix.org)
+
 ## ToDo
  - windows port
  - more memory testing
