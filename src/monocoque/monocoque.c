@@ -56,6 +56,7 @@ void SetSettingsFromParameters(Parameters* p, MonocoqueSettings* ms, char* confi
         ms->log_filename_str = strdup("monocoque.log");
     }
 
+    ms->verbosity_count = p->verbosity_count;
     ms->program_action = A_TEST;
     if (p->program_action == A_PLAY)
     {
@@ -133,11 +134,11 @@ int main(int argc, char** argv)
     slgCfg.nFlush = 0;
     slgCfg.nFlags = SLOG_FLAGS_ALL;
     slog_config_set(&slgCfg);
-    if (p->verbosity_count < 2)
+    if (ms->verbosity_count < 2)
     {
         slog_disable(SLOG_TRACE);
     }
-    if (p->verbosity_count < 1)
+    if (ms->verbosity_count < 1)
     {
         slog_disable(SLOG_DEBUG);
     }
@@ -290,10 +291,7 @@ int main(int argc, char** argv)
 
 cleanup_final:
 
-    if(ms->tyre_diameter_config != NULL)
-    {
-        free(ms->tyre_diameter_config);
-    }
+    monocoquesettingsfree(ms);
     free(ms);
     exit(0);
 }

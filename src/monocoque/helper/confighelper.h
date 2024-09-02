@@ -116,6 +116,7 @@ typedef struct
     Simulator sim_name;
     int configcheck;
     int useconfig;
+    int verbosity_count;
     char* tyre_diameter_config;
     char* config_str;
     char* log_filename_str;
@@ -186,6 +187,8 @@ int strtogame(const char* game, MonocoqueSettings* ms);
 int devsetup(const char* device_type, const char* device_subtype, const char* config_files, MonocoqueSettings* ms, DeviceSettings* ds, config_setting_t* device_settings);
 
 int settingsfree(DeviceSettings ds);
+
+int monocoquesettingsfree(MonocoqueSettings* ms);
 
 int strcicmp(char const *a, char const *b);
 

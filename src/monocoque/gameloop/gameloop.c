@@ -268,8 +268,15 @@ void shmdatamapcallback(uv_timer_t* handle)
             //stopui(ms->ui_type, f);
             // free loop data
 
-            uv_timer_start(&datachecktimer, datacheckcallback, 1000, 1000);
+            if(appstate > 0)
+            {
+                uv_timer_start(&datachecktimer, datacheckcallback, 3000, 1000);
+            }
             f->releasing = false;
+            if(appstate > 1)
+            {
+                appstate = 1;
+            }
         }
     }
 }
@@ -285,7 +292,7 @@ void datacheckcallback(uv_timer_t* handle)
     {
         getSim(simdata, simmap, &f->simstate, &f->sim);
     }
-    if (f->simstate == true)
+    if (f->simstate == true && simdata->simstatus >= 2)
     {
         if ( appstate == 1 )
         {
@@ -311,7 +318,7 @@ void cb(uv_poll_t* handle, int status, int events)
     scanf("%c", &ch);
     if (ch == 'q')
     {
-        if(f->releasing == false)
+        if(f->releasing == false && doui == false)
         {
             appstate--;
             slogi("User requested stop appstate is now %i", appstate);
@@ -384,6 +391,7 @@ int monocoque_mainloop(MonocoqueSettings* ms)
     fflush(stdout);
     tcsetattr(0, TCSANOW, &canonicalmode);
 
+    free(baton);
     free(simdata);
     free(simmap);
 

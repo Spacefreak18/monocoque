@@ -597,3 +597,23 @@ int settingsfree(DeviceSettings ds)
 
     return 0;
 }
+
+int monocoquesettingsfree(MonocoqueSettings* ms)
+{
+    if(ms->tyre_diameter_config != NULL)
+    {
+        free(ms->tyre_diameter_config);
+    }
+    if(ms->config_str != NULL)
+    {
+        free(ms->config_str);
+    }
+    if(ms->log_filename_str != NULL)
+    {
+        free(ms->log_filename_str);
+    }
+    if(ms->log_dirname_str != NULL)
+    {
+        free(ms->log_dirname_str);
+    }
+}
