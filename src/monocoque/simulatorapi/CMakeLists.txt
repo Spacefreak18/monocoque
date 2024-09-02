@@ -14,6 +14,8 @@ set(simulatorapi_source_files
   simapi/simapi/rf2.h
   simapi/simapi/pcars2.h
   simapi/simapi/scs2.h
+  simapi/simapi/getpid.c
+  simapi/simapi/getpid.h
 )
 
 add_library(simulatorapi STATIC ${simulatorapi_source_files})
