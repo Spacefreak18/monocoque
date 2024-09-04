@@ -198,6 +198,7 @@ int getconfigtouse(const char* config_file_str, char* car, int sim)
         return 0;
     }
     int confignum = 0;
+    slogt("Multiple configs found");
     for (j = 0; j < configs; j++)
     {
         config_config = config_setting_get_elem(config, j);
@@ -207,19 +208,21 @@ int getconfigtouse(const char* config_file_str, char* car, int sim)
         config_setting_lookup_int(config_config, "sim", &csim);
         if (csim != sim && csim != 0)
         {
+            slogt("rejected config %i", j);
             continue;
         }
+
+        slogt("checking if car is matched %i", j);
         found = config_setting_lookup_string(config_config, "car", &temp);
-        if(strcicmp("default", car) == 0)
+        if(strcicmp(temp, car) == 0)
         {
             confignum = j;
         }
-        if(strcicmp(temp, car) != 0)
+        if(strcicmp("default", temp) == 0)
         {
-            continue;
+            slogt("matched default car");
+            confignum = j;
         }
-        confignum = j;
-
         break;
     }
     return confignum;
