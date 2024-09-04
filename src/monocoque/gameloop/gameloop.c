@@ -305,7 +305,7 @@ void datacheckcallback(uv_timer_t* handle)
             simdata->tyrediameter[1] = -1;
             simdata->tyrediameter[2] = -1;
             simdata->tyrediameter[3] = -1;
-            uv_timer_start(&datamaptimer, shmdatamapcallback, 2000, 125);
+            uv_timer_start(&datamaptimer, shmdatamapcallback, 2000, 16);
             uv_timer_stop(handle);
         }
     }

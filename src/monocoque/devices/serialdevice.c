@@ -28,9 +28,28 @@ int arduino_shiftlights_update(SimDevice* this, SimData* simdata)
     int result = 1;
 
 
-    serialdevice->u.shiftlightsdata.maxrpm = simdata->maxrpm;
-    serialdevice->u.shiftlightsdata.rpm = simdata->rpms;
-    slogt("Updating arduino device rpms to %i", serialdevice->u.shiftlightsdata.rpm);
+    int num_avail_leds = 6;
+    int rpm = simdata->rpms;
+    int maxrpm = simdata->maxrpm;
+    int litleds = 0;
+    if(rpm > 0 && maxrpm > 0)
+    {
+        int rpmmargin = ceil(.05*maxrpm);
+        int rpminterval = (maxrpm-rpmmargin) / (num_avail_leds);
+
+
+        for (int l = 1; l <= (num_avail_leds); l++)
+        {
+            if(rpm >= (rpminterval * l))
+            {
+                litleds = l;
+            }
+        }
+    }
+
+    serialdevice->u.shiftlightsdata.litleds = litleds;
+    //serialdevice->u.shiftlightsdata.rpm = simdata->rpms;
+    slogt("Updating arduino device lights to %i", serialdevice->u.shiftlightsdata.litleds);
     // we can add configs to set all the colors
     // i can move the size to the initialization since it should not change
     size_t size = sizeof(ShiftLightsData);
