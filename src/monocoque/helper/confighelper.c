@@ -197,7 +197,7 @@ int getconfigtouse(const char* config_file_str, char* car, int sim)
     {
         return 0;
     }
-    int confignum = 0;
+    int confignum = configs-1;
     slogt("Multiple configs found");
     for (j = 0; j < configs; j++)
     {
@@ -223,7 +223,10 @@ int getconfigtouse(const char* config_file_str, char* car, int sim)
             slogt("matched default car");
             confignum = j;
         }
-        break;
+        if(confignum<configs-1)
+        {
+            break;
+        }
     }
     return confignum;
 }
