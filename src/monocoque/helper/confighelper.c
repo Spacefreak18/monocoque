@@ -494,18 +494,16 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
             config_setting_lookup_int(device_settings, "motors", &motorposition);
             ds->serialdevsettings.motorsposition = motorposition;
 
+            int baud = 9600;
+            config_setting_lookup_int(device_settings, "baud", &baud);
+            ds->serialdevsettings.baud = baud;
+
             double ampfactor = 1.0;
             ds->serialdevsettings.ampfactor = 1.0;
             int found = config_setting_lookup_float(device_settings, "ampfactor", &ampfactor);
-            if(found == 0)
-            {
-                ds->serialdevsettings.ampfactor = 1.0;
-            }
-            else
-            {
-                ds->serialdevsettings.ampfactor = ampfactor;
-                slogt("Set ampflication factor for motors to %f", ampfactor);
-            }
+            ds->serialdevsettings.ampfactor = ampfactor;
+
+            slogt("set port baud rate to %i, ampfactor %f", baud, ampfactor);
         }
 
     }
@@ -525,8 +523,6 @@ int uiloadconfig(const char* config_file_str, int confignum, int configureddevic
     else
     {
         slogi("Parsing config file");
-
-
 
         config_setting_t* config = NULL;
         config = config_lookup(&cfg, "configs");
@@ -566,8 +562,6 @@ int uiloadconfig(const char* config_file_str, int confignum, int configureddevic
             i++;
 
         }
-
-
     }
 
 

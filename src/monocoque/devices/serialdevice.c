@@ -128,7 +128,7 @@ int serialdev_free(SimDevice* this)
     return 0;
 }
 
-int serialdev_init(SerialDevice* serialdevice, const char* portdev, int motorsposition)
+int serialdev_init(SerialDevice* serialdevice, const char* portdev, int motorsposition, int baud)
 {
     slogi("initializing serial device...");
     int error = 0;
@@ -138,7 +138,7 @@ int serialdev_init(SerialDevice* serialdevice, const char* portdev, int motorspo
 
     serialdevice->motorsposition = motorsposition;
 
-    error = arduino_init(serialdevice, portdev);
+    error = arduino_init(serialdevice, portdev, baud);
 
     return error;
 }
@@ -197,7 +197,7 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
         this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
     }
 
-    int error = serialdev_init(this, ds->serialdevsettings.portdev, ds->serialdevsettings.motorsposition);
+    int error = serialdev_init(this, ds->serialdevsettings.portdev, ds->serialdevsettings.motorsposition, ds->serialdevsettings.baud);
 
     if (error != 0)
     {
