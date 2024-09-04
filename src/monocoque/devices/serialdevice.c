@@ -169,8 +169,9 @@ int serialdev_init(SerialDevice* serialdevice, const char* portdev, int motorspo
         break;
 
     default:
-        error = arduino_init(serialdevice, portdev);
+        error = arduino_init(serialdevice, portdev, baud);
     }
+
 
     return error;
 }
