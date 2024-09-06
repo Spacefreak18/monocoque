@@ -214,14 +214,23 @@ int getconfigtouse(const char* config_file_str, char* car, int sim)
         }
 
         slogt("checking if car is matched %i", j);
+        temp = NULL;
         found = config_setting_lookup_string(config_config, "car", &temp);
-        if(strcicmp(temp, car) == 0)
+        if(temp != NULL && found > 0)
         {
-            confignum = j;
+            if(strcicmp(temp, car) == 0)
+            {
+                confignum = j;
+            }
+            if(strcicmp("default", temp) == 0)
+            {
+                slogt("matched default car");
+                confignum = j;
+            }
         }
-        if(strcicmp("default", temp) == 0)
+        else
         {
-            slogt("matched default car");
+            slogt("assuming default car");
             confignum = j;
         }
         if(confignum<configs-1)
