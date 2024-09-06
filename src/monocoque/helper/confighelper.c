@@ -205,6 +205,7 @@ int getconfigtouse(const char* config_file_str, char* car, int sim)
 
         int found = 0;
         int csim = 0;
+        slogt("sim is %i", sim);
         config_setting_lookup_int(config_config, "sim", &csim);
         if (csim != sim && csim != 0)
         {
