@@ -216,7 +216,7 @@ int getconfigtouse(const char* config_file_str, char* car, int sim)
         slogt("checking if car is matched %i", j);
         temp = NULL;
         found = config_setting_lookup_string(config_config, "car", &temp);
-        if(temp != NULL && found > 0)
+        if(temp != NULL && found > 0 && car != NULL)
         {
             if(strcicmp(temp, car) == 0)
             {
