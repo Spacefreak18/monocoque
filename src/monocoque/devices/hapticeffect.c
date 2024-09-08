@@ -315,7 +315,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
         case (EFFECT_TYRELOCK):
         case (EFFECT_ABSBRAKES):
 
-            if(useconfig == 1 && configfile != NULL)
+            if(useconfig == 1 && configfile != NULL && simdata->car != NULL)
             {
                 // check for saved tyre diameter in config file
                 // if not saved version exists get tyre diameter and save it
@@ -340,7 +340,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
                     }
                 }
             }
-            if(hasTyreDiameter(simdata)==true)
+            if(hasTyreDiameter(simdata)==true && simdata->car != NULL)
             {
                 double Speedms = kmhtoms * simdata->velocity;
                 slogt("attempting wheel slip calculation");
@@ -359,7 +359,6 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
                     }
                 }
                 slogt("wheelslip values are %f %f %f %f", wheelslip[0], wheelslip[1], wheelslip[2], wheelslip[3]);
-
             }
             break;
         default:
