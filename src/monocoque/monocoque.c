@@ -249,7 +249,8 @@ int main(int argc, char** argv)
 
             ms->useconfig = 0;
 
-            int confignum = getconfigtouse(ms->config_str, "default", 0);
+            int configs = getNumberOfConfigs(ms->config_str);
+            int confignum = getconfigtouse(ms->config_str, "default", configs-1);
             int configureddevices;
             configcheck(ms->config_str, confignum, &configureddevices);
 

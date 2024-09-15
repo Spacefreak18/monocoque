@@ -176,6 +176,22 @@ int strtodev(const char* device_type, const char* device_subtype, DeviceSettings
     return MONOCOQUE_ERROR_NONE;
 }
 
+int getNumberOfConfigs(const char* config_file_str)
+{
+    config_t cfg;
+    config_init(&cfg);
+    if (!config_read_file(&cfg, config_file_str))
+    {
+        fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
+        return -1;
+    }
+    config_setting_t* config = NULL;
+    config_setting_t* config_widgets = NULL;
+    config = config_lookup(&cfg, "configs");
+    int configs = config_setting_length(config);
+
+    return configs;
+}
 int getconfigtouse(const char* config_file_str, char* car, int sim)
 {
     config_t cfg;

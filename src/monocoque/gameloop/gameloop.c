@@ -561,6 +561,7 @@ int tester(SimDevice* devices, int numdevices)
     tcsetattr(0, TCSANOW, &newsettings);
 
     fprintf(stdout, "\n");
+    simdata->car = "MONOCOQUETESTCAR";
     simdata->gear = MONOCOQUE_GEAR_NEUTRAL;
     simdata->velocity = 16;
     simdata->rpms = 100;

@@ -199,4 +199,5 @@ int configcheck(const char* config_file_str, int confignum, int* devices);
 
 int uiloadconfig(const char* config_file_str, int confignum, int configureddevices, MonocoqueSettings* ms, DeviceSettings* ds);
 
+int getNumberOfConfigs(const char* config_file_str);
 #endif
