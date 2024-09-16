@@ -35,8 +35,8 @@ int cammusc12_update(WheelDevice* wheeldevice, int maxrpm, int rpm, int gear, in
     // bytes 2 and 3 are a 16 bit velocity
     if ( velocity > 0 )
     {
-        bytes[4] = (velocity >> 8) & 0xFF;
-        bytes[5] = velocity & 0xFF;
+        bytes[5] = (velocity >> 8) & 0xFF;
+        bytes[4] = velocity & 0xFF;
     }
 
     // byte 4 is gear
