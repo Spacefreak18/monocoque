@@ -10,7 +10,8 @@
 typedef enum
 {
     WHEELDEV_UNKNOWN       = 0,
-    WHEELDEV_CAMMUSC5      = 1
+    WHEELDEV_CAMMUSC5      = 1,
+    WHEELDEV_CAMMUSC12     = 2
 }
 WheelType;
 

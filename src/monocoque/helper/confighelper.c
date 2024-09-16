@@ -95,6 +95,21 @@ int strtoeffecttype(const char* effect, DeviceSettings* ds)
     return MONOCOQUE_ERROR_NONE;
 }
 
+int strtodevsubsubtype(const char* device_subsubtype, DeviceSettings* ds)
+{
+    ds->dev_subsubtype = SIMDEVSUBTYPE_UNKNOWN;
+
+            if (strcicmp(device_subsubtype, "CammusC5") == 0)
+            {
+                ds->dev_subsubtype = SIMDEVSUBTYPE_CAMMUSC5;
+            }
+            if (strcicmp(device_subsubtype, "CammusC12") == 0)
+            {
+                ds->dev_subsubtype = SIMDEVSUBTYPE_CAMMUSC12;
+            }
+    return MONOCOQUE_ERROR_NONE;
+}
+
 int strtodevsubtype(const char* device_subtype, DeviceSettings* ds, int simdev)
 {
     ds->is_valid = false;
@@ -461,6 +476,19 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
     if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC)
     {
         // logic for different devices
+    }
+
+    if (ds->dev_subtype == SIMDEVTYPE_USBWHEEL)
+    {
+        // logic for different devices
+        int b = 0;
+
+        const char* temp;
+        int found = config_setting_lookup_string(device_settings, "subtype", &temp);
+        if(temp != NULL && found > 0)
+        {
+            b = strtodevsubsubtype(temp, ds);
+        }
     }
 
     if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC || ds->dev_type == SIMDEV_SOUND || ds->dev_subtype == SIMDEVTYPE_SERIALHAPTIC)

@@ -30,6 +30,14 @@ typedef enum
 }
 DeviceSubType;
 
+typedef enum
+{
+    SIMDEVSUBTYPE_UNKNOWN           = 0,
+    SIMDEVSUBTYPE_CAMMUSC5          = 1,
+    SIMDEVSUBTYPE_CAMMUSC12         = 2,
+}
+DeviceSubSubType;
+
 
 typedef enum
 {
@@ -169,6 +177,7 @@ typedef struct
     bool is_valid;
     DeviceType dev_type;
     DeviceSubType dev_subtype;
+    DeviceSubSubType dev_subsubtype;
     // to get really fancy move the effect information to it's own structure that would be a member of
     // any device settings member structure that can carry an effect
     VibrationEffectType effect_type;
