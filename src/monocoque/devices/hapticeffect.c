@@ -61,27 +61,38 @@ int loadtyreconfig(SimData* simdata, char* configfile)
         DeviceSettings settings;
 
         config_setting_t* config_car = config_setting_get_elem(config_cars, i);
-        const char* car;
-        double tyre0;
-        double tyre1;
-        double tyre2;
-        double tyre3;
-        config_setting_lookup_string(config_car, "car", &car);
-        config_setting_lookup_float(config_car, "tyre0", &tyre0);
-        config_setting_lookup_float(config_car, "tyre1", &tyre1);
-        config_setting_lookup_float(config_car, "tyre2", &tyre2);
-        config_setting_lookup_float(config_car, "tyre3", &tyre3);
-
-        if(simdata->car != NULL)
+        if(config_car != NULL)
         {
-            if (strcicmp(car, simdata->car) == 0)
+            const char* car;
+            double tyre0;
+            double tyre1;
+            double tyre2;
+            double tyre3;
+            config_setting_lookup_string(config_car, "car", &car);
+            config_setting_lookup_float(config_car, "tyre0", &tyre0);
+            config_setting_lookup_float(config_car, "tyre1", &tyre1);
+            config_setting_lookup_float(config_car, "tyre2", &tyre2);
+            config_setting_lookup_float(config_car, "tyre3", &tyre3);
+
+            if(simdata->car != NULL && car != NULL)
             {
-                simdata->tyrediameter[0] = tyre0;
-                simdata->tyrediameter[1] = tyre1;
-                simdata->tyrediameter[2] = tyre2;
-                simdata->tyrediameter[3] = tyre3;
-                break;
+                if(simdata->car[0] != '\0' && car[0] != '\0')
+                {
+                    if (strcicmp(car, simdata->car) == 0)
+                    {
+                        slogt("found saved car %s with tyre diameters %f %f %f %f", car, tyre0, tyre1, tyre2, tyre3);
+                        simdata->tyrediameter[0] = tyre0;
+                        simdata->tyrediameter[1] = tyre1;
+                        simdata->tyrediameter[2] = tyre2;
+                        simdata->tyrediameter[3] = tyre3;
+                        break;
+                    }
+                }
             }
+        }
+        else
+        {
+            slogw("Possible corruption in config file on entry %i attempting to continue", i+1);
         }
         i++;
     }
@@ -307,7 +318,18 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
     wheelslip[2] = 0;
     wheelslip[3] = 0;
 
-    slogt("wheel vibration calculation with wheel config set to %i configchecked %i configfile %s", useconfig, *configcheck, configfile);
+    if(simdata->car == NULL)
+    {
+        slogw("sim is not compatible with wheel and tyre effects.");
+        return 0;
+    }
+    if(simdata->car[0] == '\0')
+    {
+        slogw("sim is not compatible with wheel and tyre effects.");
+        return 0;
+    }
+
+    slogt("wheel vibration calculation with wheel config set to %i configchecked %i configfile %s car %s", useconfig, *configcheck, configfile, simdata->car);
 
     switch (effecttype)
     {
@@ -315,7 +337,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
         case (EFFECT_TYRELOCK):
         case (EFFECT_ABSBRAKES):
 
-            if(useconfig == 1 && configfile != NULL && simdata->car != NULL)
+            if(useconfig == 1 && configfile != NULL)
             {
                 // check for saved tyre diameter in config file
                 // if not saved version exists get tyre diameter and save it
@@ -340,7 +362,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
                     }
                 }
             }
-            if(hasTyreDiameter(simdata)==true && simdata->car != NULL)
+            if(hasTyreDiameter(simdata)==true)
             {
                 double Speedms = kmhtoms * simdata->velocity;
                 slogt("attempting wheel slip calculation");
