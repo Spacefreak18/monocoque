@@ -47,6 +47,7 @@ typedef struct
     int id;
     SerialType type;
     struct sp_port* port;
+    int baud;
     SerialDeviceType devicetype;
     // move these two they only apply to the haptic device
     int motorsposition;

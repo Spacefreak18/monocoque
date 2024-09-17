@@ -138,7 +138,9 @@ int serialdev_init(SerialDevice* serialdevice, const char* portdev, int motorspo
 
     serialdevice->motorsposition = motorsposition;
 
-    error = arduino_init(serialdevice, portdev, baud);
+    serialdevice->baud = baud;
+
+    error = arduino_init(serialdevice, portdev);
 
     return error;
 }
