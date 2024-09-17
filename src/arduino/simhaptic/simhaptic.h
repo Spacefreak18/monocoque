@@ -6,14 +6,14 @@
 
 typedef struct
 {
-    uint32_t motor1;
-    uint32_t effect1;
-    uint32_t motor2;
-    uint32_t effect2;
-    uint32_t motor3;
-    uint32_t effect3;
-    uint32_t motor4;
-    uint32_t effect4;
+    uint8_t motor1;
+    uint8_t effect1;
+    uint8_t motor2;
+    uint8_t effect2;
+    uint8_t motor3;
+    uint8_t effect3;
+    uint8_t motor4;
+    uint8_t effect4;
 }
 SimHapticData;
 

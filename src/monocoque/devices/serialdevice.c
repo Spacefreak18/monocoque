@@ -66,7 +66,7 @@ int arduino_simwind_update(SimDevice* this, SimData* simdata)
     serialdevice->u.simwinddata.velocity = simdata->velocity;
     slogt("Updating arduino device speed to %i", serialdevice->u.simwinddata.velocity);
     // this can be added to the config, all config dependent can be added to init
-    serialdevice->u.simwinddata.fanpower = 0.6;
+    serialdevice->u.simwinddata.fanpower = 0.6 * 255;
     size_t size = sizeof(SimWindData);
 
     arduino_update(serialdevice, &serialdevice->u.simwinddata, size);
