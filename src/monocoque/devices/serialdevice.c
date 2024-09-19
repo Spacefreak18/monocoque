@@ -12,6 +12,8 @@
 #include "../simulatorapi/simapi/simapi/simdata.h"
 #include "../slog/slog.h"
 
+#define KPHTOMPH .621317
+
 int serialdev_update(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
@@ -63,10 +65,12 @@ int arduino_simwind_update(SimDevice* this, SimData* simdata)
     SerialDevice* serialdevice = (void *) this->derived;
     int result = 1;
 
-    serialdevice->u.simwinddata.velocity = simdata->velocity;
+    // sending over as mph, when you consider 255mph to be a reasonable upper limit
+    serialdevice->u.simwinddata.velocity = ceil(simdata->velocity*KPHTOMPH);
+
     slogt("Updating arduino device speed to %i", serialdevice->u.simwinddata.velocity);
     // this can be added to the config, all config dependent can be added to init
-    serialdevice->u.simwinddata.fanpower = 0.6;
+    serialdevice->u.simwinddata.fanpower = (int)0.6 * 255;
     size_t size = sizeof(SimWindData);
 
     arduino_update(serialdevice, &serialdevice->u.simwinddata, size);

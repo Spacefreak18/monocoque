@@ -14,7 +14,7 @@ SimWindData sd;
 int velocity = 0;
 
 void setup() {
-    Serial.begin(115200);
+    Serial.begin(9600);
     if (!AFMS.begin()) {
         Serial.println("Could not find Motor Shield. Check wiring.");
         while (1);
@@ -37,11 +37,7 @@ void loop() {
         memcpy(&sd, &buff, BYTE_SIZE);
         velocity = sd.velocity;
     }
-    int v = ceil(velocity * KPHTOMPH);
-    if (v >= 255)
-    {
-      v = 255;
-    }
-    myMotor1->setSpeed(v*FANPOWER);
-    myMotor2->setSpeed(v*FANPOWER);
+
+    myMotor1->setSpeed(velocity*FANPOWER);
+    myMotor2->setSpeed(velocity*FANPOWER);
 }

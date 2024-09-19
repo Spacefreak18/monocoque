@@ -6,8 +6,8 @@
 
 typedef struct
 {
-    uint32_t velocity;
-    float fanpower;
+    uint8_t velocity;
+    uint8_t fanpower;
 }
 SimWindData;
 

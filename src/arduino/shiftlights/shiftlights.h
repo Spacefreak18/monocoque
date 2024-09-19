@@ -6,7 +6,7 @@
 
 typedef struct
 {
-    uint32_t litleds;
+    uint8_t litleds;
     //unsigned char color_1_red;
     //unsigned char color_1_green;
     //unsigned char color_1_blue;
