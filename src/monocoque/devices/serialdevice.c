@@ -19,15 +19,7 @@ int serialdev_update(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
 
-    switch (serialdevice->type)
-    {
-    case SERIALDEV_MOZA:
-        moza_update(serialdevice, simdata->maxrpm, simdata->rpms);
-        break;
-
-    default:
-        arduino_update(serialdevice, simdata, sizeof(SimData));
-    }
+    arduino_update(serialdevice, simdata, sizeof(SimData));
 
     return 0;
 }
@@ -126,7 +118,6 @@ int arduino_simhaptic_update(SimDevice* this, SimData* simdata)
     size_t size = sizeof(SimHapticData);
 
     arduino_update(serialdevice, &serialdevice->u.simhapticdata, size);
-
     return result;
 }
 
@@ -134,42 +125,35 @@ int serialdev_free(SimDevice* this)
 {
     SerialDevice* serialdevice = (void *) this->derived;
 
-    switch (serialdevice->type)
-    {
-    case SERIALDEV_MOZA:
-        moza_free(serialdevice);
-        break;
-
-    default:
-        arduino_free(serialdevice);
-    }
-
+    arduino_free(serialdevice);
 
     free(serialdevice);
     return 0;
 }
 
-int serialdev_init(SerialDevice* serialdevice, const char* portdev, int motorsposition, int baud)
+int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds)
 {
     slogi("initializing serial device...");
     int error = 0;
 
-    serialdevice->type = SERIALDEV_UNKNOWN;
-    serialdevice->type = SERIALDEV_ARDUINO;
 
-    serialdevice->motorsposition = motorsposition;
+    serialdevice->motorsposition = ds->serialdevsettings.motorsposition;
+    serialdevice->baudrate = ds->serialdevsettings.baud;
 
     serialdevice->baud = baud;
 
     error = arduino_init(serialdevice, portdev);
     switch (serialdevice->type)
     {
-    case SERIALDEV_MOZA:
-        error = moza_init(serialdevice, portdev);
+    case SERIALDEV_WHEEL:
+
+        // the wheel stuff assumed it was a usb
+        //error = wheeldev_init(&serialdevice->u.wheeldevice, ds);
+        error = moza_init(serialdevice, ds->serialdevsettings.portdev);
         break;
 
     default:
-        error = arduino_init(serialdevice, portdev, baud);
+        error = arduino_init(serialdevice, ds->serialdevsettings.portdev, ds->serialdevsettings.baud);
     }
 
 
@@ -189,6 +173,7 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
     this->m.free = &simdevfree;
     this->m.derived = this;
     this->m.vtable = &serial_simdevice_vtable;
+    this->type = SERIALDEV_ARDUINO;
 
     slogt("Attempting to configure arduino device with subtype: %i", ds->dev_subtype);
     switch (ds->dev_subtype) {
@@ -217,6 +202,17 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
             this->ampfactor = ds->serialdevsettings.ampfactor;
             slogi("Initializing arduino device for haptic effects.");
             break;
+        case (SIMDEVTYPE_SERIALWHEEL):
+            this->type = SERIALDEV_WHEEL;
+
+            switch (ds->dev_subsubtype) {
+
+                case SIMDEVSUBTYPE_MOZAR5:
+                default:
+                //move this stuff to wheeldevice or it's own serial wheel device module
+                this->devicetype = SERIALDEV__MOZAR5;
+                break;
+            }
     }
 
     if(this->devicetype == ARDUINODEV__HAPTIC)
@@ -230,7 +226,7 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
         this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
     }
 
-    int error = serialdev_init(this, ds->serialdevsettings.portdev, ds->serialdevsettings.motorsposition, ds->serialdevsettings.baud);
+    int error = serialdev_init(this, ds);
 
     if (error != 0)
     {

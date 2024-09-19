@@ -38,7 +38,7 @@ typedef enum
 {
     SERIALDEV_UNKNOWN       = 0,
     SERIALDEV_ARDUINO       = 1,
-    SERIALDEV_MOZA          = 2,
+    SERIALDEV_WHEEL         = 2,
 }
 SerialType;
 
@@ -52,6 +52,7 @@ typedef struct
     SerialDeviceType devicetype;
     // move these two they only apply to the haptic device
     int motorsposition;
+    int baudrate;
     double ampfactor;
     double state;
     union
@@ -59,6 +60,7 @@ typedef struct
         SimWindData simwinddata;
         SimHapticData simhapticdata;
         ShiftLightsData shiftlightsdata;
+        WheelDevice wheeldevice;
     } u;
 }
 SerialDevice;

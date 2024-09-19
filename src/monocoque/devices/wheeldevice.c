@@ -4,6 +4,7 @@
 
 #include "usb/wheels/cammusc5.h"
 #include "usb/wheels/cammusc12.h"
+#include "serial/moza.h"
 #include "wheeldevice.h"
 #include "../helper/confighelper.h"
 #include "../simulatorapi/simapi/simapi/simdata.h"

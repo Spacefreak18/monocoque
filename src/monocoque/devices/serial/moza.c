@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 #include <hidapi/hidapi.h>
 
@@ -7,10 +9,10 @@
 #include "../../slog/slog.h"
 
 #define MOZA_TIMEOUT 1000
-#define MOZA_SERIAL_TEMPLATE = {0x7e, 0x06, 0x41, 0x17, 0xfd, 0xde, 0x0, 0x0, 0x0, 0x0, 0x0}
-#define MOZA_NUM_AVAILABLE_LEDS = 10
-#define MOZA_BLINKING_BIT = 7
-#define MOZA_MAGIC_VALUE = 0x0d
+#define MOZA_SERIAL_TEMPLATE {0x7e, 0x06, 0x41, 0x17, 0xfd, 0xde, 0x0, 0x0, 0x0, 0x0, 0x0}
+#define MOZA_NUM_AVAILABLE_LEDS 10
+#define MOZA_BLINKING_BIT 7
+#define MOZA_MAGIC_VALUE 0x0d
 #define BIT(nr) (1UL << (nr))
 
 unsigned char moza_checksum(unsigned char *data)
@@ -24,10 +26,10 @@ unsigned char moza_checksum(unsigned char *data)
     return 0;
 }
 
-int moza_update(WheelDevice* wheeldevice, unsigned short maxrpm, unsigned short rpm)
+int moza_update(SerialDevice* serialdevice, unsigned short maxrpm, unsigned short rpm)
 {
     unsigned char bytes[] = MOZA_SERIAL_TEMPLATE;
-    int size = sizeof(bytes)/sizeof(bytes[0])
+    int size = sizeof(bytes)/sizeof(bytes[0]);
 
     if (rpm/maxrpm >= 0.8)
         bytes[9] |= BIT(0);
@@ -69,7 +71,7 @@ int moza_update(WheelDevice* wheeldevice, unsigned short maxrpm, unsigned short 
     if (serialdevice->port)
     {
         slogt("copying %i bytes to moza device", size);
-        result = check(sp_blocking_write(serialdevice->port, bytes, size, MOZA_TIMEOUT));
+        result = moza_serial_check(sp_blocking_write(serialdevice->port, bytes, size, MOZA_TIMEOUT));
     }
 
     return result;
@@ -82,34 +84,35 @@ int moza_init(SerialDevice* serialdevice, const char* portdev)
     char* port_name = strdup(portdev);
 
     slogd("Looking for port %s.\n", port_name);
-    error = check(sp_get_port_by_name(port_name, &serialdevice->port));
+    error = moza_serial_check(sp_get_port_by_name(port_name, &serialdevice->port));
     if (error != 0)
     {
         return error;
     }
 
     slogd("Opening port.\n");
-    check(sp_open(serialdevice->port, SP_MODE_READ_WRITE));
+    moza_serial_check(sp_open(serialdevice->port, SP_MODE_READ_WRITE));
 
     slogd("Setting port to 115200 8N1, no flow control.\n");
-    check(sp_set_baudrate(serialdevice->port, 115200));
-    check(sp_set_bits(serialdevice->port, 8));
-    check(sp_set_parity(serialdevice->port, SP_PARITY_NONE));
-    check(sp_set_stopbits(serialdevice->port, 1));
-    check(sp_set_flowcontrol(serialdevice->port, SP_FLOWCONTROL_NONE));
+    moza_serial_check(sp_set_baudrate(serialdevice->port, 115200));
+    moza_serial_check(sp_set_bits(serialdevice->port, 8));
+    moza_serial_check(sp_set_parity(serialdevice->port, SP_PARITY_NONE));
+    moza_serial_check(sp_set_stopbits(serialdevice->port, 1));
+    moza_serial_check(sp_set_flowcontrol(serialdevice->port, SP_FLOWCONTROL_NONE));
 
     free(port_name);
     slogd("Successfully setup moza serial device...");
     return 0;
 }
 
-int moza_free(WheelDevice* wheeldevice)
+int moza_free(SerialDevice* serialdevice)
 {
-    check(sp_close(serialdevice->port));
+    moza_serial_check(sp_close(serialdevice->port));
     sp_free_port(serialdevice->port);
 }
 
-int check(enum sp_return result)
+// i have to move this some place common
+int moza_serial_check(enum sp_return result)
 {
     /* For this example we'll just exit on any error by calling abort(). */
     char* error_message;
@@ -128,10 +131,10 @@ int check(enum sp_return result)
             //abort();
         case SP_ERR_SUPP:
             printf("Error: Not supported.\n");
-            abort();
+            //abort();
         case SP_ERR_MEM:
             printf("Error: Couldn't allocate memory.\n");
-            abort();
+            //abort();
         case SP_OK:
         default:
             return result;

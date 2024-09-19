@@ -30,6 +30,8 @@ set(devices_source_files
   sound/usb_generic_shaker_pulse.c
   serial/arduino.h
   serial/arduino.c
+  serial/moza.h
+  serial/moza.c
 )
 
 include_directories("." "usb" "sound" "serial")

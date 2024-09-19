@@ -26,7 +26,8 @@ typedef enum
     SIMDEVTYPE_SHIFTLIGHTS       = 3,
     SIMDEVTYPE_SIMWIND           = 4,
     SIMDEVTYPE_SERIALHAPTIC      = 5,
-    SIMDEVTYPE_USBWHEEL          = 6
+    SIMDEVTYPE_USBWHEEL          = 6,
+    SIMDEVTYPE_SERIALWHEEL       = 7
 }
 DeviceSubType;
 
@@ -35,6 +36,7 @@ typedef enum
     SIMDEVSUBTYPE_UNKNOWN           = 0,
     SIMDEVSUBTYPE_CAMMUSC5          = 1,
     SIMDEVSUBTYPE_CAMMUSC12         = 2,
+    SIMDEVSUBTYPE_MOZAR5            = 3,
 }
 DeviceSubSubType;
 

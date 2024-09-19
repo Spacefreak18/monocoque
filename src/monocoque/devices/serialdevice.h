@@ -2,13 +2,14 @@
 #define _SERIALDEVICE_H
 
 #include <libserialport.h>
+#include "wheeldevice.h"
 
 typedef enum
 {
     ARDUINODEV__SHIFTLIGHTS   = 0,
     ARDUINODEV__SIMWIND       = 1,
     ARDUINODEV__HAPTIC        = 2,
-    MOZADEV                   = 3,
+    SERIALDEV__MOZAR5         = 3,
 }
 SerialDeviceType;
 
