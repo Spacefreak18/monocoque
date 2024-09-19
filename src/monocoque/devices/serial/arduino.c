@@ -42,7 +42,7 @@ int arduino_update(SerialDevice* serialdevice, void* data, size_t size)
 //    return result;
 //}
 
-int arduino_init(SerialDevice* serialdevice, const char* portdev, int baud)
+int arduino_init(SerialDevice* serialdevice, const char* portdev)
 {
     slogi("initializing arduino serial device...");
     int error = 0;
@@ -59,7 +59,7 @@ int arduino_init(SerialDevice* serialdevice, const char* portdev, int baud)
     check(sp_open(serialdevice->port, SP_MODE_READ_WRITE));
 
     slogd("Setting port to %i 8N1, no flow control", serialdevice->baud);
-    check(sp_set_baudrate(serialdevice->port, baud));
+    check(sp_set_baudrate(serialdevice->port, serialdevice->baud));
     check(sp_set_bits(serialdevice->port, 8));
     check(sp_set_parity(serialdevice->port, SP_PARITY_NONE));
     check(sp_set_stopbits(serialdevice->port, 1));

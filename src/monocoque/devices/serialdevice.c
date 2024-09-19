@@ -140,9 +140,7 @@ int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds)
     serialdevice->motorsposition = ds->serialdevsettings.motorsposition;
     serialdevice->baudrate = ds->serialdevsettings.baud;
 
-    serialdevice->baud = baud;
-
-    error = arduino_init(serialdevice, portdev);
+    error = arduino_init(serialdevice, ds->serialdevsettings.portdev);
     switch (serialdevice->type)
     {
     case SERIALDEV_WHEEL:
@@ -153,7 +151,7 @@ int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds)
         break;
 
     default:
-        error = arduino_init(serialdevice, ds->serialdevsettings.portdev, ds->serialdevsettings.baud);
+        error = arduino_init(serialdevice, ds->serialdevsettings.portdev );
     }
 
 
