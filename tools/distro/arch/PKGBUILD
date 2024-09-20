@@ -27,7 +27,9 @@ sha256sums=(
 )
 
 build() {
-        #-G 'Unix Makefiles' \
+  cd "$srcdir" || exit 1
+  git submodule sync --recursive
+  git submodule update --init --recursive
   cmake \
         -B "${_reponame}/build" \
         -S "${_reponame}" \
