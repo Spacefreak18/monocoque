@@ -133,14 +133,13 @@ int serialdev_free(SimDevice* this)
 
 int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds)
 {
-    slogi("initializing serial device...");
+    slogi("initializing serial device on port %s...", ds->serialdevsettings.portdev);
     int error = 0;
 
 
     serialdevice->motorsposition = ds->serialdevsettings.motorsposition;
     serialdevice->baudrate = ds->serialdevsettings.baud;
 
-    error = arduino_init(serialdevice, ds->serialdevsettings.portdev);
     switch (serialdevice->type)
     {
     case SERIALDEV_WHEEL:

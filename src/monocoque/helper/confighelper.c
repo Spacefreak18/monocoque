@@ -551,7 +551,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         }
     }
 
-    if (ds->dev_subtype == SIMDEVTYPE_SIMWIND || ds->dev_subtype == SIMDEVTYPE_SHIFTLIGHTS || ds->dev_subtype == SIMDEVTYPE_SERIALHAPTIC)
+    if (ds->dev_type == SIMDEV_SERIAL)
     {
         if (device_settings != NULL)
         {
