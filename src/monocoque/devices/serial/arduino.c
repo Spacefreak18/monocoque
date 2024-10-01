@@ -48,18 +48,18 @@ int arduino_init(SerialDevice* serialdevice, const char* portdev)
     int error = 0;
     char* port_name = strdup(portdev);
 
-    slogd("Looking for port %s.\n", port_name);
+    slogd("Looking for port %s", port_name);
     error = check(sp_get_port_by_name(port_name, &serialdevice->port));
     if (error != 0)
     {
         return error;
     }
 
-    slogd("Opening port.\n");
+    slogd("Opening port");
     check(sp_open(serialdevice->port, SP_MODE_READ_WRITE));
 
-    slogd("Setting port to %i 8N1, no flow control", serialdevice->baud);
-    check(sp_set_baudrate(serialdevice->port, serialdevice->baud));
+    slogd("Setting port to %i 8N1, no flow control", serialdevice->baudrate);
+    check(sp_set_baudrate(serialdevice->port, serialdevice->baudrate));
     check(sp_set_bits(serialdevice->port, 8));
     check(sp_set_parity(serialdevice->port, SP_PARITY_NONE));
     check(sp_set_stopbits(serialdevice->port, 1));

@@ -133,7 +133,7 @@ int serialdev_free(SimDevice* this)
 
 int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds)
 {
-    slogi("initializing serial device on port %s...", ds->serialdevsettings.portdev);
+    slogi("initializing serial device on port %s to %i...", ds->serialdevsettings.portdev, ds->serialdevsettings.baud);
     int error = 0;
 
 
@@ -142,15 +142,16 @@ int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds)
 
     switch (serialdevice->type)
     {
-    case SERIALDEV_WHEEL:
+        case SERIALDEV_WHEEL:
 
-        // the wheel stuff assumed it was a usb
-        //error = wheeldev_init(&serialdevice->u.wheeldevice, ds);
-        error = moza_init(serialdevice, ds->serialdevsettings.portdev);
-        break;
+            // the wheel stuff assumed it was a usb
+            //error = wheeldev_init(&serialdevice->u.wheeldevice, ds);
+            error = moza_init(serialdevice, ds->serialdevsettings.portdev);
+            break;
 
-    default:
-        error = arduino_init(serialdevice, ds->serialdevsettings.portdev );
+        default:
+            error = arduino_init(serialdevice, ds->serialdevsettings.portdev );
+            break;
     }
 
 
