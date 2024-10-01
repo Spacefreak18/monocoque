@@ -13,8 +13,9 @@ typedef struct
     int granularity;
     int verbosity_count;
 
-    Simulator sim;
+    SimulatorAPI sim;
     bool simon;
+    bool  udp;
 
     char* config_filepath;
     char* config_dirpath;

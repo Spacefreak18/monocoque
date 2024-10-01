@@ -45,6 +45,8 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
     p->max_revs            = 0;
     p->verbosity_count     = 0;
 
+    p->udp                 = false;
+
     p->user_specified_config_file = false;
     p->user_specified_log_file = false;
     p->user_specified_config_dir = false;
@@ -57,13 +59,14 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
     struct arg_lit* arg_verbosity3   = arg_litn("v","verbose", 0, 2, "increase logging verbosity");
 
     struct arg_rex* cmd1             = arg_rex1(NULL, NULL, "play", NULL, REG_ICASE, NULL);
+    struct arg_lit* arg_udp          = arg_lit0("d", "udp", "force udp mode for sims which support it");
     struct arg_file* arg_conf        = arg_filen(NULL, "uiconf", "<config_file>", 0, 1, NULL);
     struct arg_file* arg_log         = arg_filen("l", "log", "<log_file>", 0, 1, NULL);
     struct arg_str* arg_confdir      = arg_strn(NULL, "configdir", "config_dir>", 0, 1, NULL);
     struct arg_lit* help             = arg_litn(NULL,"help", 0, 1, "print this help and exit");
     struct arg_lit* vers             = arg_litn(NULL,"version", 0, 1, "print version information and exit");
     struct arg_end* end1             = arg_end(20);
-    void* argtable1[]                = {cmd1,arg_log,arg_conf,arg_verbosity1,help,vers,end1};
+    void* argtable1[]                = {cmd1,arg_log,arg_conf,arg_udp,arg_verbosity1,help,vers,end1};
     int nerrors1;
 
     struct arg_rex* cmd2a            = arg_rex1(NULL, NULL, "config", NULL, REG_ICASE, NULL);
@@ -122,6 +125,10 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
         {
             p->config_filepath = strdup(arg_conf->filename[0]);
             p->user_specified_config_file = true;
+        }
+        if (arg_udp->count > 0)
+        {
+            p->udp = true;
         }
         if(arg_log->count > 0)
         {

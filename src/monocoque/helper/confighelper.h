@@ -123,10 +123,11 @@ MonocoqueTyreIdentifier;
 typedef struct
 {
     ProgramAction program_action;
-    Simulator sim_name;
+    SimulatorAPI sim_name;
     int configcheck;
     int useconfig;
     int verbosity_count;
+    bool  force_udp_mode;
     char* tyre_diameter_config;
     char* config_str;
     char* log_filename_str;
