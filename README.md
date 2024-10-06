@@ -45,6 +45,7 @@ Cross Platform device manager for driving and flight simulators, for use with co
 - libxml2
 - argtable2
 - libconfig
+- xdg-basedir
 - [slog](https://github.com/kala13x/slog) (static)
 - [simshmbridge](https://github.com/spacefreak18/simshmbridge) - for sims that need shared memory mapping like AC and Project Cars related.
 - [simapi](https://github.com/spacefreak18/simapi)
