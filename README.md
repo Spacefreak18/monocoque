@@ -9,33 +9,39 @@ _  /  / / / /_/ /  / / / /_/ / /__ / /_/ / /_/ // /_/ //  __/
 Cross Platform device manager for driving and flight simulators, for use with common simulator software titles.
 
 ## Features
-- Updates at 120 frames per seconds.
+- Updates at 60 frames per seconds.
 - Modular design for support with various titles and devices.
-- Supports bass shakers, tachometers, simlights, simwind etc, through usb and arduino serial.
+- Supports bass shakers, tachometers, several wheels, simlights, simwind etc, through usb and arduino serial.
 - Tachometer support is currently  limited to the Revburner model. Supports existing revburner xml configuration files.
 - Includes utility to configure revburner tachometer
-- Can send data to any serial device. So far only tested with arduino. Includes sample arduino sketch for sim lights.
-- The support for haptic bass shakers is limited and needs the most work. So far the engine rev is a simple sine wave, which I find convincing. The gear shift event works but not convincing enough for me.
-- Choice of Portaudio or Pulseaudio backend.
+- Can send data to any serial device. So far only tested with arduino. Includes sample arduino sketch for sim lights, simwind, and simhaptic effects for motors.
+- Convincing shaker effects for noise tranducers for wheel slip, wheel lock, and abs, as well as engine rpm and gear shifts.
+- Choice of Portaudio or Pulseaudio (libpulse) backend.
 
-## Suported Games
+## Supported Games ( see [simapi](https://github.com/spacefreak18/simapi) for more details of what is supported from each sim )
   - Using [SimSHMBridge](https://github.com/spacefreak18/simshmbridge)
     - Asseto Corsa
     - Assetto Corsa Competizione
-    - Project Cars 2
+    - Project Cars 2 (untested)
     - Automobilista 2
   
   - Using [scs-sdk-plugin](https://github.com/jackz314/scs-sdk-plugin/releases)
     - Euro Truck Simuator 2
     - American Truck Simulator
 
+  - Using [rfactor 2 plugin](https://github.com/schlegp/rF2SharedMemoryMapPlugin_Wine)
+    - RFactor 2
+
+  - Using UDP
+    - Automobilista 2
+    - Project Cars 2 (untested)
+
 ## Dependencies
 - libserialport - arduino serial devices
 - hidapi - usb hid devices
-- libusb - used by hidapi
 - portaudio - sound devices (haptic bass shakers)
-- pulseaudio - sound devices (haptic bass shakers)
-- libenet - UDP support (not yet implemented)
+- libpulse - sound devices (haptic bass shakers)
+- libuv base event loop
 - libxml2
 - argtable2
 - libconfig
@@ -64,12 +70,11 @@ cmake -DUSE_PULSEAUDIO=YES ..
 ## Bass Shaker Sound Devices
 
 When using pulseaudio it is necesarry to provide a devid in the configuration. You can find this with:
-
 ```
 pacmd list-sinks
 pacmd list-sinks | grep name:
 ```
-analyze the output to determine the appropriate hardware to which you would like to output the effects.
+analyze the output to determine the appropriate hardware to which you would like to output the effects. ( Need to research how to do this with pipewire. )
 
 ## Using Arduino Devices
 
@@ -126,6 +131,7 @@ make  # Make sure serial connection is the same as on the host pc and it have th
     cmake -Danalyze=on ..
     make
 ```
+
 ### Valgrind
 ```
     cd build
@@ -141,6 +147,5 @@ make  # Make sure serial connection is the same as on the host pc and it have th
 ## ToDo
  - windows port
  - more memory testing
- - move config code around
  - cleanup tests which are basically just copies of the example from their respective projects
  - much, much more
