@@ -8,7 +8,7 @@
 #include "../../helper/confighelper.h"
 #include "../slog/slog.h"
 
-const char* SYSFSRUMBLEPATH = "/sys/module/hid_fanatec/drivers/hid:ftec_csl_elite/0003:0EB7:183B.*/rumble";
+const char* SYSFSRUMBLEPATH = "/sys/module/hid_fanatec/drivers/hid:f*/0003:0EB7:183B.*/rumble";
 
 
 int cslelitev3_update(USBGenericHapticDevice* usbhapticdevice, int effecttype, int play)
