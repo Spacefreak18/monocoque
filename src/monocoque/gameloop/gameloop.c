@@ -252,7 +252,7 @@ void shmdatamapcallback(uv_timer_t* handle)
     //appstate = 2;
     if (appstate == 2)
     {
-        simdatamap(simdata, simmap, f->sim, false, NULL);
+        simdatamap(simdata, simmap, NULL, f->sim, false, NULL);
         looprun(ms, f, simdata);
     }
 
@@ -328,7 +328,7 @@ static void on_udp_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf,
 
     if (appstate == 2)
     {
-        simdatamap(simdata, simmap, f->sim, true, a);
+        simdatamap(simdata, simmap, NULL, f->sim, true, a);
         looprun(ms, f, simdata);
     }
 
@@ -399,7 +399,7 @@ void udpstart(MonocoqueSettings* sms, loop_data* f, SimData* simdata, SimMap* si
 {
     if (appstate == 2)
     {
-        simdatamap(simdata, simmap, f->sim, true, NULL);
+        simdatamap(simdata, simmap, NULL, f->sim, true, NULL);
         if (doui == true)
         {
             looprun(sms, f, simdata);
@@ -491,7 +491,7 @@ int monocoque_mainloop(MonocoqueSettings* ms)
 {
 
     SimData* simdata = malloc(sizeof(SimData));
-    SimMap* simmap = malloc(sizeof(SimMap));
+    SimMap* simmap = createSimMap();
 
     struct termios newsettings, canonicalmode;
     tcgetattr(0, &canonicalmode);
@@ -548,7 +548,7 @@ int monocoque_mainloop(MonocoqueSettings* ms)
 
     free(baton);
     free(simdata);
-    free(simmap);
+    freesimmap(simmap);
 
     return 0;
 }

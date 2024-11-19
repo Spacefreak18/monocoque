@@ -295,9 +295,9 @@ void getTyreDiameter(SimData* simdata)
 {
     if(simdata->velocity > minvelocity && simdata->brake <= maxbrake && simdata->gas <= maxthrottle)
     {
-        if (simdata->velocityX/simdata->velocity < maxXvelocity)
+        double Speedms = kmhtoms * simdata->velocity;
+        if (simdata->Xvelocity/Speedms < maxXvelocity)
         {
-            double Speedms = kmhtoms * simdata->velocity;
             for(int i = 0; i < 4; i++)
             {
                 simdata->tyrediameter[i] = Speedms / simdata->tyreRPS[i] * 2;
@@ -385,6 +385,15 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
             break;
         default:
             slogd("Unknown effect type");
+    }
+
+    if(simdata->Yvelocity <= 0)
+    {
+        return 0;
+    }
+    if(simdata->Zvelocity > 1 || simdata->Zvelocity < -1)
+    {
+        return 0;
     }
 
     switch (effecttype)
