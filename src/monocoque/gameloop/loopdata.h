@@ -13,6 +13,7 @@ typedef struct loop_data
 {
     uv_work_t req;
     SimulatorAPI sim;
+    SimulatorAPI map;
     bool use_udp;
     bool simstate;
     bool uion;

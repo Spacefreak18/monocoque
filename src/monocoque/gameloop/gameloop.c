@@ -252,7 +252,7 @@ void shmdatamapcallback(uv_timer_t* handle)
     //appstate = 2;
     if (appstate == 2)
     {
-        simdatamap(simdata, simmap, NULL, f->sim, false, NULL);
+        simdatamap(simdata, simmap, NULL, f->map, false, NULL);
         looprun(ms, f, simdata);
     }
 
@@ -285,7 +285,7 @@ void shmdatamapcallback(uv_timer_t* handle)
                 }
             }
             free(devices);
-            int r = simfree(simdata, simmap, f->sim);
+            int r = simfree(simdata, simmap, f->map);
             slogd("simfree returned %i", r);
             f->numdevices = 0;
             slogi("stopped mapping data, press q again to quit");
@@ -328,7 +328,7 @@ static void on_udp_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf,
 
     if (appstate == 2)
     {
-        simdatamap(simdata, simmap, NULL, f->sim, true, a);
+        simdatamap(simdata, simmap, NULL, f->map, true, a);
         looprun(ms, f, simdata);
     }
 
@@ -361,7 +361,7 @@ static void on_udp_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf,
                 }
             }
             free(devices);
-            int r = simfree(simdata, simmap, f->sim);
+            int r = simfree(simdata, simmap, f->map);
             slogd("simfree returned %i", r);
             f->numdevices = 0;
             slogi("stopped mapping data, press q again to quit");
@@ -416,10 +416,11 @@ void datacheckcallback(uv_timer_t* handle)
 
     if ( appstate == 1 )
     {
-        SimInfo si = getSim(simdata, simmap, f->ms->force_udp_mode, startudp);
+        SimInfo si = getSim(simdata, simmap, f->ms->force_udp_mode, startudp, false);
         //TODO: move all this to a siminfo struct in loop_data
         f->simstate = si.isSimOn;
         f->sim = si.simulatorapi;
+        f->map = si.mapapi;
         f->use_udp = si.SimUsesUDP;
 
         if(f->ms->force_udp_mode == true)
