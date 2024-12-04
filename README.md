@@ -149,6 +149,7 @@ make  # Make sure serial connection is the same as on the host pc and it have th
  - add option to specify frame rate
  - add ability to set frame rate per effect
  - add frequency cap (low pass filter) to sound haptic effects
+ - add road and kerb sound haptic effects
  - windows port
  - more memory testing
  - cleanup tests which are basically just copies of the example from their respective projects
