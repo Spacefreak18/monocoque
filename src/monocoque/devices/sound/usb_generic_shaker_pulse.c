@@ -12,7 +12,7 @@
 
 #define FORMAT PA_SAMPLE_S16LE
 #define SAMPLE_RATE   (44100)
-#define AMPLITUDE 1
+#define AMPLITUDE .5
 #define DURATION 1.0
 
 #ifndef M_PI
@@ -46,30 +46,45 @@ void gear_sound_stream(pa_stream *s, size_t length, void *userdata) {
     pa_stream_write(s, buffer, length, NULL, 0LL, PA_SEEK_RELATIVE);
 }
 
+double get_closest_frequency(size_t num_samples, double input_frequency) {
+
+    double samples_per_cycle = SAMPLE_RATE / input_frequency;
+
+    double adjusted_frequency = SAMPLE_RATE / (num_samples / floor(num_samples/samples_per_cycle) );
+
+    return adjusted_frequency;
+}
+
 void engine_sound_stream(pa_stream *s, size_t length, void *userdata) {
 
     SoundData* data = (SoundData*)userdata;
     double freq = data->curr_frequency;
+
     size_t num_samples = length / sizeof(int16_t);
-    num_samples = (size_t) (DURATION * SAMPLE_RATE);
+    freq = get_closest_frequency( num_samples, freq );
+    //size_t num_samples = (size_t) (DURATION * SAMPLE_RATE);
     int16_t buffer[num_samples];
 
-
+    //double t = 0;
     for (size_t i = 0; i < num_samples; i++) {
         double t = data->phase;
-        double sample = AMPLITUDE * 32767.0 * sin(2.0 * M_PI * freq * t);
 
+        double sample = AMPLITUDE * 32767.0 * sin( 2.0 * M_PI * freq * t );
 
         buffer[i] = (int16_t)sample;
 
         t += 1.0 / SAMPLE_RATE;
-        if (t >= DURATION) {
-            t = -DURATION;
+        if (t >= SAMPLE_RATE) {
+            t = 0;
         }
         data->phase = t;
     }
+    data->phase = round(data->phase);
+
     pa_stream_write(s, buffer, length, NULL, 0LL, PA_SEEK_RELATIVE);
 }
+
+
 
 void stream_success_cb(pa_stream *stream, int success, void *userdata) {
     return;
