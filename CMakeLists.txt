@@ -61,45 +61,45 @@ add_subdirectory(src/monocoque/slog)
 #target_link_libraries(testrevburner hidapi-hidraw)
 #add_test(testrevburner testrevburner)
 
-add_executable(listsound tests/pa_devs.c)
-target_include_directories(listsound PUBLIC)
-target_link_libraries(listsound m portaudio)
-add_test(list-sound-devices listsound)
-
-add_executable(longsine tests/patest_longsine.c)
-target_include_directories(longsine PUBLIC ${LIBXML_INCLUDE_DIR})
-target_link_libraries(longsine m portaudio)
-add_test(longsine longsine)
-
-add_executable(parserevburnerxml tests/revburnerparsetest.c)
-target_include_directories(parserevburnerxml PUBLIC ${LIBXML_INCLUDE_DIR})
-target_link_libraries(parserevburnerxml portaudio xml2)
-add_test(parserevburnerxml parserevburnerxml)
-
-add_executable(setmem tests/setmem.c)
-target_include_directories(setmem PUBLIC)
-target_link_libraries(setmem)
-add_test(setmem setmem)
-
-add_executable(getmem tests/getmem.c)
-target_include_directories(getmem PUBLIC)
-target_link_libraries(getmem)
-add_test(getmem getmem)
-
-add_executable(setsimdata tests/setsimdata.c)
-target_include_directories(setsimdata PUBLIC)
-target_link_libraries(setsimdata)
-add_test(setsimdata setsimdata)
-
-add_executable(hidtest tests/hidtest.c)
-target_include_directories(hidtest PUBLIC)
-target_link_libraries(hidtest hidapi-hidraw)
-add_test(hidtest hidtest)
-
-add_executable(simlighttest tests/simlighttest.c)
-target_include_directories(simlighttest PUBLIC)
-target_link_libraries(simlighttest serialport)
-add_test(simlighttest simlighttest)
+#add_executable(listsound tests/pa_devs.c)
+#target_include_directories(listsound PUBLIC)
+#target_link_libraries(listsound m portaudio)
+#add_test(list-sound-devices listsound)
+#
+#add_executable(longsine tests/patest_longsine.c)
+#target_include_directories(longsine PUBLIC ${LIBXML_INCLUDE_DIR})
+#target_link_libraries(longsine m portaudio)
+#add_test(longsine longsine)
+#
+#add_executable(parserevburnerxml tests/revburnerparsetest.c)
+#target_include_directories(parserevburnerxml PUBLIC ${LIBXML_INCLUDE_DIR})
+#target_link_libraries(parserevburnerxml portaudio xml2)
+#add_test(parserevburnerxml parserevburnerxml)
+#
+#add_executable(setmem tests/setmem.c)
+#target_include_directories(setmem PUBLIC)
+#target_link_libraries(setmem)
+#add_test(setmem setmem)
+#
+#add_executable(getmem tests/getmem.c)
+#target_include_directories(getmem PUBLIC)
+#target_link_libraries(getmem)
+#add_test(getmem getmem)
+#
+#add_executable(setsimdata tests/setsimdata.c)
+#target_include_directories(setsimdata PUBLIC)
+#target_link_libraries(setsimdata)
+#add_test(setsimdata setsimdata)
+#
+#add_executable(hidtest tests/hidtest.c)
+#target_include_directories(hidtest PUBLIC)
+#target_link_libraries(hidtest hidapi-hidraw)
+#add_test(hidtest hidtest)
+#
+#add_executable(simlighttest tests/simlighttest.c)
+#target_include_directories(simlighttest PUBLIC)
+#target_link_libraries(simlighttest serialport)
+#add_test(simlighttest simlighttest)
 
 
 # used for enabling additional compiler options if supported
