@@ -23,6 +23,7 @@ typedef struct
     double duration;
     int curr_frequency;
     double curr_duration;
+    double phase;
 }
 SoundData;
 

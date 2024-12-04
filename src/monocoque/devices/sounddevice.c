@@ -131,7 +131,7 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int
     //sounddevice->sounddata.table_size = 48000/(100/60);
     sounddevice->sounddata.curr_frequency = 0;
     sounddevice->sounddata.curr_duration = 0;
-
+    sounddevice->sounddata.phase = 0;
 
 
     const char* streamname= "Engine";

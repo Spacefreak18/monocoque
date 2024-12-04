@@ -11,9 +11,9 @@
 #include "../sounddevice.h"
 
 #define FORMAT PA_SAMPLE_S16LE
-#define SAMPLE_RATE   (48000)
-#define AMPLITUDE .5
-#define DURATION 4.0
+#define SAMPLE_RATE   (44100)
+#define AMPLITUDE 1
+#define DURATION 1.0
 
 #ifndef M_PI
 #define M_PI  (3.14159265)
@@ -49,20 +49,24 @@ void gear_sound_stream(pa_stream *s, size_t length, void *userdata) {
 void engine_sound_stream(pa_stream *s, size_t length, void *userdata) {
 
     SoundData* data = (SoundData*)userdata;
+    double freq = data->curr_frequency;
     size_t num_samples = length / sizeof(int16_t);
+    num_samples = (size_t) (DURATION * SAMPLE_RATE);
     int16_t buffer[num_samples];
 
+
     for (size_t i = 0; i < num_samples; i++) {
-        static double t = 0.0;
-        double sample = AMPLITUDE * 32767.0 * sin(2.0 * M_PI * data->curr_frequency * t);
+        double t = data->phase;
+        double sample = AMPLITUDE * 32767.0 * sin(2.0 * M_PI * freq * t);
 
 
         buffer[i] = (int16_t)sample;
 
         t += 1.0 / SAMPLE_RATE;
         if (t >= DURATION) {
-            t = 0.0;
+            t = -DURATION;
         }
+        data->phase = t;
     }
     pa_stream_write(s, buffer, length, NULL, 0LL, PA_SEEK_RELATIVE);
 }
