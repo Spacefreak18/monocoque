@@ -6,7 +6,7 @@
 #define LED_PIN     7
 #define NUM_LEDS    6
 #define BRIGHTNESS  40
-#define STARTLED    0
+#define STARTLED    1
 
 #define COLOR1R 0
 #define COLOR1G 255
@@ -64,15 +64,15 @@ void loop()
     {
         if (l >= numlights / 2)
         {
-            leds[l+STARTLED] = CRGB ( COLOR2R, COLOR2G, COLOR2B);
+            leds[l+STARTLED-1] = CRGB ( COLOR2R, COLOR2G, COLOR2B);
         }
         if (l < numlights / 2)
         {
-            leds[l+STARTLED] = CRGB ( COLOR1R, COLOR1G, COLOR1B);
+            leds[l+STARTLED-1] = CRGB ( COLOR1R, COLOR1G, COLOR1B);
         }
         if (l == numlights - 1)
         {
-            leds[l+STARTLED] = CRGB ( COLOR3R, COLOR3G, COLOR3B);
+            leds[l+STARTLED-1] = CRGB ( COLOR3R, COLOR3G, COLOR3B);
         }
         //if (lights[l] <= 0)
         //{
