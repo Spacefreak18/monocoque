@@ -6,6 +6,7 @@
 #define LED_PIN     7
 #define NUM_LEDS    6
 #define BRIGHTNESS  40
+#define STARTLED    0
 
 #define COLOR1R 0
 #define COLOR1G 255
@@ -23,12 +24,12 @@ int maxrpm = 0;
 int rpm = 0;
 int numlights = NUM_LEDS;
 int pin = LED_PIN;
-int lights[6];
+int lights[NUM_LEDS];
 
 
 void setup()
 {
-    Serial.begin(9600);
+    Serial.begin(115200);
     FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
     FastLED.setMaxPowerInVoltsAndMilliamps(5, 500);
     FastLED.setBrightness(BRIGHTNESS);
@@ -56,30 +57,6 @@ void loop()
         memcpy(&sd, &buff, SIMDATA_SIZE);
         lit = sd.litleds;
     }
-    //if (Serial.available() >= SIMDATA_SIZE)
-    //{
-    //    Serial.readBytes(buff, SIMDATA_SIZE);
-    //    memcpy(&sd, &buff, SIMDATA_SIZE);
-    //    rpm = sd.rpm;
-    //    maxrpm = sd.maxrpm;
-    //}
-
-    //while (l < numlights)
-    //{
-    //    lights[l] = 0;
-    //    l++;
-    //}
-    //l = -1;
-    //int rpmlights = 0;
-    //while (rpm > rpmlights)
-    //{
-    //    if (l>=0)
-    //    {
-    //        lights[l] = 1;
-    //    }
-    //    l++;
-    //    rpmlights = rpmlights + (((maxrpm-250)/numlights));
-    //}
 
     l = 0;
     FastLED.clear();
@@ -87,15 +64,15 @@ void loop()
     {
         if (l >= numlights / 2)
         {
-            leds[l] = CRGB ( COLOR2R, COLOR2G, COLOR2B);
+            leds[l+STARTLED] = CRGB ( COLOR2R, COLOR2G, COLOR2B);
         }
         if (l < numlights / 2)
         {
-            leds[l] = CRGB ( COLOR1R, COLOR1G, COLOR1B);
+            leds[l+STARTLED] = CRGB ( COLOR1R, COLOR1G, COLOR1B);
         }
         if (l == numlights - 1)
         {
-            leds[l] = CRGB ( COLOR3R, COLOR3G, COLOR3B);
+            leds[l+STARTLED] = CRGB ( COLOR3R, COLOR3G, COLOR3B);
         }
         //if (lights[l] <= 0)
         //{
