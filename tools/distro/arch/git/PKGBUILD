@@ -1,13 +1,12 @@
 # Maintainer: Paul Jones <paul@spacefreak18.xyz>
 _reponame=monocoque
-pkgname=monocoque
-pkgver=0.2.0
-pkgrel=3
+pkgname=monocoque-git
+pkgver=0.1.0r94
+pkgrel=1
 pkgdesc="Device Manager for Racing Sims"
 arch=('x86_64')
 url="https://github.com/spacefreak18/monocoque"
 license=('GPL3')
-_commit=12509e9709871afcb3ae264823b4a7d3c3b71bf7
 depends=(
         hidapi
 	libserialport
@@ -22,12 +21,17 @@ makedepends=(
   git
   cmake
 )
-
-source=("git+https://github.com/spacefreak18/monocoque.git#commit=$_commit")
-
+source=(
+  git+https://github.com/spacefreak18/monocoque
+)
 sha256sums=(
   'SKIP'
 )
+
+pkgver() {
+  cd "$srcdir/$_reponame"
+  git describe --long --tags | cut -d "-" -f 1-2 | tr "-" "r"
+}
 
 package() {
   cd "$srcdir/$_reponame" || exit 1
@@ -35,10 +39,9 @@ package() {
   git submodule update --init --recursive
   mkdir -p build
   cd build
-  cmake -Wno-dev -DUSE_PULSEAUDIO=yes ..
+  cmake -DUSE_PULSEAUDIO=yes ..
   make
 
   mkdir -p "${pkgdir}/usr/bin/"
-  cp "$srcdir/$_reponame"/build/monocoque "${pkgdir}/usr/bin/monocoque"
-  install -D -m644 "$srcdir/$_reponame"/LICENSE.rst -t "${pkgdir}/usr/share/licenses/$_reponame"
+  cp "$srcdir/$_reponame"/build/$_reponame "${pkgdir}/usr/bin/$_reponame"
 }
