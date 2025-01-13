@@ -40,6 +40,7 @@ int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds, Monocoque
                 simdevices[j] = sim->m;
                 simdevices[j].initialized = true;
                 simdevices[j].type = SIMDEV_USB;
+                simdevices[j].fps = ds[j].fps;
                 devices++;
             }
             else
@@ -57,6 +58,7 @@ int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds, Monocoque
                 simdevices[j] = sim->m;
                 simdevices[j].initialized = true;
                 simdevices[j].type = SIMDEV_SOUND;
+                simdevices[j].fps = ds[j].fps;
                 devices++;
             }
             else
@@ -73,6 +75,7 @@ int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds, Monocoque
                 simdevices[j] = sim->m;
                 simdevices[j].initialized = true;
                 simdevices[j].type = SIMDEV_SERIAL;
+                simdevices[j].fps = ds[j].fps;
                 devices++;
 
             }

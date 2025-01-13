@@ -23,6 +23,7 @@ struct SimDevice
     int (*free)(SimDevice*);
     void* derived;
     int id;
+    int fps;
     bool initialized;
     DeviceType type;
     HapticEffect hapticeffect;

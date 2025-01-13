@@ -178,6 +178,7 @@ USBDeviceSettings;
 typedef struct
 {
     bool is_valid;
+    int fps;
     DeviceType dev_type;
     DeviceSubType dev_subtype;
     DeviceSubSubType dev_subsubtype;

@@ -465,6 +465,8 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
     }
 
 
+    ds->fps = 60;
+    config_setting_lookup_int(device_settings, "fps", &ds->fps);
 
     if (ds->dev_subtype == SIMDEVTYPE_TACHOMETER)
     {

@@ -8,6 +8,12 @@
 #include "../simulatorapi/simapi/simapi/simdata.h"
 #include "../simulatorapi/simapi/simapi/simmapper.h"
 
+typedef struct device_loop_data
+{
+    uv_work_t req;
+    SimData* simdata;
+    SimDevice* simdevice;
+} device_loop_data;
 
 typedef struct loop_data
 {
@@ -23,6 +29,10 @@ typedef struct loop_data
     SimData* simdata;
     SimMap* simmap;
     SimDevice* simdevices;
+    uv_timer_t* device_timers;
+    device_loop_data* device_batons;
 } loop_data;
+
+
 
 #endif
