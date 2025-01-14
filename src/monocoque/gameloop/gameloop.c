@@ -612,7 +612,7 @@ int monocoque_mainloop(MonocoqueSettings* ms)
 
     free(baton);
     free(simdata);
-    freesimmap(simmap);
+    freesimmap(simmap, false);
 
     return 0;
 }
@@ -773,7 +773,11 @@ int tester(SimDevice* devices, int numdevices)
     tcsetattr(0, TCSANOW, &newsettings);
 
     fprintf(stdout, "\n");
-    simdata->car = "MONOCOQUETESTCAR";
+    simdata->car[0] = 'C';
+    simdata->car[1] = 'A';
+    simdata->car[2] = 'R';
+    simdata->car[3] = '\0';
+
     simdata->gear = MONOCOQUE_GEAR_NEUTRAL;
     simdata->velocity = 16;
     simdata->rpms = 100;
