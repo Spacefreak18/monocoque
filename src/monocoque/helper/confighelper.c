@@ -107,6 +107,10 @@ int strtodevsubsubtype(const char* device_subsubtype, DeviceSettings* ds)
             {
                 ds->dev_subsubtype = SIMDEVSUBTYPE_CAMMUSC12;
             }
+            if (strcicmp(device_subsubtype, "MozaR5") == 0)
+            {
+                ds->dev_subsubtype = SIMDEVSUBTYPE_MOZAR5;
+            }
             if (strcicmp(device_subsubtype, "MozaR8") == 0)
             {
                 ds->dev_subsubtype = SIMDEVSUBTYPE_MOZAR5;

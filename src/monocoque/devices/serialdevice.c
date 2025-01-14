@@ -15,6 +15,15 @@
 
 #define KPHTOMPH .621317
 
+int serial_wheel_update(SimDevice* this, SimData* simdata)
+{
+    SerialDevice* serialdevice = (void *) this->derived;
+
+    moza_update(serialdevice, simdata->rpms, simdata->maxrpm);
+
+    return 0;
+}
+
 int serialdev_update(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
@@ -131,6 +140,16 @@ int serialdev_free(SimDevice* this)
     return 0;
 }
 
+int serial_wheel_free(SimDevice* this)
+{
+    SerialDevice* serialdevice = (void *) this->derived;
+
+    moza_free(serialdevice);
+
+    free(serialdevice);
+    return 0;
+}
+
 int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds)
 {
     slogi("initializing serial device on port %s to %i...", ds->serialdevsettings.portdev, ds->serialdevsettings.baud);
@@ -162,6 +181,7 @@ static const vtable serial_simdevice_vtable = { &serialdev_update, &serialdev_fr
 static const vtable arduino_shiftlights_vtable = { &arduino_shiftlights_update, &serialdev_free };
 static const vtable arduino_simwind_vtable = { &arduino_simwind_update, &serialdev_free };
 static const vtable arduino_simhaptic_vtable = { &arduino_simhaptic_update, &serialdev_free };
+static const vtable serialwheel_vtable = { &serial_wheel_update, &serial_wheel_free };
 
 SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
 
@@ -203,12 +223,15 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
         case (SIMDEVTYPE_SERIALWHEEL):
             this->type = SERIALDEV_WHEEL;
 
+            slogi("Initializing serial wheel device.");
             switch (ds->dev_subsubtype) {
 
                 case SIMDEVSUBTYPE_MOZAR5:
                 default:
                 //move this stuff to wheeldevice or it's own serial wheel device module
                 this->devicetype = SERIALDEV__MOZAR5;
+                this->m.vtable = &serialwheel_vtable;
+
                 break;
             }
     }
