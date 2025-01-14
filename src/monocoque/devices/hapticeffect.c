@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
-#include <jansson.h>
 #include <math.h>
 
 #include "usbhapticdevice.h"
