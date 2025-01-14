@@ -223,8 +223,18 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
 
     if (doui == true)
     {
-        slogi("looking for ui config %s", ms->config_str);
-        int confignum = getconfigtouse(ms->config_str, simdata->car, f->sim);
+        slogi("looking for ui config %s pass 1", ms->config_str);
+        int confignum = getconfigtouse2(ms->config_str, simdata->car, f->sim);
+        if(confignum == -1)
+        {
+            slogi("looking for ui config %s pass 2", ms->config_str);
+            confignum = getconfigtouse1(ms->config_str, simdata->car, f->sim);
+        }
+        if(confignum == -1)
+        {
+            slogi("looking for ui config %s pass 3", ms->config_str);
+            confignum = getconfigtouse(ms->config_str, simdata->car, f->sim);
+        }
         int configureddevices;
         configcheck(ms->config_str, confignum, &configureddevices);
 

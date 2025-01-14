@@ -206,6 +206,8 @@ int monocoquesettingsfree(MonocoqueSettings* ms);
 
 int strcicmp(char const *a, char const *b);
 
+int getconfigtouse2(const char* config_file_str, char* car, int sim);
+int getconfigtouse1(const char* config_file_str, char* car, int sim);
 int getconfigtouse(const char* config_file_str, char* car, int sim);
 
 int configcheck(const char* config_file_str, int confignum, int* devices);

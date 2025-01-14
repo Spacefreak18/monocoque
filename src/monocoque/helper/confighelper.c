@@ -216,6 +216,132 @@ int getNumberOfConfigs(const char* config_file_str)
 
     return configs;
 }
+
+int getconfigtouse2(const char* config_file_str, char* car, int sim)
+{
+    config_t cfg;
+    config_init(&cfg);
+    if (!config_read_file(&cfg, config_file_str))
+    {
+        fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
+        return -1;
+    }
+    config_setting_t* config = NULL;
+    config_setting_t* config_widgets = NULL;
+    config = config_lookup(&cfg, "configs");
+    int configs = config_setting_length(config);
+
+    const char* temp;
+    config_setting_t* config_config = NULL;
+    int j = 0;
+    if ( configs == 1 )
+    {
+        return -1;
+    }
+    int confignum = -1;
+    slogt("Multiple configs found");
+    for (j = 0; j < configs; j++)
+    {
+        config_config = config_setting_get_elem(config, j);
+
+        int found = 0;
+        int csim = 0;
+        slogt("sim is %i", sim);
+        config_setting_lookup_int(config_config, "sim", &csim);
+        if (csim != sim)
+        {
+            slogt("rejected config %i", j);
+            continue;
+        }
+
+        slogt("checking if car is matched %i", j);
+        temp = NULL;
+        found = config_setting_lookup_string(config_config, "car", &temp);
+        slogt("config car is %s found is %i", temp, found);
+        if(temp != NULL && found > 0 && car > 0 && car != NULL)
+        {
+            slogt("checking against sim car of %s", car);
+            if(strcicmp(temp, car) == 0)
+            {
+                confignum = j;
+            }
+        }
+        if(confignum>=0)
+        {
+            break;
+        }
+    }
+    return confignum;
+}
+
+int getconfigtouse1(const char* config_file_str, char* car, int sim)
+{
+    config_t cfg;
+    config_init(&cfg);
+    if (!config_read_file(&cfg, config_file_str))
+    {
+        fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
+        return -1;
+    }
+    config_setting_t* config = NULL;
+    config_setting_t* config_widgets = NULL;
+    config = config_lookup(&cfg, "configs");
+    int configs = config_setting_length(config);
+
+    const char* temp;
+    config_setting_t* config_config = NULL;
+    int j = 0;
+    if ( configs == 1 )
+    {
+        return -1;
+    }
+    int confignum = -1;
+    slogt("Multiple configs found");
+    for (j = 0; j < configs; j++)
+    {
+        config_config = config_setting_get_elem(config, j);
+
+        int found = 0;
+        int csim = 0;
+        slogt("sim is %i", sim);
+        config_setting_lookup_int(config_config, "sim", &csim);
+        if (csim != sim)
+        {
+            slogt("rejected config %i", j);
+            continue;
+        }
+
+        slogt("checking if car is matched %i", j);
+        temp = NULL;
+        found = config_setting_lookup_string(config_config, "car", &temp);
+        slogt("config car is %s found is %i", temp, found);
+        if(temp != NULL && found > 0 && car > 0 && car != NULL)
+        {
+            slogt("checking against sim car of %s", car);
+            if(strcicmp(temp, car) == 0)
+            {
+                confignum = j;
+            }
+            if(strcicmp("default", temp) == 0)
+            {
+                slogt("matched default car");
+                confignum = j;
+            }
+        }
+        else
+        {
+            slogt("assuming default car");
+            confignum = j;
+        }
+        slogt("bomb");
+        if(confignum>=0)
+        {
+            break;
+        }
+    }
+    return confignum;
+}
+
 int getconfigtouse(const char* config_file_str, char* car, int sim)
 {
     config_t cfg;
@@ -237,7 +363,7 @@ int getconfigtouse(const char* config_file_str, char* car, int sim)
     {
         return 0;
     }
-    int confignum = configs-1;
+    int confignum = 0;
     slogt("Multiple configs found");
     for (j = 0; j < configs; j++)
     {
@@ -283,6 +409,7 @@ int getconfigtouse(const char* config_file_str, char* car, int sim)
     }
     return confignum;
 }
+
 
 int loadtachconfig(const char* config_file, DeviceSettings* ds)
 {
