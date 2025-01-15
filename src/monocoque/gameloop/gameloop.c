@@ -970,6 +970,17 @@ int tester(SimDevice* devices, int numdevices)
     }
     sleep(3);
 
+    fprintf(stdout, "Setting rpms to 7000\n");
+    simdata->rpms = 7000;
+    for (int x = 0; x < numdevices; x++)
+    {
+        if (devices[x].initialized == true)
+        {
+            devices[x].update(&devices[x], simdata);
+        }
+    }
+    sleep(3);
+
     fprintf(stdout, "Setting rpms to 8000\n");
     simdata->rpms = 8000;
     for (int x = 0; x < numdevices; x++)
