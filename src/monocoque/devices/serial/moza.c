@@ -31,38 +31,40 @@ int moza_update(SerialDevice* serialdevice, unsigned short maxrpm, unsigned shor
     unsigned char bytes[] = MOZA_SERIAL_TEMPLATE;
     int size = sizeof(bytes)/sizeof(bytes[0]);
 
-    if (rpm/maxrpm >= 0.8)
+    float perct = (float)rpm/(float)maxrpm;
+
+    if (perct >= 0.8)
         bytes[9] |= BIT(0);
 
-    if (rpm/maxrpm >= 0.83)
+    if (perct >= 0.83)
         bytes[9] |= BIT(1);
 
-    if (rpm/maxrpm >= 0.86)
+    if (perct >= 0.86)
         bytes[9] |= BIT(2);
 
-    if (rpm/maxrpm >= 0.89)
+    if (perct >= 0.89)
         bytes[9] |= BIT(3);
 
-    if (rpm/maxrpm >= 0.91)
+    if (perct >= 0.91)
         bytes[8] |= BIT(4);
 
-    if (rpm/maxrpm >= 0.92)
+    if (perct >= 0.92)
         bytes[8] |= BIT(5);
 
-    if (rpm/maxrpm >= 0.93)
+    if (perct >= 0.93)
         bytes[8] |= BIT(6);
 
-    if (rpm/maxrpm >= 0.94)
+    if (perct >= 0.94)
         bytes[8] |= BIT(7);
 
-    if (rpm/maxrpm >= 0.96)
+    if (perct >= 0.96)
         bytes[8] |= BIT(0);
 
-    if (rpm/maxrpm >= 0.96)
+    if (perct >= 0.96)
         bytes[8] |= BIT(1);
 
     // blinking
-    if (rpm/maxrpm >= 0.97)
+    if (perct >= 0.97)
         bytes[9] |= BIT(MOZA_BLINKING_BIT);
 
     bytes[10] = moza_checksum(bytes);
@@ -70,7 +72,8 @@ int moza_update(SerialDevice* serialdevice, unsigned short maxrpm, unsigned shor
     int result = 1;
     if (serialdevice->port)
     {
-        slogt("copying %i bytes to moza device", size);
+        slogd("copying %i bytes to moza device", size);
+        slogt("writing bytes %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x from rpm %i maxrpm %i", bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7], bytes[8], bytes[9], bytes[10], rpm, maxrpm);
         result = moza_serial_check(sp_blocking_write(serialdevice->port, bytes, size, MOZA_TIMEOUT));
     }
 

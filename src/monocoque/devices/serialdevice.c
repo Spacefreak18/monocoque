@@ -19,7 +19,7 @@ int serial_wheel_update(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
 
-    moza_update(serialdevice, simdata->rpms, simdata->maxrpm);
+    moza_update(serialdevice, simdata->maxrpm, simdata->rpms);
 
     return 0;
 }
