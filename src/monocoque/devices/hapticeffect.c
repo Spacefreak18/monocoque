@@ -440,6 +440,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
                 if(wheelslip[0] > threshold)
                 {
                     play += wheelslip[0] - threshold;
+                    slogt("lock is %f", play);
                 }
             }
             if (tyre == FRONTRIGHT || tyre == FRONTS || tyre == ALLFOUR)
@@ -447,6 +448,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
                 if(wheelslip[1] > threshold)
                 {
                     play += wheelslip[1] - threshold;
+                    slogt("lock is %f", play);
                 }
             }
             if (tyre == REARLEFT || tyre == REARS || tyre == ALLFOUR)
@@ -454,6 +456,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
                 if(wheelslip[2] > threshold)
                 {
                     play += wheelslip[2] - threshold;
+                    slogt("lock is %f", play);
                 }
             }
             if (tyre == REARRIGHT || tyre == REARS || tyre == ALLFOUR)
@@ -461,6 +464,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
                 if(wheelslip[3] > threshold)
                 {
                     play += wheelslip[3] - threshold;
+                    slogt("lock is %f", play);
                 }
             }
 
@@ -472,6 +476,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
                 if(wheelslip[0] > threshold)
                 {
                     play += wheelslip[0] - threshold;
+                    slogt("abs is %f", play);
                 }
             }
             if (tyre == FRONTRIGHT || tyre == FRONTS || tyre == ALLFOUR)
@@ -479,6 +484,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
                 if(wheelslip[1] > threshold)
                 {
                     play += wheelslip[1] - threshold;
+                    slogt("abs is %f", play);
                 }
             }
             if (tyre == REARLEFT || tyre == REARS || tyre == ALLFOUR)
@@ -486,6 +492,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
                 if(wheelslip[2] > threshold)
                 {
                     play += wheelslip[2] - threshold;
+                    slogt("abs is %f", play);
                 }
             }
             if (tyre == REARRIGHT || tyre == REARS || tyre == ALLFOUR)
@@ -493,6 +500,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
                 if(wheelslip[3] > threshold)
                 {
                     play += wheelslip[3] - threshold;
+                    slogt("abs is %f", play);
                 }
             }
             if(simdata->abs <= 0)

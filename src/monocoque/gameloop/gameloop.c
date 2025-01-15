@@ -827,14 +827,14 @@ int tester(SimDevice* devices, int numdevices)
     sleep(3);
 
     fprintf(stdout, "testing wheel spin\n");
+    simdata->tyreRPS[0] = 50;
+    simdata->tyreRPS[1] = 50;
+    simdata->tyreRPS[2] = 50;
+    simdata->tyreRPS[3] = 50;
     simdata->tyrediameter[0] = 0.638636385206394;
     simdata->tyrediameter[1] = 0.633384434597093;
     simdata->tyrediameter[2] = 0.710475735564615;
     simdata->tyrediameter[3] = 0.710475735564615;
-    simdata->tyreRPS[0] = 103;
-    simdata->tyreRPS[1] = 103;
-    simdata->tyreRPS[2] = 103;
-    simdata->tyreRPS[3] = 103;
     for (int x = 0; x < numdevices; x++)
     {
         if (devices[x].initialized == true)
@@ -883,11 +883,11 @@ int tester(SimDevice* devices, int numdevices)
     simdata->tyreRPS[0] = 50;
     simdata->tyreRPS[1] = 50;
     simdata->tyreRPS[2] = 50;
+    simdata->tyreRPS[3] = 50;
     simdata->tyrediameter[0] = 0.638636385206394;
     simdata->tyrediameter[1] = 0.633384434597093;
     simdata->tyrediameter[2] = 0.710475735564615;
     simdata->tyrediameter[3] = 0.710475735564615;
-    simdata->tyreRPS[3] = 50;
     simdata->abs = .11;
     for (int x = 0; x < numdevices; x++)
     {
