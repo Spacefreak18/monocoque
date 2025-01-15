@@ -23,7 +23,7 @@ unsigned char moza_checksum(unsigned char *data)
         ret += data[i];
     }
 
-    return 0;
+    return ret;
 }
 
 int moza_update(SerialDevice* serialdevice, unsigned short maxrpm, unsigned short rpm)
