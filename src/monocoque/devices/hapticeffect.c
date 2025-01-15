@@ -390,7 +390,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
     {
         return 0;
     }
-    if(simdata->Zvelocity > 1 || simdata->Zvelocity < -1)
+    if(simdata->Zvelocity > 1)
     {
         return 0;
     }
