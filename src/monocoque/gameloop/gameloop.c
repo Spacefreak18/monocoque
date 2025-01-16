@@ -261,7 +261,7 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
 
         for (int x = 0; x < numdevices; x++)
         {
-            if (devices[x].initialized == true)
+            if (devices[x].initialized == true && devices[x].type != 2)
             {
                 device_loop_data* dld = f->device_batons + (sizeof(device_loop_data) * x);
                 dld->simdevice = &devices[x];
@@ -278,15 +278,15 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
     else
     {
         showstats(simdata);
-        //SimDevice* devices = f->simdevices;
-        //int numdevices = f->numdevices;
-        //for (int x = 0; x < numdevices; x++)
-        //{
-        //    if (devices[x].initialized == true)
-        //    {
-        //        devices[x].update(&devices[x], simdata);
-        //    }
-        //}
+        SimDevice* devices = f->simdevices;
+        int numdevices = f->numdevices;
+        for (int x = 0; x < numdevices; x++)
+        {
+            if (devices[x].initialized == true && devices[x].type == 2)
+            {
+                devices[x].update(&devices[x], simdata);
+            }
+        }
     }
 }
 
@@ -321,7 +321,7 @@ void shmdatamapcallback(uv_timer_t* handle)
 
             for (int x = 0; x < numdevices; x++)
             {
-                if (devices[x].initialized == true)
+                if (devices[x].initialized == true && devices[x].type != 2)
                 {
                     uv_timer_t* dt = (uv_timer_t*) f->device_timers + (uv_handle_size(UV_TIMER) * x);
                     slogt("attempting device timer stop and release");
