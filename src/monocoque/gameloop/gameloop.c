@@ -329,7 +329,7 @@ void shmdatamapcallback(uv_timer_t* handle)
                     slogt("attempting device timer stop and release");
                     slogt("timer active status %i", uv_is_active((uv_handle_t*) dt));
                     uv_timer_stop(dt);
-                    uv_close((uv_handle_t*) dt, on_timer_close_complete);
+                    //uv_close((uv_handle_t*) dt, on_timer_close_complete);
                 }
             }
             free(f->device_batons);
