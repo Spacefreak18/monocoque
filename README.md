@@ -73,10 +73,9 @@ cmake -DUSE_PULSEAUDIO=YES ..
 ```
 ## Bass Shaker Sound Devices
 
-When using pulseaudio it is necesarry to provide a devid in the configuration. You can find this with:
+When using pulseaudio it is necesarry to provide a devid in the configuration. You can find this with: (you need to look at the full output of pactl if you don't know which one you want)
 ```
-pacmd list-sinks
-pacmd list-sinks | grep name:
+pactl list sinks|grep -E -i 'index:|name:'
 ```
 analyze the output to determine the appropriate hardware to which you would like to output the effects. ( Need to research how to do this with pipewire. )
 
