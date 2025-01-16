@@ -109,6 +109,7 @@ int usb_generic_shaker_free(SoundDevice* sounddevice)
 
 int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* mainloop, pa_context* context, const char* devname, int volume, int pan, int channels, const char* streamname)
 {
+    pa_threaded_mainloop_lock(mainloop);
     pa_stream *stream;
 
     // Create a playback stream
@@ -181,10 +182,9 @@ int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* main
         pa_threaded_mainloop_wait(mainloop);
     }
 
-    //pa_threaded_mainloop_unlock(mainloop);
-
     // Uncork the stream so it will start playing
     pa_stream_cork(stream, 0, stream_success_cb, mainloop);
+    pa_threaded_mainloop_unlock(mainloop);
 
     sounddevice->stream = stream;
     return 0;

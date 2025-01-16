@@ -251,22 +251,22 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
             settingsfree(ds[i]);
         }
         free(ds);
-        doui = false;
+
 
 
         int numdevices = f->numdevices;
         SimDevice* devices = f->simdevices;
-        f->device_timers = (malloc(uv_handle_size(UV_TIMER) * numdevices));
-        f->device_batons = (malloc(sizeof(device_loop_data) * numdevices));
+        f->device_timers = (uv_timer_t*) (malloc(uv_handle_size(UV_TIMER) * numdevices));
+        f->device_batons = (device_loop_data*) (malloc(sizeof(device_loop_data) * numdevices));
 
         for (int x = 0; x < numdevices; x++)
         {
-            if (devices[x].initialized == true && devices[x].type != 2)
+            if (devices[x].initialized == true)
             {
-                device_loop_data* dld = f->device_batons + (sizeof(device_loop_data) * x);
+                device_loop_data* dld = &f->device_batons[x];
                 dld->simdevice = &devices[x];
                 dld->simdata = simdata;
-                uv_timer_t* dt = (f->device_timers + (uv_handle_size(UV_TIMER) * x));
+                uv_timer_t* dt = &f->device_timers[x];
                 uv_timer_init(uv_default_loop(), dt);
                 uv_handle_set_data((uv_handle_t*) dt, (void*) dld);
                 int interval = 1000/devices[x].fps;
@@ -274,19 +274,21 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
                 slogi("starting device at %i fps (%i ms ticks)", devices[x].fps, interval);
             }
         }
+
+        doui = false;
     }
     else
     {
         showstats(simdata);
-        SimDevice* devices = f->simdevices;
-        int numdevices = f->numdevices;
-        for (int x = 0; x < numdevices; x++)
-        {
-            if (devices[x].initialized == true && devices[x].type == 2)
-            {
-                devices[x].update(&devices[x], simdata);
-            }
-        }
+        //SimDevice* devices = f->simdevices;
+        //int numdevices = f->numdevices;
+        //for (int x = 0; x < numdevices; x++)
+        //{
+        //    if (devices[x].initialized == true && devices[x].type == 2)
+        //    {
+        //        devices[x].update(&devices[x], simdata);
+        //    }
+        //}
     }
 }
 
@@ -321,9 +323,9 @@ void shmdatamapcallback(uv_timer_t* handle)
 
             for (int x = 0; x < numdevices; x++)
             {
-                if (devices[x].initialized == true && devices[x].type != 2)
+                if (devices[x].initialized == true)
                 {
-                    uv_timer_t* dt = (uv_timer_t*) f->device_timers + (uv_handle_size(UV_TIMER) * x);
+                    uv_timer_t* dt = &f->device_timers[x];
                     slogt("attempting device timer stop and release");
                     slogt("timer active status %i", uv_is_active((uv_handle_t*) dt));
                     uv_timer_stop(dt);
