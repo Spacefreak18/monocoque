@@ -827,6 +827,7 @@ int tester(SimDevice* devices, int numdevices)
     sleep(3);
 
     fprintf(stdout, "testing wheel spin\n");
+    simdata->velocity = 15;
     simdata->tyreRPS[0] = 50;
     simdata->tyreRPS[1] = 50;
     simdata->tyreRPS[2] = 50;
@@ -845,11 +846,11 @@ int tester(SimDevice* devices, int numdevices)
     sleep(3);
 
     fprintf(stdout, "Testing wheel Lock\n");
-    simdata->tyreRPS[0] = 50;
-    simdata->tyreRPS[1] = 50;
-    simdata->tyreRPS[2] = 50;
-    simdata->tyreRPS[3] = 50;
-    simdata->velocity = 100;
+    simdata->tyreRPS[0] = 25;
+    simdata->tyreRPS[1] = 25;
+    simdata->tyreRPS[2] = 25;
+    simdata->tyreRPS[3] = 25;
+    simdata->velocity = 150;
     for (int x = 0; x < numdevices; x++)
     {
         if (devices[x].initialized == true)
