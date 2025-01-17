@@ -127,6 +127,7 @@ typedef struct
     int configcheck;
     int useconfig;
     int verbosity_count;
+    int fps;
     bool  force_udp_mode;
     char* tyre_diameter_config;
     char* config_str;

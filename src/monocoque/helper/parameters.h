@@ -9,6 +9,7 @@ typedef struct
     int   program_action;
     const char* sim_string;
     const char* save_file;
+    int fps;
     int max_revs;
     int granularity;
     int verbosity_count;

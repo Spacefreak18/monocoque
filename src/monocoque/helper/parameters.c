@@ -44,6 +44,7 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
     p->program_action      = 0;
     p->max_revs            = 0;
     p->verbosity_count     = 0;
+    p->fps                 = 60;
 
     p->udp                 = false;
 
@@ -63,10 +64,11 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
     struct arg_file* arg_conf        = arg_filen(NULL, "uiconf", "<config_file>", 0, 1, NULL);
     struct arg_file* arg_log         = arg_filen("l", "log", "<log_file>", 0, 1, NULL);
     struct arg_str* arg_confdir      = arg_strn(NULL, "configdir", "config_dir>", 0, 1, NULL);
+    struct arg_int* arg_fps          = arg_int0("f", "fps", "fps", "main data refresh rate");
     struct arg_lit* help             = arg_litn(NULL,"help", 0, 1, "print this help and exit");
     struct arg_lit* vers             = arg_litn(NULL,"version", 0, 1, "print version information and exit");
     struct arg_end* end1             = arg_end(20);
-    void* argtable1[]                = {cmd1,arg_log,arg_conf,arg_udp,arg_verbosity1,help,vers,end1};
+    void* argtable1[]                = {cmd1,arg_log,arg_conf,arg_fps,arg_udp,arg_verbosity1,help,vers,end1};
     int nerrors1;
 
     struct arg_rex* cmd2a            = arg_rex1(NULL, NULL, "config", NULL, REG_ICASE, NULL);
@@ -129,6 +131,10 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
         if (arg_udp->count > 0)
         {
             p->udp = true;
+        }
+        if(arg_fps->count > 0)
+        {
+            p->fps = arg_fps->ival[0];
         }
         if(arg_log->count > 0)
         {

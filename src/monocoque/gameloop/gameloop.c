@@ -513,7 +513,9 @@ void datacheckcallback(uv_timer_t* handle)
             }
             else
             {
-                uv_timer_start(&datamaptimer, shmdatamapcallback, 2000, 16);
+                int interval = 1000 / f->ms->fps;
+                slogd("starting telemetry mapping at %i fps (%i ms ticks)", f->ms->fps, interval);
+                uv_timer_start(&datamaptimer, shmdatamapcallback, 2000, interval);
             }
             uv_timer_stop(handle);
         }

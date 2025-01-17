@@ -56,6 +56,8 @@ void SetSettingsFromParameters(Parameters* p, MonocoqueSettings* ms, char* confi
         ms->log_filename_str = strdup("monocoque.log");
     }
 
+    ms->fps = p->fps;
+
     ms->verbosity_count = p->verbosity_count;
     ms->program_action = A_TEST;
     if (p->program_action == A_PLAY)
