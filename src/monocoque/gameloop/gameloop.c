@@ -537,9 +537,9 @@ void cb(uv_poll_t* handle, int status, int events)
         if(f->releasing == false && doui == false)
         {
             appstate--;
-            slogi("User requested stop appstate is now %i", appstate);
-            fprintf(stdout, "User requested stop appstate is now %i\n", appstate);
+            fprintf(stdout, "\nUser requested stop appstate is now %i\n", appstate);
             fflush(stdout);
+            slogi("User requested stop appstate is now %i", appstate);
         }
     }
 
