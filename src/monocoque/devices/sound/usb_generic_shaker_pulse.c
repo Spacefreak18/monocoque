@@ -134,11 +134,11 @@ int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* main
     }
     if(channels == 6)
     {
-        pa_channel_map_parse(&channel_map, "front-left,front-right,rear-left,rear-right,front-center,lfe");
+        pa_channel_map_parse(&channel_map, "front-left,front-right,front-center,lfe,rear-left,rear-right");
     }
     if(channels == 8)
     {
-        pa_channel_map_parse(&channel_map, "front-left,front-right,rear-left,rear-right,front-center,lfe,side-left,side-right");
+        pa_channel_map_parse(&channel_map, "front-left,front-right,front-center,lfe,rear-left,rear-right,side-left,side-right");
     }
 
     stream = pa_stream_new(context, streamname, &sample_specifications, &channel_map);
@@ -182,11 +182,13 @@ int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* main
         pa_threaded_mainloop_wait(mainloop);
     }
 
+
+
     // Uncork the stream so it will start playing
     pa_stream_cork(stream, 0, stream_success_cb, mainloop);
-    pa_threaded_mainloop_unlock(mainloop);
 
     sounddevice->stream = stream;
+    pa_threaded_mainloop_unlock(mainloop);
     return 0;
 }
 
