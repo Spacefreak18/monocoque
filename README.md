@@ -77,7 +77,7 @@ When using pulseaudio it is necesarry to provide a devid in the configuration. T
 ```
 pactl list sinks | grep -E -i 'index:|name:' -A 4
 ```
-One can generate sample sine waves at specific frequency on a specific channel on a specific sound card with this command
+One can generate sample sine waves at specific frequency on a specific channel on a specific sound card with this command (change -d to the Name of your desired target card and change 440 to any frequency)
 ```
 ffmpeg -f lavfi -i "sine=f=440" -af "pan=7.1|c1=c0,surround=level_out=10" -f wav pipe:1 | paplay --no-remap --no-remix -d alsa_output.pci-0000_00_1b.0.analog-stereo -n "Monocoque" --stream-name="Haptic Test"
 ```
