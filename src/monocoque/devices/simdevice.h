@@ -52,6 +52,7 @@ typedef struct
     SerialDeviceType devicetype;
     // move these two they only apply to the haptic device
     int motorsposition;
+    int numlights;
     int baudrate;
     double ampfactor;
     double state;

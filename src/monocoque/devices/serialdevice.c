@@ -39,7 +39,7 @@ int arduino_shiftlights_update(SimDevice* this, SimData* simdata)
     int result = 1;
 
 
-    int num_avail_leds = 6;
+    int num_avail_leds = serialdevice->numlights;
     int rpm = simdata->rpms;
     int maxrpm = simdata->maxrpm;
     int litleds = 0;
@@ -197,6 +197,7 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
     switch (ds->dev_subtype) {
         case (SIMDEVTYPE_SHIFTLIGHTS):
             this->devicetype = ARDUINODEV__SHIFTLIGHTS;
+            this->numlights = ds->serialdevsettings.numlights;
             this->m.vtable = &arduino_shiftlights_vtable;
             slogi("Initializing arduino device for shiftlights.");
             break;

@@ -152,6 +152,7 @@ typedef struct
 {
     char* portdev;
     MotorPosition motorsposition;
+    int numlights;
     float ampfactor;
     int baud;
 }

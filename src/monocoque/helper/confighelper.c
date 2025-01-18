@@ -716,6 +716,10 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
             config_setting_lookup_int(device_settings, "motors", &motorposition);
             ds->serialdevsettings.motorsposition = motorposition;
 
+            int numlights = 6;
+            config_setting_lookup_int(device_settings, "numlights", &numlights);
+            ds->serialdevsettings.numlights = numlights;
+
             int baud = 9600;
             config_setting_lookup_int(device_settings, "baud", &baud);
             ds->serialdevsettings.baud = baud;
