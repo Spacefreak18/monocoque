@@ -5,7 +5,7 @@
 #include "tachdevice.h"
 #include "../slog/slog.h"
 
-const int buf_size = 65;
+const size_t buf_size = 8;
 
 
 int revburner_update(TachDevice* tachdevice, int pulses)

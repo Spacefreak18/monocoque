@@ -6,6 +6,8 @@
 #include "usbhapticdevice.h"
 #include "hapticeffect.h"
 #include "usb/cslelitev3.h"
+#include "usb/simagicp1000.h"
+
 #include "../../helper/confighelper.h"
 #include "../../simulatorapi/simapi/simapi/simdata.h"
 #include "../../slog/slog.h"
@@ -15,18 +17,34 @@ int usbhapticdev_update(USBGenericHapticDevice* usbhapticdevice, SimData* simdat
 {
 
     double play = slipeffect(simdata, usbhapticdevice->effecttype, tyre, usbhapticdevice->threshold, useconfig, configcheck, configfile);
-    
+
     if (play != usbhapticdevice->state)
     {
         int rplay = 0;
         if(play > 0)
         {
             rplay = 1;
-            cslelitev3_update(usbhapticdevice, usbhapticdevice->effecttype, rplay);
+            switch ( usbhapticdevice->type )
+            {
+                case USBHAPTIC_CSLELITEV3PEDALS:
+                    cslelitev3_update(usbhapticdevice, usbhapticdevice->effecttype, rplay);
+                    break;
+                case USBHAPTIC_SIMAGICP1000PEDALS:
+                    simagicp1000_update(usbhapticdevice, usbhapticdevice->effecttype, rplay);
+                    break;
+            }
         }
         else
         {
-            cslelitev3_update(usbhapticdevice, usbhapticdevice->effecttype, rplay);
+            switch ( usbhapticdevice->type )
+            {
+                case USBHAPTIC_CSLELITEV3PEDALS:
+                    cslelitev3_update(usbhapticdevice, usbhapticdevice->effecttype, rplay);
+                    break;
+                case USBHAPTIC_SIMAGICP1000PEDALS:
+                    simagicp1000_update(usbhapticdevice, usbhapticdevice->effecttype, rplay);
+                    break;
+            }
         }
         usbhapticdevice->state = play;
     }
@@ -36,7 +54,16 @@ int usbhapticdev_update(USBGenericHapticDevice* usbhapticdevice, SimData* simdat
 int usbhapticdev_free(USBGenericHapticDevice* usbhapticdevice)
 {
     slogt("closing usb haptic device");
-    cslelitev3_free(usbhapticdevice);
+    switch ( usbhapticdevice->type )
+    {
+        case USBHAPTIC_CSLELITEV3PEDALS:
+            cslelitev3_free(usbhapticdevice);
+            break;
+        case USBHAPTIC_SIMAGICP1000PEDALS:
+            simagicp1000_free(usbhapticdevice);
+            break;
+    }
+
     return 0;
 }
 
@@ -65,9 +92,18 @@ int usbhapticdev_init(USBGenericHapticDevice* usbhapticdevice, DeviceSettings* d
 
     slogi("initializing standalone usb haptic device...");
     // detection of usb device model
-    usbhapticdevice->type = HAPTIC_UNKNOWN;
-    usbhapticdevice->type = HAPTIC_CSLELITEV3;
-    error = cslelitev3_init(usbhapticdevice);
+    switch (ds->dev_subsubtype) {
+        case (SIMDEVSUBTYPE_SIMAGICP1000PEDALS):
+            usbhapticdevice->type = USBHAPTIC_SIMAGICP1000PEDALS;
+            error = simagicp1000_init(usbhapticdevice);
+            break;
+        case (SIMDEVSUBTYPE_CSLELITEV3PEDALS):
+            usbhapticdevice->type = USBHAPTIC_CSLELITEV3PEDALS;
+            error = cslelitev3_init(usbhapticdevice);
+            break;
+        default:
+            slogw("Possibly unknown device");
+    }
 
     if(usbhapticdevice->handle == 0)
     {

@@ -34,8 +34,8 @@ int cslelitev3_update(USBGenericHapticDevice* usbhapticdevice, int effecttype, i
     }
 
 
-    fprintf(usbhapticdevice->handle, "%i\n", value);
-    fflush(usbhapticdevice->handle);
+    fprintf(usbhapticdevice->filehandle, "%i\n", value);
+    fflush(usbhapticdevice->filehandle);
 
     return res;
 }
@@ -46,8 +46,8 @@ int cslelitev3_free(USBGenericHapticDevice* usbhapticdevice)
 
     free(usbhapticdevice->dev);
 
-    fflush(usbhapticdevice->handle);
-    fclose(usbhapticdevice->handle);
+    fflush(usbhapticdevice->filehandle);
+    fclose(usbhapticdevice->filehandle);
 
     return res;
 }
@@ -91,9 +91,9 @@ int cslelitev3_init(USBGenericHapticDevice* usbhapticdevice)
         return res;
     }
 
-    usbhapticdevice->handle = fopen(usbhapticdevice->dev, "w");
+    usbhapticdevice->filehandle = fopen(usbhapticdevice->dev, "w");
 
-    if (!usbhapticdevice->handle)
+    if (!usbhapticdevice->filehandle)
     {
         sloge("Could not open pedal device...");
         return res;

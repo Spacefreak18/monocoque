@@ -8,8 +8,9 @@
 
 typedef enum
 {
-    HAPTIC_UNKNOWN        = 0,
-    HAPTIC_CSLELITEV3     = 1
+    USBHAPTIC_UNKNOWN                  = 0,
+    USBHAPTIC_CSLELITEV3PEDALS         = 1,
+    USBHAPTIC_SIMAGICP1000PEDALS       = 2
 }
 HapticType;
 
@@ -22,7 +23,8 @@ typedef struct
     int value0;
     int value1;
     VibrationEffectType effecttype;
-    FILE* handle;
+    FILE* filehandle;
+    hid_device* handle;
     char* dev;
 }
 USBGenericHapticDevice;

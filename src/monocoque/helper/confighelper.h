@@ -33,10 +33,12 @@ DeviceSubType;
 
 typedef enum
 {
-    SIMDEVSUBTYPE_UNKNOWN           = 0,
-    SIMDEVSUBTYPE_CAMMUSC5          = 1,
-    SIMDEVSUBTYPE_CAMMUSC12         = 2,
-    SIMDEVSUBTYPE_MOZAR5            = 3,
+    SIMDEVSUBTYPE_UNKNOWN                 = 0,
+    SIMDEVSUBTYPE_CAMMUSC5                = 1,
+    SIMDEVSUBTYPE_CAMMUSC12               = 2,
+    SIMDEVSUBTYPE_MOZAR5                  = 3,
+    SIMDEVSUBTYPE_CSLELITEV3PEDALS        = 4,
+    SIMDEVSUBTYPE_SIMAGICP1000PEDALS      =5
 }
 DeviceSubSubType;
 
