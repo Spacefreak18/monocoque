@@ -5,7 +5,7 @@
 #include "tachdevice.h"
 #include "../slog/slog.h"
 
-const size_t buf_size = 8;
+const size_t REVBURNER_BUFSIZE = 8;
 
 
 int revburner_update(TachDevice* tachdevice, int pulses)
@@ -13,8 +13,8 @@ int revburner_update(TachDevice* tachdevice, int pulses)
 
     int res = 0;
 
-    unsigned char bytes[buf_size];
-    for (int x = 0; x < buf_size; x++)
+    unsigned char bytes[REVBURNER_BUFSIZE];
+    for (int x = 0; x < REVBURNER_BUFSIZE; x++)
     {
         bytes[x] = 0x00;
     }
@@ -27,7 +27,7 @@ int revburner_update(TachDevice* tachdevice, int pulses)
 
     if (tachdevice->handle)
     {
-        res = hid_write(tachdevice->handle, bytes, buf_size);
+        res = hid_write(tachdevice->handle, bytes, REVBURNER_BUFSIZE);
     }
     else
     {
