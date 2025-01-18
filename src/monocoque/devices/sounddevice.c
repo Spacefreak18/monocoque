@@ -102,6 +102,21 @@ int sounddev_gearshift_update(SimDevice* this, SimData* simdata)
     gear_sound_set(sounddevice, simdata);
 }
 
+
+#ifdef USE_PULSEAUDIO
+
+int sounddev_free(SimDevice* this)
+{
+    SoundDevice* sounddevice = (void *) this->derived;
+
+    usb_generic_shaker_free(sounddevice, mainloop);
+
+    free(sounddevice);
+
+    return 0;
+}
+
+#else
 int sounddev_free(SimDevice* this)
 {
     SoundDevice* sounddevice = (void *) this->derived;
@@ -112,6 +127,7 @@ int sounddev_free(SimDevice* this)
 
     return 0;
 }
+#endif
 
 int sounddev_init(SoundDevice* sounddevice, const char* devname, int volume, int frequency, int pan, int channels, double duration, double threshold)
 {

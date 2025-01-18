@@ -94,8 +94,9 @@ void stream_state_cb(pa_stream *s, void *mainloop) {
     pa_threaded_mainloop_signal(mainloop, 0);
 }
 
-int usb_generic_shaker_free(SoundDevice* sounddevice)
+int usb_generic_shaker_free(SoundDevice* sounddevice, pa_threaded_mainloop* mainloop)
 {
+    pa_threaded_mainloop_lock(mainloop);
     int err = 0;
     if (sounddevice->stream)
     {
@@ -104,6 +105,7 @@ int usb_generic_shaker_free(SoundDevice* sounddevice)
         // why is this wrong
         //pa_xfree(sounddevice->stream);
     }
+    pa_threaded_mainloop_unlock(mainloop);
     return err;
 }
 
