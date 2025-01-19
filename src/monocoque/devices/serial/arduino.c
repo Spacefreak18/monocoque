@@ -86,19 +86,14 @@ int check(enum sp_return result)
         case SP_ERR_ARG:
             //printf("Error: Invalid argument.\n");
             return 1;
-        //abort();
         case SP_ERR_FAIL:
             error_message = sp_last_error_message();
-            //printf("error: failed: %s\n", error_message);
             sloge("error: serial write failed: %s", error_message);
             sp_free_error_message(error_message);
-            //abort();
         case SP_ERR_SUPP:
             printf("Error: Not supported.\n");
-            abort();
         case SP_ERR_MEM:
             printf("Error: Couldn't allocate memory.\n");
-            abort();
         case SP_OK:
         default:
             return result;
