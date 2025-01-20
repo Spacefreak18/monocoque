@@ -195,12 +195,12 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
 
     if(simdata->car == NULL)
     {
-        slogw("sim is not compatible with wheel and tyre effects.");
+        slogw("sim is not compatible with wheel and tyre effects, or car and session not loaded.");
         return 0;
     }
     if(simdata->car[0] == '\0')
     {
-        slogw("sim is not compatible with wheel and tyre effects.");
+        slogw("sim is not compatible with wheel and tyre effects, or car not loaded.");
         return 0;
     }
 
@@ -256,6 +256,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
                     }
                 }
                 slogt("wheelslip values are %f %f %f %f", wheelslip[0], wheelslip[1], wheelslip[2], wheelslip[3]);
+                slogt("velocities (x,y,z) are %f %f %f", simdata->Xvelocity, simdata->Yvelocity, simdata->Zvelocity);
             }
             break;
         default:
@@ -266,7 +267,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
     {
         return 0;
     }
-    if(simdata->Zvelocity > 1 || simdata->Zvelocity < 1)
+    if(simdata->Zvelocity > 1 || simdata->Zvelocity < -1)
     {
         return 0;
     }
