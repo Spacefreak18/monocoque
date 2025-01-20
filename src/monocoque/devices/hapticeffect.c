@@ -8,6 +8,7 @@
 #include "usbhapticdevice.h"
 #include "../../helper/confighelper.h"
 #include "../../simulatorapi/simapi/simapi/simdata.h"
+#include "../../simulatorapi/simapi/simapi/simmapper.h"
 #include "../../slog/slog.h"
 
 #define kmhtoms      0.277778
@@ -63,23 +64,33 @@ int loadtyreconfig(SimData* simdata, char* configfile)
         if(config_car != NULL)
         {
             const char* car;
-            int sim;
+            const char* simstr;
+            int sim = 0;
             double tyre0;
             double tyre1;
             double tyre2;
             double tyre3;
             config_setting_lookup_string(config_car, "car", &car);
-            config_setting_lookup_int(config_car, "sim", &sim);
             config_setting_lookup_float(config_car, "tyre0", &tyre0);
             config_setting_lookup_float(config_car, "tyre1", &tyre1);
             config_setting_lookup_float(config_car, "tyre2", &tyre2);
             config_setting_lookup_float(config_car, "tyre3", &tyre3);
+            int found = config_setting_lookup_string(config_car, "sim", &simstr);
+            if(found == 0)
+            {
+                int found = config_setting_lookup_int(config_car, "sim", &sim);
+            }
+            else
+            {
+                sim = simapi_strtogame(simstr);
+            }
+
 
             if(simdata->car != NULL && car != NULL)
             {
                 if(simdata->car[0] != '\0' && car[0] != '\0')
                 {
-                    if (strcicmp(car, simdata->car) == 0 && sim == simdata->sim)
+                    if (strcicmp(car, simdata->car) == 0 && sim == simdata->simexe)
                     {
                         slogt("found saved car %s with tyre diameters %f %f %f %f", car, tyre0, tyre1, tyre2, tyre3);
                         simdata->tyrediameter[0] = tyre0;
@@ -131,7 +142,7 @@ int savetyreconfig(SimData* simdata, char* configfile)
     setting = config_setting_add(carobject, "car", CONFIG_TYPE_STRING);
     config_setting_set_string(setting, simdata->car);
     setting = config_setting_add(carobject, "sim", CONFIG_TYPE_INT);
-    config_setting_set_int(setting, simdata->sim);
+    config_setting_set_string(setting, simapi_gametostr(simdata->simexe));
     setting = config_setting_add(carobject, "tyre0", CONFIG_TYPE_FLOAT);
     config_setting_set_float(setting, simdata->tyrediameter[0]);
     setting = config_setting_add(carobject, "tyre1", CONFIG_TYPE_FLOAT);

@@ -11,8 +11,11 @@
 
 #include "confighelper.h"
 
+
 #include "../slog/slog.h"
 #include "parameters.h"
+
+#include "../simulatorapi/simapi/simapi/simmapper.h"
 
 #include <pulse/pulseaudio.h>
 
@@ -23,34 +26,6 @@ int strcicmp(char const *a, char const *b)
         if (d != 0 || !*a)
             return d;
     }
-}
-
-
-int strtogame(const char* game, MonocoqueSettings* ms)
-{
-    slogd("Checking for %s in list of supported simulators.", game);
-    if (strcicmp(game, "ac") == 0)
-    {
-        slogd("Setting simulator to Assetto Corsa");
-        ms->sim_name = SIMULATOR_ASSETTO_CORSA;
-    }
-    else if (strcicmp(game, "rf2") == 0)
-    {
-        slogd("Setting simulator to RFactor 2");
-        ms->sim_name = SIMULATOR_RFACTOR2;
-    }
-    else
-        if (strcicmp(game, "test") == 0)
-        {
-            slogd("Setting simulator to Test Data");
-            ms->sim_name = SIMULATOR_SIMAPI_TEST;
-        }
-        else
-        {
-            slogi("%s does not appear to be a supported simulator.", game);
-            return MONOCOQUE_ERROR_INVALID_SIM;
-        }
-    return MONOCOQUE_ERROR_NONE;
 }
 
 int strtoeffecttype(const char* effect, DeviceSettings* ds)
@@ -226,6 +201,22 @@ int strtodev(const char* device_type, const char* device_subtype, DeviceSettings
     return MONOCOQUE_ERROR_NONE;
 }
 
+int getsimfromconfig(config_setting_t* c)
+{
+    int sim = 0;
+    const char* simstr = NULL;
+    int found = config_setting_lookup_string(c, "sim", &simstr);
+    if(found == 0)
+    {
+        int found = config_setting_lookup_int(c, "sim", &sim);
+    }
+    else
+    {
+        sim = simapi_strtogame(simstr);
+    }
+    return sim;
+}
+
 int getNumberOfConfigs(const char* config_file_str)
 {
     config_t cfg;
@@ -273,7 +264,7 @@ int getconfigtouse2(const char* config_file_str, char* car, int sim)
         int found = 0;
         int csim = 0;
         slogt("sim is %i", sim);
-        config_setting_lookup_int(config_config, "sim", &csim);
+        csim = getsimfromconfig(config_config);
         if (csim != sim)
         {
             slogt("rejected config %i", j);
@@ -330,7 +321,7 @@ int getconfigtouse1(const char* config_file_str, char* car, int sim)
         int found = 0;
         int csim = 0;
         slogt("sim is %i", sim);
-        config_setting_lookup_int(config_config, "sim", &csim);
+        csim = getsimfromconfig(config_config);
         if (csim != sim)
         {
             slogt("rejected config %i", j);
@@ -398,7 +389,7 @@ int getconfigtouse(const char* config_file_str, char* car, int sim)
         int found = 0;
         int csim = 0;
         slogt("sim is %i", sim);
-        config_setting_lookup_int(config_config, "sim", &csim);
+        csim = getsimfromconfig(config_config);
         if (csim != sim && csim != 0)
         {
             slogt("rejected config %i", j);
