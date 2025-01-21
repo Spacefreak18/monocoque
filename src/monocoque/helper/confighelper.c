@@ -15,6 +15,8 @@
 #include "../slog/slog.h"
 #include "parameters.h"
 
+
+
 #include "../simulatorapi/simapi/simapi/simmapper.h"
 
 #include <pulse/pulseaudio.h>
@@ -660,10 +662,9 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         if (ds->dev_type == SIMDEV_SOUND)
         {
             slogi("reading configured sound device settings");
-            ds->sounddevsettings.frequency = -1;
-            ds->sounddevsettings.volume = -1;
-            ds->sounddevsettings.lowbound_frequency = -1;
-            ds->sounddevsettings.upperbound_frequency = -1;
+            ds->sounddevsettings.frequency = 0;
+            ds->sounddevsettings.frequencyMax = 0;
+            ds->sounddevsettings.volume = 0;
             ds->sounddevsettings.pan = 0;
             ds->sounddevsettings.channels = 1;
             ds->sounddevsettings.duration = 2.0;
@@ -676,6 +677,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
 
                 config_setting_lookup_int(device_settings, "volume", &ds->sounddevsettings.volume);
                 config_setting_lookup_int(device_settings, "frequency", &ds->sounddevsettings.frequency);
+                config_setting_lookup_int(device_settings, "frequencyMax", &ds->sounddevsettings.frequencyMax);
                 config_setting_lookup_int(device_settings, "pan", &ds->sounddevsettings.pan);
                 config_setting_lookup_int(device_settings, "channels", &ds->sounddevsettings.channels);
                 config_setting_lookup_float(device_settings, "duration", &ds->sounddevsettings.duration);
@@ -690,6 +692,41 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
                 else
                 {
                     ds->sounddevsettings.dev = strdup(temp);
+                }
+
+
+                found = config_setting_lookup_string(device_settings, "modulation", &temp);
+                ds->sounddevsettings.modulation = SOUND_EFFECT_MODULATION_NONE;
+                if (found == 0)
+                {
+                    ds->sounddevsettings.modulation = SOUND_EFFECT_MODULATION_NONE;
+                    slogd("Effect modulation not found, set to none");
+                }
+                else
+                {
+                    if(strcicmp(temp, "FREQUENCY"))
+                    {
+                        ds->sounddevsettings.modulation = SOUND_EFFECT_MODULATION_FREQUENCY;
+                        if(ds->sounddevsettings.frequencyMax == 0 || ds->sounddevsettings.frequencyMax < ds->sounddevsettings.frequency)
+                        {
+                            ds->sounddevsettings.modulation = SOUND_EFFECT_MODULATION_NONE;
+                            slogw("Falling back to no frequency modulation since frequencyMax is either not set or set below target frequency");
+                        }
+                        else
+                        {
+                            slogi("Effect modulation found, set to FREQUENCY");
+                        }
+                    }
+                    else if(strcicmp(temp, "AMPLIFY"))
+                    {
+                        ds->sounddevsettings.modulation = SOUND_EFFECT_MODULATION_AMPLIFY;
+                        slogi("Effect modulation found, set to AMPLIFY");
+                    }
+                    else
+                    {
+                        slogw("%s is not a valid modulation type, falling back to no effect modulation");
+                        ds->sounddevsettings.modulation = SOUND_EFFECT_MODULATION_NONE;
+                    }
                 }
             }
         }

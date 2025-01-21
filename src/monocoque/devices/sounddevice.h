@@ -7,19 +7,22 @@
 #include "portaudio.h"
 #endif
 
+
 typedef enum
 {
-    SOUNDDEV_UNKNOWN       = 0,
-    SOUNDDEV_SHAKER        = 1
+    SOUND_EFFECT_MODULATION_NONE            = 0,
+    SOUND_EFFECT_MODULATION_FREQUENCY       = 1,
+    SOUND_EFFECT_MODULATION_AMPLIFY         = 2,
 }
-SoundType;
+SoundEffectModulationType;
 
 #define MAX_TABLE_SIZE   (6000)
 typedef struct
 {
     int last_gear;
     int volume;
-    int frequency;
+    uint32_t frequency;
+    uint32_t frequencyMax;
     double duration;
     int curr_frequency;
     double curr_duration;

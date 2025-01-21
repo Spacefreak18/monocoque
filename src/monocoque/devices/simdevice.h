@@ -108,8 +108,8 @@ typedef struct
 {
     SimDevice m;
     int id;
-    SoundType type;
     int configcheck;
+    SoundEffectModulationType modulationType;
     SoundData sounddata;
 #ifdef USE_PULSEAUDIO
     pa_stream *stream;

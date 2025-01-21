@@ -9,6 +9,8 @@
 
 #include "parameters.h"
 
+#include "../devices/sounddevice.h"
+
 typedef enum
 {
     SIMDEV_UNKNOWN    = 0,
@@ -160,14 +162,16 @@ SerialDeviceSettings;
 
 typedef struct
 {
-    int frequency;
-    int volume;
+    uint32_t frequency;
+    uint32_t volume;
     int lowbound_frequency;
     int upperbound_frequency;
+    uint32_t frequencyMax;
     int pan;
     int channels;
     double duration;
     char* dev;
+    SoundEffectModulationType modulation;
 }
 SoundDeviceSettings;
 
