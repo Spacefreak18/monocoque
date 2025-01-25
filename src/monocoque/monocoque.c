@@ -165,6 +165,8 @@ int main(int argc, char** argv)
         slogi("Openend monocoque configuration file");
     }
 
+
+
     if (ms->program_action == A_CONFIG_TACH)
     {
         int error = 0;
@@ -214,15 +216,11 @@ int main(int argc, char** argv)
         int error = 0;
         error = MONOCOQUE_ERROR_NONE;
         setupsound();
+        bool pulseaudio = false;
 
         if (ms->program_action == A_PLAY)
         {
             ms->useconfig = 1;
-        }
-
-        bool pulseaudio = false;
-        if (ms->program_action == A_PLAY)
-        {
             slogi("running monocoque in gameloop mode..");
 #ifdef USE_PULSEAUDIO
             pa_threaded_mainloop_unlock(mainloop);
