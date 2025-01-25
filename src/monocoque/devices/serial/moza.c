@@ -6,6 +6,7 @@
 #include <hidapi/hidapi.h>
 
 #include "moza.h"
+#include "../serialadapter.h"
 #include "../../slog/slog.h"
 
 #define MOZA_TIMEOUT 1000
@@ -74,7 +75,7 @@ int moza_update(SerialDevice* serialdevice, unsigned short maxrpm, unsigned shor
     {
         slogd("copying %i bytes to moza device", size);
         slogt("writing bytes %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x from rpm %i maxrpm %i", bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7], bytes[8], bytes[9], bytes[10], rpm, maxrpm);
-        result = moza_serial_check(sp_blocking_write(serialdevice->port, bytes, size, MOZA_TIMEOUT));
+        result = monocoque_serial_write(serialdevice->id, bytes, size, MOZA_TIMEOUT);
     }
 
     return result;
@@ -82,58 +83,6 @@ int moza_update(SerialDevice* serialdevice, unsigned short maxrpm, unsigned shor
 
 int moza_init(SerialDevice* serialdevice, const char* portdev)
 {
-    slogi("initializing moza serial device...");
-    int error = 0;
-    char* port_name = strdup(portdev);
-
-    slogd("Looking for port %s.\n", port_name);
-    error = moza_serial_check(sp_get_port_by_name(port_name, &serialdevice->port));
-    if (error != 0)
-    {
-        return error;
-    }
-
-    slogd("Opening port.\n");
-    moza_serial_check(sp_open(serialdevice->port, SP_MODE_READ_WRITE));
-
-    slogd("Setting port to 115200 8N1, no flow control.\n");
-    moza_serial_check(sp_set_baudrate(serialdevice->port, 115200));
-    moza_serial_check(sp_set_bits(serialdevice->port, 8));
-    moza_serial_check(sp_set_parity(serialdevice->port, SP_PARITY_NONE));
-    moza_serial_check(sp_set_stopbits(serialdevice->port, 1));
-    moza_serial_check(sp_set_flowcontrol(serialdevice->port, SP_FLOWCONTROL_NONE));
-
-    free(port_name);
-    slogd("Successfully setup moza serial device...");
-    return 0;
-}
-
-int moza_free(SerialDevice* serialdevice)
-{
-    moza_serial_check(sp_close(serialdevice->port));
-    sp_free_port(serialdevice->port);
-}
-
-// i have to move this some place common
-int moza_serial_check(enum sp_return result)
-{
-    /* For this example we'll just exit on any error by calling abort(). */
-    char* error_message;
-
-    switch (result)
-    {
-        case SP_ERR_ARG:
-            return 1;
-        case SP_ERR_FAIL:
-            error_message = sp_last_error_message();
-            sloge("error: serial write failed: %s", error_message);
-            sp_free_error_message(error_message);
-        case SP_ERR_SUPP:
-            printf("Error: Not supported.\n");
-        case SP_ERR_MEM:
-            printf("Error: Couldn't allocate memory.\n");
-        case SP_OK:
-        default:
-            return result;
-    }
+    serialdevice->id = monocoque_serial_open(serialdevice, portdev);
+    return serialdevice->id;
 }

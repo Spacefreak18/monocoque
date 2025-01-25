@@ -6,6 +6,7 @@
 
 #include "simdevice.h"
 #include "serialdevice.h"
+#include "serialadapter.h"
 #include "hapticeffect.h"
 #include "serial/arduino.h"
 #include "serial/moza.h"
@@ -134,9 +135,29 @@ int serialdev_free(SimDevice* this)
 {
     SerialDevice* serialdevice = (void *) this->derived;
 
-    arduino_free(serialdevice);
+    switch (serialdevice->devicetype) {
+        case (ARDUINODEV__HAPTIC):
+
+            serialdevice->u.simhapticdata.effect1 = 0;
+            serialdevice->u.simhapticdata.motor1 = 1;
+            serialdevice->u.simhapticdata.effect2 = 0;
+            serialdevice->u.simhapticdata.motor2 = 1;
+            serialdevice->u.simhapticdata.effect3 = 0;
+            serialdevice->u.simhapticdata.motor3 = 1;
+            serialdevice->u.simhapticdata.effect4 = 0;
+            serialdevice->u.simhapticdata.motor4 = 1;
+            serialdevice->state = 0;
+            
+            size_t size = sizeof(SimHapticData);
+            monocoque_serial_write_block(serialdevice->id, &serialdevice->u.simhapticdata, size, 9000);
+            slogi("set zero to arduino device");
+    }
+
+
+    monocoque_serial_free(serialdevice);
 
     free(serialdevice);
+
     return 0;
 }
 
@@ -144,9 +165,10 @@ int serial_wheel_free(SimDevice* this)
 {
     SerialDevice* serialdevice = (void *) this->derived;
 
-    moza_free(serialdevice);
+    monocoque_serial_free(serialdevice);
 
     free(serialdevice);
+
     return 0;
 }
 
@@ -250,7 +272,7 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
 
     int error = serialdev_init(this, ds);
 
-    if (error != 0)
+    if (error < 0)
     {
         free(this);
         return NULL;

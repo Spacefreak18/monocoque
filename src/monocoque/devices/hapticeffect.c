@@ -90,9 +90,10 @@ int loadtyreconfig(SimData* simdata, char* configfile)
             {
                 if(simdata->car[0] != '\0' && car[0] != '\0')
                 {
+                    slogt("%s %s %i %i", simdata->car, car, simdata->simexe, sim);
                     if (strcicmp(car, simdata->car) == 0 && sim == simdata->simexe)
                     {
-                        slogt("found saved car %s with tyre diameters %f %f %f %f", car, tyre0, tyre1, tyre2, tyre3);
+                        slogi("found saved car %s with tyre diameters %f %f %f %f", car, tyre0, tyre1, tyre2, tyre3);
                         simdata->tyrediameter[0] = tyre0;
                         simdata->tyrediameter[1] = tyre1;
                         simdata->tyrediameter[2] = tyre2;

@@ -7,6 +7,8 @@ set(devices_source_files
   sounddevice.c
   serialdevice.h
   serialdevice.c
+  serialadapter.h
+  serialadapter.c
   tachdevice.h
   tachdevice.c
   wheeldevice.h

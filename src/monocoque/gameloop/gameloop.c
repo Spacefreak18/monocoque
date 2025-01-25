@@ -15,6 +15,7 @@
 #include "../helper/parameters.h"
 #include "../helper/confighelper.h"
 #include "../devices/simdevice.h"
+#include "../devices/serialadapter.h"
 #include "../simulatorapi/simapi/simapi/simdata.h"
 #include "../simulatorapi/simapi/simapi/simmapper.h"
 #include "../slog/slog.h"
@@ -242,6 +243,10 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
         slogd("loading confignum %i, with %i devices.", confignum, configureddevices);
 
         f->numdevices = uiloadconfig(ms->config_str, confignum, configureddevices, ms, ds);
+        if(ms->useconfig == 1)
+        {
+            ms->configcheck = 0;
+        }
 
         f->simdevices = malloc(f->numdevices * sizeof(SimDevice));
         int initdevices = devinit(f->simdevices, configureddevices, ds, ms);
@@ -252,6 +257,14 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
         }
         free(ds);
 
+
+        for(int d = 0; d < 10; d++)
+        {
+            monocoque_serial_devices[d].open = false;
+            monocoque_serial_devices[d].openfail = false;
+            monocoque_serial_devices[d].busy = false;
+            monocoque_serial_devices[d].refs = 0;
+        }
 
 
         int numdevices = f->numdevices;
@@ -350,6 +363,15 @@ void shmdatamapcallback(uv_timer_t* handle)
                 }
             }
             free(devices);
+
+            for(int d = 0; d < 10; d++)
+            {
+                if(monocoque_serial_devices[d].portname != NULL)
+                {
+                    free(monocoque_serial_devices[d].portname);
+                }
+            }
+
             int r = simfree(simdata, simmap, f->map);
             slogd("simfree returned %i", r);
             f->numdevices = 0;
