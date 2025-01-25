@@ -50,23 +50,23 @@ int setupsound()
 
 int freesound()
 {
+    if (mainloop) {
+        pa_threaded_mainloop_lock(mainloop);
+    }
     if (context)
         pa_context_unref(context);
 
     if (mainloop) {
         pa_signal_done();
+        pa_threaded_mainloop_unlock(mainloop);
         pa_threaded_mainloop_free(mainloop);
     }
-
 }
 
 #else
 
 int setupsound()
 {
-
-
-
     slogi("connecting portaudio...");
 }
 
