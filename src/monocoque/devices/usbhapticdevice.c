@@ -105,11 +105,5 @@ int usbhapticdev_init(USBGenericHapticDevice* usbhapticdevice, DeviceSettings* d
             slogw("Possibly unknown device");
     }
 
-    if(usbhapticdevice->handle == 0)
-    {
-        error = MONOCOQUE_ERROR_INVALID_DEV;
-        return error;
-    }
-
     return error;
 }
