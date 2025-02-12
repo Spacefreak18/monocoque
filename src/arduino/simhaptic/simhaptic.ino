@@ -22,7 +22,7 @@ int effect3 = 0;
 int effect4 = 0;
 
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(115200);
     if (!AFMS.begin()) {
         Serial.println("Could not find Motor Shield. Check wiring.");
         while (1);
