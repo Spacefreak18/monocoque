@@ -96,10 +96,10 @@ add_subdirectory(src/monocoque/slog)
 #target_link_libraries(hidtest hidapi-hidraw)
 #add_test(hidtest hidtest)
 #
-#add_executable(simlighttest tests/simlighttest.c)
-#target_include_directories(simlighttest PUBLIC)
-#target_link_libraries(simlighttest serialport)
-#add_test(simlighttest simlighttest)
+add_executable(simlighttest tests/simlighttest.c)
+target_include_directories(simlighttest PUBLIC)
+target_link_libraries(simlighttest serialport)
+add_test(simlighttest simlighttest)
 
 
 # used for enabling additional compiler options if supported

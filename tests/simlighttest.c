@@ -31,40 +31,44 @@ int main()
 
     ShiftLightsData sd;
 
+    int numlights = 7;
+    size_t bufsize = (numlights * 3) + 9;
+    char bytes[bufsize];
+
+    bytes[0] = 0xff;
+    bytes[1] = 0xff;
+    bytes[2] = 0xff;
+    bytes[3] = 0xff;
+    bytes[4] = 0xff;
+    bytes[5] = 0xff;
+    bytes[bufsize-1] = 0xfd;
+    bytes[bufsize-2] = 0xfe;
+    bytes[bufsize-3] = 0xff;
 
     int result;
     unsigned int timeout = 2000;
-    size_t size = sizeof(ShiftLightsData);
-    for( sd.litleds = 0; sd.litleds < 7; sd.litleds++)
+    for( int i = 0; i < 7; i++)
     {
-
-
-
-
-        /* On success, sp_blocking_write() and sp_blocking_read()
-         * return the number of bytes sent/received before the
-        * timeout expired. We'll store that result here. */
-
-
+        bytes[(i * 3) + 6 + 1] = 0xff;
 
         /* Send data. */
-        result = check(sp_blocking_write(port, &sd, size, timeout));
+        result = check(sp_blocking_write(port, &bytes, bufsize, timeout));
 
         /* Check whether we sent all of the data. */
-        if (result == size)
+        if (result == bufsize)
         {
-            printf("Sent %d bytes successfully, %i lit leds.\n", size, sd.litleds);
+            printf("Sent %d bytes successfully, %i lit leds.\n", bufsize, numlights);
         }
         else
         {
-            printf("Timed out, %d/%d bytes sent.\n", result, size);
+            printf("Timed out, %d/%d bytes sent.\n", result, bufsize);
         }
 
 
         sleep(2);
     }
     sd.litleds = 0;
-    result = check(sp_blocking_write(port, &sd, size, timeout));
+    result = check(sp_blocking_write(port, &bytes, bufsize, timeout));
 
     check(sp_close(port));
     sp_free_port(port);
