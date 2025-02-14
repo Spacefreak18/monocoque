@@ -70,6 +70,91 @@ int arduino_shiftlights_update(SimDevice* this, SimData* simdata)
     return result;
 }
 
+int arduino_simled_update(SimDevice* this, SimData* simdata)
+{
+    SerialDevice* serialdevice = (void *) this->derived;
+    int result = 1;
+
+    int total_leds = serialdevice->numleds;
+    size_t bufsize = (total_leds * 3) + 14;
+    char bytes[bufsize];
+    int endled = serialdevice->endled;
+    int startled = serialdevice->startled;
+    if(endled == 0)
+    {
+        endled = total_leds;
+    }
+    int num_avail_leds = endled - startled + 1;
+    int rpm = simdata->rpms;
+    int maxrpm = simdata->maxrpm;
+    int litleds = 0;
+    if(rpm > 0 && maxrpm > 0)
+    {
+        int rpmmargin = ceil(.05*maxrpm);
+        int rpminterval = (maxrpm-rpmmargin) / (num_avail_leds);
+
+
+        for (int l = 1; l <= (num_avail_leds); l++)
+        {
+            if(rpm >= (rpminterval * l))
+            {
+                litleds = l;
+            }
+        }
+
+
+
+        for(int j = 0; j < bufsize; j++)
+        {
+            bytes[j] = 0x00;
+        }
+        bytes[0] = 0xff;
+        bytes[1] = 0xff;
+        bytes[2] = 0xff;
+        bytes[3] = 0xff;
+        bytes[4] = 0xff;
+        bytes[5] = 0xff;
+        bytes[6] = 0x73;
+        bytes[7] = 0x6c;
+        bytes[8] = 0x65;
+        bytes[9] = 0x64;
+        bytes[10] = 0x73;
+        bytes[bufsize-1] = 0xfd;
+        bytes[bufsize-2] = 0xfe;
+        bytes[bufsize-3] = 0xff;
+
+        for(int i = 0; i < litleds; i++)
+        {
+            if(i < ((num_avail_leds) / 2))
+            {
+                //green
+                bytes[11 + ((i + startled - 1) * 3) + 1] = 0xff;
+            }
+            else
+            {
+                if(i < num_avail_leds - 1)
+                {
+                    //yellow
+                    bytes[11 + ((i + startled - 1) * 3) + 0] = 0xff;
+                    bytes[11 + ((i + startled - 1) * 3) + 1] = 0xff;
+                }
+            }
+            if(i == num_avail_leds - 1)
+            {
+                //red
+                bytes[11 + ((i + startled - 1) * 3) + 0] = 0xff;
+            }
+        }
+    }
+
+    slogt("Updating arduino device lights to %i", litleds);
+    // we can add configs to set all the colors
+    size_t size = sizeof(bytes);
+
+    arduino_update(serialdevice, &bytes, size);
+    return result;
+}
+
 int arduino_simwind_update(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
@@ -201,6 +286,7 @@ int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds)
 
 static const vtable serial_simdevice_vtable = { &serialdev_update, &serialdev_free };
 static const vtable arduino_shiftlights_vtable = { &arduino_shiftlights_update, &serialdev_free };
+static const vtable arduino_simled_vtable = { &arduino_simled_update, &serialdev_free };
 static const vtable arduino_simwind_vtable = { &arduino_simwind_update, &serialdev_free };
 static const vtable arduino_simhaptic_vtable = { &arduino_simhaptic_update, &serialdev_free };
 static const vtable serialwheel_vtable = { &serial_wheel_update, &serial_wheel_free };
@@ -222,6 +308,14 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
             this->numlights = ds->serialdevsettings.numlights;
             this->m.vtable = &arduino_shiftlights_vtable;
             slogi("Initializing arduino device for shiftlights.");
+            break;
+        case (SIMDEVTYPE_SIMLED):
+            this->devicetype = ARDUINODEV__SIMLED;
+            this->numleds = ds->serialdevsettings.numleds;
+            this->startled = ds->serialdevsettings.startled;
+            this->endled = ds->serialdevsettings.endled;
+            this->m.vtable = &arduino_simled_vtable;
+            slogi("Initializing arduino device for simled.");
             break;
         case (SIMDEVTYPE_SIMWIND):
             this->devicetype = ARDUINODEV__SIMWIND;

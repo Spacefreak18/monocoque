@@ -10,6 +10,7 @@ typedef enum
     ARDUINODEV__SIMWIND       = 1,
     ARDUINODEV__HAPTIC        = 2,
     SERIALDEV__MOZAR5         = 3,
+    ARDUINODEV__SIMLED        = 4
 }
 SerialDeviceType;
 

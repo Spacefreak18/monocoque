@@ -145,6 +145,11 @@ int strtodevsubtype(const char* device_subtype, DeviceSettings* ds, int simdev)
                 ds->dev_subtype = SIMDEVTYPE_SHIFTLIGHTS;
                 break;
             }
+            if (strcicmp(device_subtype, "Simleds") == 0)
+            {
+                ds->dev_subtype = SIMDEVTYPE_SIMLED;
+                break;
+            }
             if (strcicmp(device_subtype, "SimWind") == 0)
             {
                 ds->dev_subtype = SIMDEVTYPE_SIMWIND;
@@ -748,6 +753,18 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
             config_setting_lookup_int(device_settings, "numlights", &numlights);
             ds->serialdevsettings.numlights = numlights;
 
+            int numleds = 6;
+            config_setting_lookup_int(device_settings, "numleds", &numleds);
+            ds->serialdevsettings.numleds = numleds;
+
+            int startled = 1;
+            config_setting_lookup_int(device_settings, "startled", &startled);
+            ds->serialdevsettings.startled = startled;
+
+            int endled = 1;
+            config_setting_lookup_int(device_settings, "endled", &endled);
+            ds->serialdevsettings.endled = endled;
+
             int baud = 9600;
             config_setting_lookup_int(device_settings, "baud", &baud);
             ds->serialdevsettings.baud = baud;
@@ -827,7 +844,7 @@ int uiloadconfig(const char* config_file_str, int confignum, int configureddevic
 int settingsfree(DeviceSettings ds)
 {
 
-    if (ds.dev_subtype == SIMDEVTYPE_SIMWIND || ds.dev_subtype == SIMDEVTYPE_SHIFTLIGHTS)
+    if (ds.dev_subtype == SIMDEVTYPE_SIMWIND || ds.dev_subtype == SIMDEVTYPE_SHIFTLIGHTS || ds.dev_subtype == SIMDEVTYPE_SIMLED)
     {
         if (ds.serialdevsettings.portdev != NULL)
         {

@@ -53,6 +53,9 @@ typedef struct
     // move these two they only apply to the haptic device
     int motorsposition;
     int numlights;
+    int numleds;
+    int startled;
+    int endled;
     int baudrate;
     double ampfactor;
     double state;

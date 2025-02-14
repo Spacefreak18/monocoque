@@ -29,7 +29,8 @@ typedef enum
     SIMDEVTYPE_SIMWIND           = 4,
     SIMDEVTYPE_SERIALHAPTIC      = 5,
     SIMDEVTYPE_USBWHEEL          = 6,
-    SIMDEVTYPE_SERIALWHEEL       = 7
+    SIMDEVTYPE_SERIALWHEEL       = 7,
+    SIMDEVTYPE_SIMLED            = 8
 }
 DeviceSubType;
 
@@ -155,6 +156,9 @@ typedef struct
     char* portdev;
     MotorPosition motorsposition;
     int numlights;
+    int numleds;
+    int startled;
+    int endled;
     float ampfactor;
     int baud;
 }
