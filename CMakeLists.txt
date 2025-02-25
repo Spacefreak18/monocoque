@@ -1,6 +1,6 @@
 
 # minimum CMake version required for C++20 support, among other things
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.18)
 
 # detect if Monocoque is being used as a sub-project of another CMake project
 if(NOT DEFINED PROJECT_NAME)
@@ -37,10 +37,10 @@ add_executable(monocoque src/monocoque/monocoque.c)
 if(USE_PULSEAUDIO)
     message("Using pulseaudio backend...")
     add_compile_definitions(USE_PULSEAUDIO=true)
-    target_link_libraries(monocoque m hidapi-hidraw pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir)
+    target_link_libraries(monocoque m hidapi-hidraw pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir lua5.4)
 else()
     message("Using portaudio backend...")
-    target_link_libraries(monocoque m hidapi-hidraw portaudio serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir)
+    target_link_libraries(monocoque m hidapi-hidraw portaudio serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir lua5.4)
 endif()
 
 target_include_directories(monocoque PUBLIC config ${LIBXML_INCLUDE_DIR})
@@ -96,10 +96,10 @@ add_subdirectory(src/monocoque/slog)
 #target_link_libraries(hidtest hidapi-hidraw)
 #add_test(hidtest hidtest)
 #
-#add_executable(simlighttest tests/simlighttest.c)
-#target_include_directories(simlighttest PUBLIC)
-#target_link_libraries(simlighttest serialport)
-#add_test(simlighttest simlighttest)
+add_executable(simlighttest tests/simlighttest.c)
+target_include_directories(simlighttest PUBLIC)
+target_link_libraries(simlighttest serialport)
+add_test(simlighttest simlighttest)
 
 
 # used for enabling additional compiler options if supported

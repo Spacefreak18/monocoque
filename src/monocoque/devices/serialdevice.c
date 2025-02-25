@@ -70,6 +70,8 @@ int arduino_shiftlights_update(SimDevice* this, SimData* simdata)
     return result;
 }
 
+
+
 int arduino_simwind_update(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
@@ -151,6 +153,13 @@ int serialdev_free(SimDevice* this)
             size_t size = sizeof(SimHapticData);
             monocoque_serial_write_block(serialdevice->id, &serialdevice->u.simhapticdata, size, 9000);
             slogi("set zero to arduino device");
+            break;
+        case ARDUINODEV__SIMLED__CUSTOM:
+            arduino_customled_free(serialdevice, true);
+            break;
+        case ARDUINODEV__SIMLED:
+            arduino_customled_free(serialdevice, false);
+            break;
     }
 
 
@@ -181,17 +190,22 @@ int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds)
     serialdevice->motorsposition = ds->serialdevsettings.motorsposition;
     serialdevice->baudrate = ds->serialdevsettings.baud;
 
-    switch (serialdevice->type)
+    switch (serialdevice->devicetype)
     {
-        case SERIALDEV_WHEEL:
-
+        case SERIALDEV__MOZAR5:
             // the wheel stuff assumed it was a usb
             //error = wheeldev_init(&serialdevice->u.wheeldevice, ds);
+            // maybe this call a more generic serial wheel init first
             error = moza_init(serialdevice, ds->serialdevsettings.portdev);
             break;
-
+        case ARDUINODEV__SIMLED__CUSTOM:
+            error = arduino_customled_init(serialdevice, ds->serialdevsettings.portdev, ds->serialdevsettings.config_file);
+            break;
+        case ARDUINODEV__SIMLED:
+            error = arduino_customled_init(serialdevice, ds->serialdevsettings.portdev, NULL);
+            break;
         default:
-            error = arduino_init(serialdevice, ds->serialdevsettings.portdev );
+            error = arduino_init(serialdevice, ds->serialdevsettings.portdev);
             break;
     }
 
@@ -201,6 +215,8 @@ int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds)
 
 static const vtable serial_simdevice_vtable = { &serialdev_update, &serialdev_free };
 static const vtable arduino_shiftlights_vtable = { &arduino_shiftlights_update, &serialdev_free };
+static const vtable arduino_simled_vtable = { &arduino_simled_update, &serialdev_free };
+static const vtable arduino_simled_custom_vtable = { &arduino_customled_update, &serialdev_free };
 static const vtable arduino_simwind_vtable = { &arduino_simwind_update, &serialdev_free };
 static const vtable arduino_simhaptic_vtable = { &arduino_simhaptic_update, &serialdev_free };
 static const vtable serialwheel_vtable = { &serial_wheel_update, &serial_wheel_free };
@@ -222,6 +238,26 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
             this->numlights = ds->serialdevsettings.numlights;
             this->m.vtable = &arduino_shiftlights_vtable;
             slogi("Initializing arduino device for shiftlights.");
+            break;
+        case (SIMDEVTYPE_SIMLED):
+
+            if(ds->has_config == true)
+            {
+                this->devicetype = ARDUINODEV__SIMLED__CUSTOM;
+                this->startled = ds->serialdevsettings.startled;
+                this->endled = ds->serialdevsettings.endled;
+                this->m.vtable = &arduino_simled_custom_vtable;
+                slogi("Initializing arduino device for custom simled.");
+            }
+            else
+            {
+                this->devicetype = ARDUINODEV__SIMLED;
+                this->numleds = ds->serialdevsettings.numleds;
+                this->startled = ds->serialdevsettings.startled;
+                this->endled = ds->serialdevsettings.endled;
+                this->m.vtable = &arduino_simled_vtable;
+                slogi("Initializing arduino device for simled.");
+            }
             break;
         case (SIMDEVTYPE_SIMWIND):
             this->devicetype = ARDUINODEV__SIMWIND;

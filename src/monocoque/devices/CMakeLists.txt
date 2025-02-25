@@ -34,6 +34,8 @@ set(devices_source_files
   sound/usb_generic_shaker_pulse.c
   serial/arduino.h
   serial/arduino.c
+  serial/arduinoledlua.h
+  serial/arduinoledlua.c
   serial/moza.h
   serial/moza.c
 )

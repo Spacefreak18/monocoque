@@ -128,6 +128,36 @@ int monocoque_serial_write_block(uint8_t serialdevicenum, void* data, size_t siz
     return result;
 }
 
+int monocoque_serial_read_block(uint8_t serialdevicenum, void* data, size_t size, int timeout)
+{
+    slogt("serial device id %i", serialdevicenum);
+    monocoque_serial_device monocoque_serial_dev = monocoque_serial_devices[serialdevicenum];
+
+    slogt("port name: %s, busy %i, open %i, openfail %i", monocoque_serial_dev.portname, monocoque_serial_dev.busy, monocoque_serial_dev.open, monocoque_serial_dev.busy);
+
+    if(monocoque_serial_dev.port == NULL)
+    {
+        sloge("port is null");
+    }
+
+    int result = -1;
+    if(monocoque_serial_dev.open == true)
+    {
+        while(monocoque_serial_dev.busy == true)
+        {
+            slogt("hopefully this doesn't happen long");
+            continue;
+        }
+
+        monocoque_serial_dev.busy = true;
+        result = sp_blocking_read(monocoque_serial_dev.port, data, size, timeout);
+        slogi("actually performed read");
+    }
+
+    monocoque_serial_dev.busy = false;
+    return result;
+}
+
 int monocoque_serial_open(SerialDevice* serialdevice, const char* portdev)
 {
     int serial_device_num = -1;
@@ -173,6 +203,7 @@ int monocoque_serial_open(SerialDevice* serialdevice, const char* portdev)
         error = check(sp_get_port_by_name(port_name, &sp));
         if (error != 0)
         {
+            sloge("Error opening serial port");
             monocoque_serial_devices[i].open = false;
             monocoque_serial_devices[i].openfail = true;
             return -1;

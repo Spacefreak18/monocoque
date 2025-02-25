@@ -10,7 +10,7 @@ int check(enum sp_return result);
 int main()
 {
 
-    char* port_name = "/dev/ttyACM0";
+    char* port_name = "/dev/simdev0";
 
     /* The ports we will use. */
     struct sp_port* port;
@@ -32,39 +32,101 @@ int main()
     ShiftLightsData sd;
 
 
-    int result;
-    unsigned int timeout = 2000;
-    size_t size = sizeof(ShiftLightsData);
-    for( sd.litleds = 0; sd.litleds < 7; sd.litleds++)
+
+    size_t bufsize1 = 11;
+    size_t recv_bufsize1 = 5;
+    char recv_buf1[recv_bufsize1];
+    char bytes1[bufsize1];
+
+    for(int j = 0; j < bufsize1; j++)
     {
+        bytes1[j] = 0x00;
+    }
+    bytes1[0] = 0xff;
+    bytes1[1] = 0xff;
+    bytes1[2] = 0xff;
+    bytes1[3] = 0xff;
+    bytes1[4] = 0xff;
+    bytes1[5] = 0xff;
+    bytes1[6] = 0x6c;
+    bytes1[7] = 0x65;
+    bytes1[8] = 0x64;
+    bytes1[9] = 0x73;
+    bytes1[10] = 0x63;
+
+    int result = 0;
+    unsigned int timeout = 2000;
+    result = check(sp_blocking_write(port, &bytes1, bufsize1, timeout));
+    result = check(sp_blocking_read(port, &recv_buf1, recv_bufsize1, timeout));
+
+    char numstr[recv_bufsize1];
+    for(int j = 0; j < recv_bufsize1; j++)
+    {
+        numstr[j] = '\0';
+    }
+    for(int j = 0; j < recv_bufsize1; j++)
+    {
+        printf("%02x\n", recv_buf1[j]);
+        if(recv_buf1[j] != 0 && recv_buf1[j] != 0x0d && recv_buf1[j] != 0x0a)
+        {
+            numstr[j] = recv_buf1[j];
+        }
+    }
+    int numlights = atoi(numstr);
+    printf("numlights is %s %i\n", numstr, numlights);
+    //printf("%x\n", recv_buf[0]);
+    //printf("%x\n", recv_buf[1]);
+    //printf("%x\n", recv_buf[2]);
+    //printf("%x\n", recv_buf[3]);
+    //printf("%x\n", recv_buf[4]);
+
+    size_t bufsize = (numlights * 3) + 14;
+    char bytes[bufsize];
+    for(int j = 0; j < bufsize; j++)
+    {
+        bytes[j] = 0x00;
+    }
+    bytes[0] = 0xff;
+    bytes[1] = 0xff;
+    bytes[2] = 0xff;
+    bytes[3] = 0xff;
+    bytes[4] = 0xff;
+    bytes[5] = 0xff;
+    bytes[6] = 0x73;
+    bytes[7] = 0x6c;
+    bytes[8] = 0x65;
+    bytes[9] = 0x64;
+    bytes[10] = 0x73;
+    bytes[bufsize-1] = 0xfd;
+    bytes[bufsize-2] = 0xfe;
+    bytes[bufsize-3] = 0xff;
 
 
-
-
-        /* On success, sp_blocking_write() and sp_blocking_read()
-         * return the number of bytes sent/received before the
-        * timeout expired. We'll store that result here. */
-
-
+    for( int i = 0; i < numlights; i++)
+    {
+        bytes[(i * 3) + 11 + 1] = 0xff;
 
         /* Send data. */
-        result = check(sp_blocking_write(port, &sd, size, timeout));
+        result = check(sp_blocking_write(port, &bytes, bufsize, timeout));
 
         /* Check whether we sent all of the data. */
-        if (result == size)
+        if (result == bufsize)
         {
-            printf("Sent %d bytes successfully, %i lit leds.\n", size, sd.litleds);
+            printf("Sent %d bytes successfully, %i lit leds.\n", bufsize, numlights);
         }
         else
         {
-            printf("Timed out, %d/%d bytes sent.\n", result, size);
+            printf("Timed out, %d/%d bytes sent.\n", result, bufsize);
         }
 
 
         sleep(2);
     }
-    sd.litleds = 0;
-    result = check(sp_blocking_write(port, &sd, size, timeout));
+    for( int i = 0; i < numlights; i++)
+    {
+        bytes[(i * 3) + 11 + 1] = 0x00;
+    }
+    result = check(sp_blocking_write(port, &bytes, bufsize, timeout));
 
     check(sp_close(port));
     sp_free_port(port);
