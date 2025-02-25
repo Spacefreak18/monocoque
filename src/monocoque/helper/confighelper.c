@@ -775,6 +775,21 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
             ds->serialdevsettings.ampfactor = ampfactor;
 
             slogt("set port baud rate to %i, ampfactor %f", baud, ampfactor);
+
+            ds->has_config = false;
+            const char* temp2;
+            found = config_setting_lookup_string(device_settings, "config", &temp2);
+            slogt("config is %s found is %i", temp2, found);
+            if(strcicmp(temp2, "none") == 0)
+            {
+                slogt("config set to none");
+            }
+            else
+            {
+                ds->has_config = true;
+                ds->serialdevsettings.config_file = strdup(temp2);
+                slogt("will try to load config file at %s", ds->serialdevsettings.config_file);
+            }
         }
 
     }

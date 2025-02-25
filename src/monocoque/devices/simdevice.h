@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#include "lua5.4/lua.h"
+
 #include "usbdevice.h"
 #include "sounddevice.h"
 #include "serialdevice.h"
@@ -49,6 +51,7 @@ typedef struct
     int id;
     SerialType type;
     struct sp_port* port;
+    lua_State* L;
     SerialDeviceType devicetype;
     // move these two they only apply to the haptic device
     int motorsposition;

@@ -154,6 +154,7 @@ TachometerSettings;
 typedef struct
 {
     char* portdev;
+    char* config_file;
     MotorPosition motorsposition;
     int numlights;
     int numleds;
@@ -199,6 +200,7 @@ typedef struct
     VibrationEffectType effect_type;
     MonocoqueTyreIdentifier tyre;
     double threshold;
+    bool has_config;
     // union?
     TachometerSettings tachsettings;
     SerialDeviceSettings serialdevsettings;

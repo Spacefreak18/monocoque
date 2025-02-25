@@ -59,20 +59,21 @@ int main()
     result = check(sp_blocking_write(port, &bytes1, bufsize1, timeout));
     result = check(sp_blocking_read(port, &recv_buf1, recv_bufsize1, timeout));
 
-    char numstr[4];
-    for(int j = 0; j < 4; j++)
+    char numstr[recv_bufsize1];
+    for(int j = 0; j < recv_bufsize1; j++)
     {
         numstr[j] = '\0';
     }
     for(int j = 0; j < recv_bufsize1; j++)
     {
+        printf("%02x\n", recv_buf1[j]);
         if(recv_buf1[j] != 0 && recv_buf1[j] != 0x0d && recv_buf1[j] != 0x0a)
         {
             numstr[j] = recv_buf1[j];
         }
     }
     int numlights = atoi(numstr);
-    printf("numlights is %i\n", numlights);
+    printf("numlights is %s %i\n", numstr, numlights);
     //printf("%x\n", recv_buf[0]);
     //printf("%x\n", recv_buf[1]);
     //printf("%x\n", recv_buf[2]);
