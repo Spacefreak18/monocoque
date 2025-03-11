@@ -24,7 +24,7 @@ int gear_sound_set(SoundDevice* sounddevice, SimData* simdata)
     }
     sounddevice->sounddata.last_gear = simdata->gear;
 
-    slogt("set gear frequency to %i", sounddevice->sounddata.frequency);
+    slogt("set gear frequency to %i", sounddevice->sounddata.curr_frequency);
 }
 
 // we could make a vtable for these different effects too
@@ -32,10 +32,10 @@ int sounddev_engine_update(SimDevice* this, SimData* simdata)
 {
     SoundDevice* sounddevice = (void *) this->derived;
 
-    sounddevice->sounddata.curr_frequency = simdata->rpms/60;
+    sounddevice->sounddata.curr_frequency = simdata->rpms/60 + sounddevice->sounddata.frequency;
     //sounddevice->sounddata.table_size = 48000/(sounddevice->sounddata.frequency);
 
-    slogt("set engine frequency to %i", sounddevice->sounddata.frequency);
+    slogt("set engine frequency to %i", sounddevice->sounddata.curr_frequency);
 }
 
 double modulate(SoundDevice* sounddevice, double raw_effect, SoundEffectModulationType modulation)
@@ -278,4 +278,3 @@ SoundDevice* new_sound_device(DeviceSettings* ds, MonocoqueSettings* ms) {
 
     return this;
 }
-

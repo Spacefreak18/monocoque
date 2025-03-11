@@ -20,6 +20,9 @@ set(CMAKE_EXE_LINKER_FLAGS "-Wl,--no-as-needed -ldl")
 set(LIBUSB_INCLUDE_DIR /usr/include/libusb-1.0)
 set(LIBXML_INCLUDE_DIR /usr/include/libxml2)
 
+FIND_PACKAGE(Lua 5.3 REQUIRED)
+set(INCLUDE_DIRS ${LUA_INCLUDE_DIR})
+
 #FIND_PATH(LIBUSB_INCLUDE_DIR libusb.h
 #	HINTS $ENV{LIBUSB_ROOT}
 #	PATHS ${PC_LIBUSB_INCLUDEDIR} ${PC_LIBUSB_INCLUDE_DIRS}
@@ -37,10 +40,10 @@ add_executable(monocoque src/monocoque/monocoque.c)
 if(USE_PULSEAUDIO)
     message("Using pulseaudio backend...")
     add_compile_definitions(USE_PULSEAUDIO=true)
-    target_link_libraries(monocoque m hidapi-hidraw pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir lua5.4)
+  target_link_libraries(monocoque m hidapi-hidraw pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir ${LUA_LIBRARY})
 else()
     message("Using portaudio backend...")
-    target_link_libraries(monocoque m hidapi-hidraw portaudio serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir lua5.4)
+  target_link_libraries(monocoque m hidapi-hidraw portaudio serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir ${LUA_LIBRARY})
 endif()
 
 target_include_directories(monocoque PUBLIC config ${LIBXML_INCLUDE_DIR})

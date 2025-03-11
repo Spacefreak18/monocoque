@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include "lua5.4/lua.h"
+#include "lua.h"
 
 #include "usbdevice.h"
 #include "sounddevice.h"
