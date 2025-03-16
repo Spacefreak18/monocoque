@@ -19,12 +19,15 @@ SoundEffectModulationType;
 #define MAX_TABLE_SIZE   (6000)
 typedef struct
 {
-    int last_gear;
+    uint8_t last_gear;
     int volume;
     uint32_t frequency;
     uint32_t frequencyMax;
+    uint32_t amplitude;
+    uint32_t amplitudeMax;
     double duration;
-    int curr_frequency;
+    uint32_t curr_frequency;
+    uint32_t curr_amplitude;
     double curr_duration;
     double phase;
 }

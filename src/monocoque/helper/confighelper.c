@@ -532,9 +532,9 @@ int gettyre(config_setting_t* device_settings, DeviceSettings* ds) {
 
     const char* temp;
     int found = config_setting_lookup_string(device_settings, "tyre", &temp);
-    
+
     ds->tyre = ALLFOUR;
-    
+
     if (strcicmp(temp, "FRONTS") == 0)
     {
         ds->tyre = FRONTS;
@@ -669,6 +669,8 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
             slogi("reading configured sound device settings");
             ds->sounddevsettings.frequency = 0;
             ds->sounddevsettings.frequencyMax = 0;
+            ds->sounddevsettings.amplitude = 50;
+            ds->sounddevsettings.amplitudeMax = 50;
             ds->sounddevsettings.volume = 0;
             ds->sounddevsettings.pan = 0;
             ds->sounddevsettings.channels = 1;
@@ -683,6 +685,8 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
                 config_setting_lookup_int(device_settings, "volume", &ds->sounddevsettings.volume);
                 config_setting_lookup_int(device_settings, "frequency", &ds->sounddevsettings.frequency);
                 config_setting_lookup_int(device_settings, "frequencyMax", &ds->sounddevsettings.frequencyMax);
+                config_setting_lookup_int(device_settings, "amplitude", &ds->sounddevsettings.amplitude);
+                config_setting_lookup_int(device_settings, "amplitudeMax", &ds->sounddevsettings.amplitudeMax);
                 config_setting_lookup_int(device_settings, "pan", &ds->sounddevsettings.pan);
                 config_setting_lookup_int(device_settings, "channels", &ds->sounddevsettings.channels);
                 config_setting_lookup_float(device_settings, "duration", &ds->sounddevsettings.duration);
@@ -709,7 +713,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
                 }
                 else
                 {
-                    if(strcicmp(temp, "FREQUENCY"))
+                    if(strcicmp(temp, "FREQUENCY") == 0)
                     {
                         ds->sounddevsettings.modulation = SOUND_EFFECT_MODULATION_FREQUENCY;
                         if(ds->sounddevsettings.frequencyMax == 0 || ds->sounddevsettings.frequencyMax < ds->sounddevsettings.frequency)
@@ -722,7 +726,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
                             slogi("Effect modulation found, set to FREQUENCY");
                         }
                     }
-                    else if(strcicmp(temp, "AMPLIFY"))
+                    else if(strcicmp(temp, "AMPLIFY") == 0)
                     {
                         ds->sounddevsettings.modulation = SOUND_EFFECT_MODULATION_AMPLIFY;
                         slogi("Effect modulation found, set to AMPLIFY");

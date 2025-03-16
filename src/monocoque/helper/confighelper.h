@@ -172,6 +172,8 @@ typedef struct
     int lowbound_frequency;
     int upperbound_frequency;
     uint32_t frequencyMax;
+    uint32_t amplitudeMax;
+    uint32_t amplitude;
     int pan;
     int channels;
     double duration;

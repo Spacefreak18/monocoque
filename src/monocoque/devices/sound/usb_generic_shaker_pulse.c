@@ -6,13 +6,12 @@
 #include <unistd.h>
 
 
-
 #include "usb_generic_shaker.h"
 #include "../sounddevice.h"
 
 #define FORMAT PA_SAMPLE_S16LE
 #define SAMPLE_RATE   (44100)
-#define AMPLITUDE .5
+#define AMPLITUDE 1
 #define DURATION 1.0
 
 #ifndef M_PI
@@ -31,7 +30,7 @@ void gear_sound_stream(pa_stream *s, size_t length, void *userdata) {
         double sample = 0;
         if (data->frequency>0)
         {
-            sample = AMPLITUDE * 32767.0 * sin(2.0 * M_PI * data->curr_frequency * data->curr_duration);
+            sample = ((double)data->curr_amplitude/100) * 32767.0 * sin(2.0 * M_PI * data->curr_frequency * data->curr_duration);
         }
 
 
@@ -69,7 +68,7 @@ void engine_sound_stream(pa_stream *s, size_t length, void *userdata) {
     for (size_t i = 0; i < num_samples; i++) {
         double t = data->phase;
 
-        double sample = AMPLITUDE * 32767.0 * sin( 2.0 * M_PI * freq * t );
+        double sample = ((double)data->curr_amplitude/100) * 32767.0 * sin( 2.0 * M_PI * freq * t );
 
         buffer[i] = (int16_t)sample;
 

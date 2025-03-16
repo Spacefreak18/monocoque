@@ -27,16 +27,6 @@ int gear_sound_set(SoundDevice* sounddevice, SimData* simdata)
     slogt("set gear frequency to %i", sounddevice->sounddata.curr_frequency);
 }
 
-// we could make a vtable for these different effects too
-int sounddev_engine_update(SimDevice* this, SimData* simdata)
-{
-    SoundDevice* sounddevice = (void *) this->derived;
-
-    sounddevice->sounddata.curr_frequency = simdata->rpms/60 + sounddevice->sounddata.frequency;
-    //sounddevice->sounddata.table_size = 48000/(sounddevice->sounddata.frequency);
-
-    slogt("set engine frequency to %i", sounddevice->sounddata.curr_frequency);
-}
 
 double modulate(SoundDevice* sounddevice, double raw_effect, SoundEffectModulationType modulation)
 {
@@ -44,15 +34,34 @@ double modulate(SoundDevice* sounddevice, double raw_effect, SoundEffectModulati
     switch (modulation)
     {
         case SOUND_EFFECT_MODULATION_FREQUENCY:
-            modulated_effect = (sounddevice->sounddata.frequencyMax - sounddevice->sounddata.frequency) * raw_effect;
+            modulated_effect = ((sounddevice->sounddata.frequencyMax - sounddevice->sounddata.frequency) * raw_effect) + sounddevice->sounddata.frequency;
+            sounddevice->sounddata.curr_frequency = modulated_effect;
+            slogt("set frequency to %i from raw effect %f and base frequency %i", sounddevice->sounddata.curr_frequency, raw_effect, sounddevice->sounddata.frequency);
             break;
         case SOUND_EFFECT_MODULATION_AMPLIFY:
+            modulated_effect = ((sounddevice->sounddata.amplitudeMax - sounddevice->sounddata.amplitude) * raw_effect) + sounddevice->sounddata.amplitude;
+            sounddevice->sounddata.curr_amplitude = modulated_effect;
+            slogt("set curr amplitude to %i from raw effect %f and base amplitude %i", sounddevice->sounddata.curr_amplitude, raw_effect, sounddevice->sounddata.amplitude);
+            break;
         case SOUND_EFFECT_MODULATION_NONE:
         default:
-            modulated_effect = raw_effect;
+            sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency;
+            sounddevice->sounddata.curr_amplitude = sounddevice->sounddata.amplitude;
+            break;
     }
 
     return modulated_effect;
+}
+
+// we could make a vtable for these different effects too
+int sounddev_engine_update(SimDevice* this, SimData* simdata)
+{
+    SoundDevice* sounddevice = (void *) this->derived;
+
+    double effect = ((double)simdata->rpms/60)/((double)simdata->maxrpm/60);
+    modulate(sounddevice, effect, sounddevice->modulationType);
+
+
 }
 
 int sounddev_tyreslip_update(SimDevice* this, SimData* simdata)
@@ -65,7 +74,6 @@ int sounddev_tyreslip_update(SimDevice* this, SimData* simdata)
     if (effect > 0)
     {
         effect = modulate(sounddevice, effect, sounddevice->modulationType);
-        sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency;
         sounddevice->sounddata.curr_duration = sounddevice->sounddata.duration;
     }
     else
@@ -153,8 +161,11 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, MonocoqueTyreId
 
 
     slogi("volume is: %i", sds.volume);
+    slogi("Modulation type: %i", sds.modulation);
     slogi("frequency is: %i", sds.frequency);
     slogi("frequency Max is: %i", sds.frequencyMax);
+    slogi("amplitude is: %i", sds.amplitude);
+    slogi("amplitude Max is: %i", sds.amplitudeMax);
     slogi("pan is: %i", sds.pan);
     slogi("channels is: %i", sds.channels);
     slogi("duration is: %f", sds.duration);
@@ -162,9 +173,15 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, MonocoqueTyreId
 
     sounddevice->modulationType = sds.modulation;
     sounddevice->sounddata.frequency = sds.frequency;
-    sounddevice->sounddata.curr_frequency = 0;
+    sounddevice->sounddata.frequencyMax = sds.frequencyMax;
+    sounddevice->sounddata.amplitude = sds.amplitude;
+    sounddevice->sounddata.amplitudeMax = sds.amplitudeMax;
     sounddevice->sounddata.curr_duration = 0;
+
     sounddevice->sounddata.phase = 0;
+
+    sounddevice->sounddata.curr_amplitude = sounddevice->sounddata.amplitude;
+    sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency;
 
 
     const char* streamname= "Engine";
