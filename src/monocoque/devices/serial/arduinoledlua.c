@@ -22,6 +22,51 @@ int simdata_to_lua(lua_State *L, SimData* simdata) {
     lua_pushinteger(L, simdata->maxrpm);
     lua_setfield(L, -2, "maxrpm");
 
+    lua_pushinteger(L, PROXCARS);
+    lua_setfield(L, -2, "proxcars");
+
+    lua_newtable(L);
+    for(int i = 0; i < PROXCARS; i++)
+    {
+        lua_newtable(L);
+        lua_pushinteger(L, simdata->pd[i].radius);
+        lua_setfield(L, -2, "radius");
+        lua_pushinteger(L, simdata->pd[i].theta);
+        lua_setfield(L, -2, "theta");
+        lua_rawseti(L, -2, i+1);
+    }
+    lua_setfield(L, -2, "pd");
+
+    lua_pushinteger(L, simdata->pd[0].radius);
+    lua_setfield(L, -2, "radius1");
+    lua_pushinteger(L, simdata->pd[0].theta);
+    lua_setfield(L, -2, "theta1");
+
+    lua_pushinteger(L, simdata->pd[1].radius);
+    lua_setfield(L, -2, "radius2");
+    lua_pushinteger(L, simdata->pd[1].theta);
+    lua_setfield(L, -2, "theta2");
+
+    lua_pushinteger(L, simdata->pd[2].radius);
+    lua_setfield(L, -2, "radius3");
+    lua_pushinteger(L, simdata->pd[2].theta);
+    lua_setfield(L, -2, "theta3");
+
+    lua_pushinteger(L, simdata->pd[3].radius);
+    lua_setfield(L, -2, "radius4");
+    lua_pushinteger(L, simdata->pd[3].theta);
+    lua_setfield(L, -2, "theta4");
+
+    lua_pushinteger(L, simdata->pd[4].radius);
+    lua_setfield(L, -2, "radius5");
+    lua_pushinteger(L, simdata->pd[4].theta);
+    lua_setfield(L, -2, "theta5");
+
+    lua_pushinteger(L, simdata->pd[5].radius);
+    lua_setfield(L, -2, "radius6");
+    lua_pushinteger(L, simdata->pd[5].theta);
+    lua_setfield(L, -2, "theta6");
+
     return 1; // Return the table to Lua
 }
 
@@ -144,9 +189,14 @@ int set_led_range_to_rgb_color(lua_State *L)
 
     int range_start = lua_tonumber(L, 1);
     int range_end = lua_tonumber(L, 2);
-    int color0 = lua_tonumber(L, 3);
-    int color1 = lua_tonumber(L, 4);
-    int color2 = lua_tonumber(L, 5);
+    int color = lua_tonumber(L, 3);
+
+    int color0 = (color >> 8) & 0xff;
+    int color1 = (color >> 16) & 0xff;
+    int color2 = (color >> 24) & 0xff;
+    //int color0 = lua_tonumber(L, 3);
+    //int color1 = lua_tonumber(L, 4);
+    //int color2 = lua_tonumber(L, 5);
 
     slogd("lua range start is %i", range_start);
     slogd("lua range end is %i", range_end);
@@ -236,9 +286,11 @@ int set_led_to_rgb_color(lua_State *L)
     slogt("lua called c function set_led_to_rgb_color");
 
     int led = lua_tonumber(L, 1);
-    int color0 = lua_tonumber(L, 2);
-    int color1 = lua_tonumber(L, 3);
-    int color2 = lua_tonumber(L, 4);
+    int color = lua_tonumber(L, 2);
+
+    int color0 = (color >> 8) & 0xff;
+    int color1 = (color >> 16) & 0xff;
+    int color2 = (color >> 24) & 0xff;
 
     slogd("lua led is %i", led);
     slogd("lua color0 is %i", color0);
