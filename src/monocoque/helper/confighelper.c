@@ -250,6 +250,8 @@ int getconfigtouse2(const char* config_file_str, char* car, int sim)
         fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
         return -1;
     }
+
+    slogt("config validates");
     config_setting_t* config = NULL;
     config_setting_t* config_widgets = NULL;
     config = config_lookup(&cfg, "configs");
@@ -375,6 +377,7 @@ int getconfigtouse(const char* config_file_str, char* car, int sim)
         fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
         return -1;
     }
+
     config_setting_t* config = NULL;
     config_setting_t* config_widgets = NULL;
     config = config_lookup(&cfg, "configs");
@@ -431,6 +434,8 @@ int getconfigtouse(const char* config_file_str, char* car, int sim)
             break;
         }
     }
+
+    config_destroy(&cfg);
     return confignum;
 }
 

@@ -226,6 +226,7 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
     {
         slogi("looking for ui config %s pass 1", ms->config_str);
         int confignum = getconfigtouse2(ms->config_str, simdata->car, f->sim);
+        slogi("first pass finished");
         if(confignum == -1)
         {
             slogi("looking for ui config %s pass 2", ms->config_str);
