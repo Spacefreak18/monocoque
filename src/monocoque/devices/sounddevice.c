@@ -121,6 +121,30 @@ int sounddev_absbrakes_update(SimDevice* this, SimData* simdata)
     }
 }
 
+int sounddev_suspension_update(SimDevice* this, SimData* simdata)
+{
+    SoundDevice* sounddevice = (void *) this->derived;
+
+    double effect = slipeffect(simdata, this->hapticeffect.effecttype, this->hapticeffect.tyre, this->hapticeffect.threshold, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
+    effect = effect * 10;
+    slogt("Updating sound device output from original suspension travel effect %f", effect);
+
+    if (effect > 0)
+    {
+        sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency;
+        sounddevice->sounddata.curr_amplitude = sounddevice->sounddata.amplitude;
+        effect = modulate(sounddevice, effect, sounddevice->modulationType);
+        sounddevice->sounddata.curr_duration = sounddevice->sounddata.duration;
+    }
+    else
+    {
+        sounddevice->sounddata.curr_frequency = 0;
+        sounddevice->sounddata.curr_amplitude = 0;
+        sounddevice->sounddata.curr_duration = 0;
+    }
+
+}
+
 int sounddev_gearshift_update(SimDevice* this, SimData* simdata)
 {
     SoundDevice* sounddevice = (void *) this->derived;
@@ -180,8 +204,8 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, MonocoqueTyreId
 
     sounddevice->sounddata.phase = 0;
 
-    sounddevice->sounddata.curr_amplitude = sounddevice->sounddata.amplitude;
-    sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency;
+    sounddevice->sounddata.curr_amplitude = 0;
+    sounddevice->sounddata.curr_frequency = 0;
 
 
     const char* streamname= "Engine";
@@ -219,6 +243,7 @@ static const vtable gear_sound_simdevice_vtable = { &sounddev_gearshift_update, 
 static const vtable tyreslip_sound_simdevice_vtable = { &sounddev_tyreslip_update, &sounddev_free };
 static const vtable tyrelock_sound_simdevice_vtable = { &sounddev_tyrelock_update, &sounddev_free };
 static const vtable absbrakes_sound_simdevice_vtable = { &sounddev_absbrakes_update, &sounddev_free };
+static const vtable suspension_sound_simdevice_vtable = { &sounddev_suspension_update, &sounddev_free };
 
 SoundDevice* new_sound_device(DeviceSettings* ds, MonocoqueSettings* ms) {
 
@@ -281,6 +306,21 @@ SoundDevice* new_sound_device(DeviceSettings* ds, MonocoqueSettings* ms) {
 
             this->m.vtable = &absbrakes_sound_simdevice_vtable;
             slogi("Initializing sound device for abs vibrations.");
+            break;
+
+        case (EFFECT_SUSPENSION):
+            this->m.hapticeffect.effecttype = EFFECT_SUSPENSION;
+            this->m.hapticeffect.threshold = ds->threshold;
+
+            this->m.hapticeffect.threshold = ds->threshold;
+            slogt("Haptic effect: %i %i on tyre %i", this->m.hapticeffect.effecttype, ds->effect_type, ds->tyre);
+            this->m.hapticeffect.tyre = ds->tyre;
+            this->m.hapticeffect.useconfig = ms->useconfig;
+            this->m.hapticeffect.configcheck = &ms->configcheck;
+            this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
+
+            this->m.vtable = &suspension_sound_simdevice_vtable;
+            slogi("Initializing sound device for suspension vibrations.");
             break;
     }
 

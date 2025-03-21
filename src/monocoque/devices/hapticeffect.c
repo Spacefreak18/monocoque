@@ -260,6 +260,8 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
                 slogt("velocities (x,y,z) are %f %f %f", simdata->Xvelocity, simdata->Yvelocity, simdata->Zvelocity);
             }
             break;
+        case EFFECT_SUSPENSION:
+            break;
         default:
             slogd("Unknown effect type");
     }
@@ -276,7 +278,6 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
     switch (effecttype)
     {
         case (EFFECT_TYRESLIP):
-
 
             if (tyre == FRONTLEFT || tyre == FRONTS || tyre == ALLFOUR)
             {
@@ -384,6 +385,42 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
             if(simdata->abs <= 0)
             {
                 play = 0;
+            }
+            break;
+
+        case (EFFECT_SUSPENSION):
+
+            if (tyre == FRONTLEFT || tyre == FRONTS || tyre == ALLFOUR)
+            {
+                if(simdata->suspension[0] > threshold)
+                {
+                    play += simdata->suspension[0] - threshold;
+                    slogt("suspension is %f", play);
+                }
+            }
+            if (tyre == FRONTRIGHT || tyre == FRONTS || tyre == ALLFOUR)
+            {
+                if(simdata->suspension[1] > threshold)
+                {
+                    play += simdata->suspension[1] - threshold;
+                    slogt("suspension is %f", play);
+                }
+            }
+            if (tyre == REARLEFT || tyre == REARS || tyre == ALLFOUR)
+            {
+                if(simdata->suspension[2] > threshold)
+                {
+                    play += simdata->suspension[2] - threshold;
+                    slogt("suspension is %f", play);
+                }
+            }
+            if (tyre == REARRIGHT || tyre == REARS || tyre == ALLFOUR)
+            {
+                if(simdata->suspension[3] > threshold)
+                {
+                    play += simdata->suspension[3] - threshold;
+                    slogt("suspension is %f", play);
+                }
             }
             break;
     }
