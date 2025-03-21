@@ -158,12 +158,14 @@ int main(int argc, char** argv)
     if (!config_read_file(&cfg, ms->config_str))
     {
         fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
+        config_destroy(&cfg);
         goto cleanup_final;
     }
     else
     {
         slogi("Openend monocoque configuration file");
     }
+    config_destroy(&cfg);
 
 
 

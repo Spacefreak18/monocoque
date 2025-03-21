@@ -44,6 +44,11 @@ int strtoeffecttype(const char* effect, DeviceSettings* ds)
         ds->is_valid = true;
         ds->effect_type = EFFECT_GEARSHIFT;
     }
+    if (strcicmp(effect, "Suspension") == 0)
+    {
+        ds->is_valid = true;
+        ds->effect_type = EFFECT_SUSPENSION;
+    }
     if (strcicmp(effect, "ABS") == 0)
     {
         ds->is_valid = true;
@@ -243,11 +248,13 @@ int getNumberOfConfigs(const char* config_file_str)
 
 int getconfigtouse2(const char* config_file_str, char* car, int sim)
 {
+    slogt("inside first pass");
     config_t cfg;
     config_init(&cfg);
     if (!config_read_file(&cfg, config_file_str))
     {
         fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
+        config_destroy(&cfg);
         return -1;
     }
 
@@ -262,6 +269,7 @@ int getconfigtouse2(const char* config_file_str, char* car, int sim)
     int j = 0;
     if ( configs == 1 )
     {
+        config_destroy(&cfg);
         return -1;
     }
     int confignum = -1;
@@ -297,6 +305,8 @@ int getconfigtouse2(const char* config_file_str, char* car, int sim)
             break;
         }
     }
+
+    config_destroy(&cfg);
     return confignum;
 }
 
@@ -307,6 +317,7 @@ int getconfigtouse1(const char* config_file_str, char* car, int sim)
     if (!config_read_file(&cfg, config_file_str))
     {
         fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
+        config_destroy(&cfg);
         return -1;
     }
     config_setting_t* config = NULL;
@@ -319,6 +330,7 @@ int getconfigtouse1(const char* config_file_str, char* car, int sim)
     int j = 0;
     if ( configs == 1 )
     {
+        config_destroy(&cfg);
         return -1;
     }
     int confignum = -1;
@@ -365,6 +377,8 @@ int getconfigtouse1(const char* config_file_str, char* car, int sim)
             break;
         }
     }
+
+    config_destroy(&cfg);
     return confignum;
 }
 
@@ -375,6 +389,7 @@ int getconfigtouse(const char* config_file_str, char* car, int sim)
     if (!config_read_file(&cfg, config_file_str))
     {
         fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
+        config_destroy(&cfg);
         return -1;
     }
 
@@ -388,6 +403,7 @@ int getconfigtouse(const char* config_file_str, char* car, int sim)
     int j = 0;
     if ( configs == 1 )
     {
+        config_destroy(&cfg);
         return 0;
     }
     int confignum = 0;
@@ -662,7 +678,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         const char* effect;
         config_setting_lookup_string(device_settings, "effect", &effect);
         strtoeffecttype(effect, ds);
-        if (ds->effect_type == EFFECT_TYRESLIP || ds->effect_type == EFFECT_TYRELOCK || ds->effect_type == EFFECT_ABSBRAKES)
+        if (ds->effect_type == EFFECT_TYRESLIP || ds->effect_type == EFFECT_TYRELOCK || ds->effect_type == EFFECT_ABSBRAKES || ds->effect_type == EFFECT_SUSPENSION )
         {
             gettyre(device_settings, ds);
             ds->threshold = 0;
