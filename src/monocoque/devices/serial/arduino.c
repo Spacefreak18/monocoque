@@ -119,15 +119,14 @@ int arduino_customled_init(SerialDevice* serialdevice, const char* portdev, cons
     }
     lua_setglobal(L,"myFunc");
 
-    serialdevice->L = L;
+    serialdevice->m.L = L;
 
     return serialdevice->id;
 }
 
 
-int arduino_simled_update(SimDevice* this, SimData* simdata)
+int arduino_simled_update(SerialDevice* serialdevice, SimData* simdata)
 {
-    SerialDevice* serialdevice = (void *) this->derived;
     int result = 1;
 
     int total_leds = serialdevice->numleds;
@@ -211,9 +210,8 @@ int arduino_simled_update(SimDevice* this, SimData* simdata)
     return result;
 }
 
-int arduino_customled_update(SimDevice* this, SimData* simdata)
+int arduino_customled_update(SerialDevice* serialdevice, SimData* simdata)
 {
-    SerialDevice* serialdevice = (void *) this->derived;
     int result = 1;
 
     int total_leds = serialdevice->numleds;
@@ -240,7 +238,7 @@ int arduino_customled_update(SimDevice* this, SimData* simdata)
     bytes[bufsize-3] = 0xff;
 
 
-    lua_State* L = serialdevice->L;
+    lua_State* L = serialdevice->m.L;
 
     lua_pushstring(L, "buff");
     lua_pushlightuserdata(L, &bytes);
@@ -325,7 +323,7 @@ int arduino_customled_free(SerialDevice* serialdevice, bool lua)
 
     if(lua == true)
     {
-        lua_close(serialdevice->L);
+        lua_close(serialdevice->m.L);
     }
     return result;
 }

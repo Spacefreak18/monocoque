@@ -2,13 +2,13 @@
 
 #include <hidapi/hidapi.h>
 
-#include "tachdevice.h"
-#include "../slog/slog.h"
+#include "../simdevice.h"
+#include "../../slog/slog.h"
 
 const size_t REVBURNER_BUFSIZE = 8;
 
 
-int revburner_update(TachDevice* tachdevice, int pulses)
+int revburner_update(USBDevice* tachdevice, int pulses)
 {
 
     int res = 0;
@@ -37,7 +37,7 @@ int revburner_update(TachDevice* tachdevice, int pulses)
     return res;
 }
 
-int revburner_free(TachDevice* tachdevice)
+int revburner_free(USBDevice* tachdevice)
 {
     int res = 0;
 
@@ -47,7 +47,7 @@ int revburner_free(TachDevice* tachdevice)
     return res;
 }
 
-int revburner_init(TachDevice* tachdevice)
+int revburner_init(USBDevice* tachdevice)
 {
     slogi("initializing revburner tachometer...");
     //tachdevice->update_tachometer = revburner_device_update;

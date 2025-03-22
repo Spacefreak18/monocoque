@@ -2,13 +2,16 @@
 #define _SIMDEVICE_H
 
 #include <stdbool.h>
+#include <hidapi/hidapi.h>
 
 #include "lua.h"
 
 #include "usbdevice.h"
 #include "sounddevice.h"
 #include "serialdevice.h"
+
 #include "hapticeffect.h"
+
 #include "../helper/confighelper.h"
 #include "../simulatorapi/simapi/simapi/simdata.h"
 
@@ -27,6 +30,7 @@ struct SimDevice
     int id;
     int fps;
     bool initialized;
+    lua_State* L;
     DeviceType type;
     HapticEffect hapticeffect;
 };
@@ -51,7 +55,7 @@ typedef struct
     int id;
     SerialType type;
     struct sp_port* port;
-    lua_State* L;
+
     SerialDeviceType devicetype;
     // move these two they only apply to the haptic device
     int motorsposition;
@@ -93,6 +97,7 @@ typedef struct
 {
     SimDevice m;
     int id;
+    hid_device* handle;
     USBType type;
     union
     {
@@ -144,5 +149,17 @@ int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds, Monocoque
 int devfree(SimDevice* simdevices, int numdevices);
 
 int simdevfree(SimDevice* this);
+
+
+/****** USB SubTypes ****************/
+int wheeldev_update(USBDevice* usbdevice, SimData* simdata);
+int wheeldev_init(USBDevice* usbdevice, DeviceSettings* ds);
+int wheeldev_free(USBDevice* usbdevice);
+
+int tachdev_update(USBDevice* tachdevice, SimData* simdata);
+int tachdev_init(USBDevice* tachdevice, DeviceSettings* ds);
+int tachdev_free(USBDevice* tachdevice);
+
+
 
 #endif

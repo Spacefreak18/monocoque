@@ -155,7 +155,7 @@ TachometerSettings;
 typedef struct
 {
     char* portdev;
-    char* config_file;
+
     MotorPosition motorsposition;
     int numlights;
     int numleds;
@@ -204,12 +204,12 @@ typedef struct
     MonocoqueTyreIdentifier tyre;
     double threshold;
     bool has_config;
+    char* specific_config_file;
     // union?
     TachometerSettings tachsettings;
     SerialDeviceSettings serialdevsettings;
     SoundDeviceSettings sounddevsettings;
     USBDeviceSettings usbdevsettings;
-
 }
 DeviceSettings;
 

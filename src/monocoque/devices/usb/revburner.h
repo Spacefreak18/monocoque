@@ -1,8 +1,10 @@
 #ifndef _REVBURNER_H
 #define _REVBURNER_H
 
-int revburner_update(TachDevice* tachdevice, int pulses);
-int revburner_init(TachDevice* tachdevice);
-int revburner_free(TachDevice* tachdevice);
+#include "../simdevice.h"
+
+int revburner_update(USBDevice* tachdevice, int pulses);
+int revburner_init(USBDevice* tachdevice);
+int revburner_free(USBDevice* tachdevice);
 
 #endif

@@ -9,13 +9,13 @@
 const int cammusc5_hidupdate_buf_size = 14;
 const int num_avail_leds = 9;
 
-int cammusc5_update(WheelDevice* wheeldevice, int maxrpm, int rpm, int gear, int velocity)
+int cammusc5_update(USBDevice* usbdevice, int maxrpm, int rpm, int gear, int velocity)
 {
 
     int res = 0;
 
     unsigned char bytes[cammusc5_hidupdate_buf_size];
-   
+
     for (int x = 0; x < cammusc5_hidupdate_buf_size; x++)
     {
         bytes[x] = 0x00;
@@ -56,9 +56,9 @@ int cammusc5_update(WheelDevice* wheeldevice, int maxrpm, int rpm, int gear, int
     bytes[4] = gear-1;
 
     slogt("writing bytes x%02xx%02xx%02xx%02xx%02x from rpm %i velocity %i gear %i", bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], rpm, velocity, gear);
-    if (wheeldevice->handle)
+    if (usbdevice->handle)
     {
-        res = hid_write(wheeldevice->handle, bytes, cammusc5_hidupdate_buf_size);
+        res = hid_write(usbdevice->handle, bytes, cammusc5_hidupdate_buf_size);
     }
     else
     {
@@ -68,17 +68,17 @@ int cammusc5_update(WheelDevice* wheeldevice, int maxrpm, int rpm, int gear, int
     return res;
 }
 
-int cammusc5_free(WheelDevice* wheeldevice)
+int cammusc5_free(USBDevice* usbdevice)
 {
     int res = 0;
 
-    hid_close(wheeldevice->handle);
+    hid_close(usbdevice->handle);
     res = hid_exit();
 
     return res;
 }
 
-int cammusc5_init(WheelDevice* wheeldevice)
+int cammusc5_init(USBDevice* usbdevice)
 {
     slogi("initializing cammus c5 wheel...");
 
@@ -86,9 +86,9 @@ int cammusc5_init(WheelDevice* wheeldevice)
 
     res = hid_init();
 
-    wheeldevice->handle = hid_open(0x3416, 0x1021, NULL);
+    usbdevice->handle = hid_open(0x3416, 0x1021, NULL);
 
-    if (!wheeldevice->handle)
+    if (!usbdevice->handle)
     {
         sloge("Could not find attached Cammus C5 Wheel");
         res = hid_exit();

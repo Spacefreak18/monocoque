@@ -17,10 +17,10 @@ int usbdev_update(SimDevice* this, SimData* simdata)
     {
         case USBDEV_UNKNOWN :
         case USBDEV_TACHOMETER :
-            tachdev_update(&usbdevice->u.tachdevice, simdata);
+            tachdev_update(usbdevice, simdata);
             break;
         case USBDEV_WHEEL :
-            wheeldev_update(&usbdevice->u.wheeldevice, simdata);
+            wheeldev_update(usbdevice, simdata);
             break;
         case USBDEV_GENERICHAPTIC :
             usbhapticdev_update(&usbdevice->u.hapticdevice, simdata, this->hapticeffect.tyre, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
@@ -39,10 +39,10 @@ int usbdev_free(SimDevice* this)
     {
         case USBDEV_UNKNOWN :
         case USBDEV_TACHOMETER :
-            tachdev_free(&usbdevice->u.tachdevice);
+            tachdev_free(usbdevice);
             break;
         case USBDEV_WHEEL :
-            wheeldev_free(&usbdevice->u.wheeldevice);
+            wheeldev_free(usbdevice);
             break;
         case USBDEV_GENERICHAPTIC :
             usbhapticdev_free(&usbdevice->u.hapticdevice);
@@ -64,10 +64,10 @@ int usbdev_init(USBDevice* usbdevice, DeviceSettings* ds)
     {
         case USBDEV_UNKNOWN :
         case USBDEV_TACHOMETER :
-            error = tachdev_init(&usbdevice->u.tachdevice, ds);
+            error = tachdev_init(usbdevice, ds);
             break;
         case USBDEV_WHEEL :
-            error = wheeldev_init(&usbdevice->u.wheeldevice, ds);
+            error = wheeldev_init(usbdevice, ds);
             break;
         case USBDEV_GENERICHAPTIC :
             error = usbhapticdev_init(&usbdevice->u.hapticdevice, ds);

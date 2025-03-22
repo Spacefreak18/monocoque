@@ -1,7 +1,7 @@
 #ifndef _TACHDEVICE_H
 #define _TACHDEVICE_H
 
-#include <hidapi/hidapi.h>
+
 #include "../helper/confighelper.h"
 #include "../simulatorapi/simapi/simapi/simdata.h"
 
@@ -19,13 +19,10 @@ typedef struct
     int id;
     TachType type;
     bool use_pulses;
-    hid_device* handle;
     TachometerSettings tachsettings;
 }
 TachDevice;
 
-int tachdev_update(TachDevice* tachdevice, SimData* simdata);
-int tachdev_init(TachDevice* tachdevice, DeviceSettings* ds);
-int tachdev_free(TachDevice* tachdevice);
+
 
 #endif

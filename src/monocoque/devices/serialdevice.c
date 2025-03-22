@@ -34,6 +34,24 @@ int serialdev_update(SimDevice* this, SimData* simdata)
     return 0;
 }
 
+int arduino_customled_updater(SimDevice* this, SimData* simdata)
+{
+    SerialDevice* serialdevice = (void *) this->derived;
+
+    arduino_customled_update(serialdevice, simdata);
+
+    return 0;
+}
+
+int arduino_simled_updater(SimDevice* this, SimData* simdata)
+{
+    SerialDevice* serialdevice = (void *) this->derived;
+
+    arduino_simled_update(serialdevice, simdata);
+
+    return 0;
+}
+
 int arduino_shiftlights_update(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
@@ -149,7 +167,7 @@ int serialdev_free(SimDevice* this)
             serialdevice->u.simhapticdata.effect4 = 0;
             serialdevice->u.simhapticdata.motor4 = 1;
             serialdevice->state = 0;
-            
+
             size_t size = sizeof(SimHapticData);
             monocoque_serial_write_block(serialdevice->id, &serialdevice->u.simhapticdata, size, 9000);
             slogi("set zero to arduino device");
@@ -199,7 +217,7 @@ int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds)
             error = moza_init(serialdevice, ds->serialdevsettings.portdev);
             break;
         case ARDUINODEV__SIMLED__CUSTOM:
-            error = arduino_customled_init(serialdevice, ds->serialdevsettings.portdev, ds->serialdevsettings.config_file);
+            error = arduino_customled_init(serialdevice, ds->serialdevsettings.portdev, ds->specific_config_file);
             break;
         case ARDUINODEV__SIMLED:
             error = arduino_customled_init(serialdevice, ds->serialdevsettings.portdev, NULL);
@@ -215,8 +233,8 @@ int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds)
 
 static const vtable serial_simdevice_vtable = { &serialdev_update, &serialdev_free };
 static const vtable arduino_shiftlights_vtable = { &arduino_shiftlights_update, &serialdev_free };
-static const vtable arduino_simled_vtable = { &arduino_simled_update, &serialdev_free };
-static const vtable arduino_simled_custom_vtable = { &arduino_customled_update, &serialdev_free };
+static const vtable arduino_simled_vtable = { &arduino_simled_updater, &serialdev_free };
+static const vtable arduino_simled_custom_vtable = { &arduino_customled_updater, &serialdev_free };
 static const vtable arduino_simwind_vtable = { &arduino_simwind_update, &serialdev_free };
 static const vtable arduino_simhaptic_vtable = { &arduino_simhaptic_update, &serialdev_free };
 static const vtable serialwheel_vtable = { &serial_wheel_update, &serial_wheel_free };

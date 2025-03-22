@@ -3,8 +3,10 @@
 
 #include "../../wheeldevice.h"
 
-int cammusc12_update(WheelDevice* wheeldevice, int maxrpm, int rpm, int gear, int velocity);
-int cammusc12_init(WheelDevice* wheeldevice);
-int cammusc12_free(WheelDevice* wheeldevice);
+#include "../../simdevice.h"
+
+int cammusc12_update(USBDevice* wheeldevice, int maxrpm, int rpm, int gear, int velocity);
+int cammusc12_init(USBDevice* wheeldevice, const char* luafile);
+int cammusc12_free(USBDevice* wheeldevice);
 
 #endif

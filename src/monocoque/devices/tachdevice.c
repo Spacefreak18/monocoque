@@ -2,14 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "tachdevice.h"
-#include "revburner.h"
-#include "../../helper/confighelper.h"
-#include "../../simulatorapi/simapi/simapi/simdata.h"
-#include "../../slog/slog.h"
+//#include "tachdevice.h"
+#include "simdevice.h"
+#include "usb/revburner.h"
+#include "../helper/confighelper.h"
+#include "../simulatorapi/simapi/simapi/simdata.h"
+#include "../slog/slog.h"
 
-int tachdev_update(TachDevice* tachdevice, SimData* simdata)
+int tachdev_update(USBDevice* usbdevice, SimData* simdata)
 {
+    TachDevice* tachdevice = &usbdevice->u.tachdevice;
     // current plan is to just use the revburner xml format for other possible tachometer devices
     // with that assumption this same logic is assumed the same for other tachometer devices
     // the only difference then being in communication to the physical device
@@ -43,30 +45,33 @@ int tachdev_update(TachDevice* tachdevice, SimData* simdata)
                 }
             }
             slogt("Settings tachometer pulses to %i", pulses);
-            revburner_update(tachdevice, pulses);
+            revburner_update(usbdevice, pulses);
             break;
     }
 
     return 0;
 }
 
-int tachdev_free(TachDevice* tachdevice)
+int tachdev_free(USBDevice* usbdevice)
 {
+    TachDevice* tachdevice = &usbdevice->u.tachdevice;
     switch ( tachdevice->type )
     {
         case TACHDEV_UNKNOWN :
         case TACHDEV_REVBURNER :
-            revburner_update(tachdevice, 0);
-            revburner_free(tachdevice);
+            revburner_update(usbdevice, 0);
+            revburner_free(usbdevice);
             break;
     }
 
     return 0;
 }
 
-int tachdev_init(TachDevice* tachdevice, DeviceSettings* ds)
+int tachdev_init(USBDevice* usbdevice, DeviceSettings* ds)
 {
     slogi("initializing tachometer device...");
+
+    TachDevice* tachdevice = &usbdevice->u.tachdevice;
     int error = 0;
     // detection of tach device model
     tachdevice->type = TACHDEV_UNKNOWN;
@@ -74,7 +79,7 @@ int tachdev_init(TachDevice* tachdevice, DeviceSettings* ds)
 
     tachdevice->tachsettings = ds->tachsettings;
 
-    error = revburner_init(tachdevice);
+    error = revburner_init(usbdevice);
 
     return error;
 }
