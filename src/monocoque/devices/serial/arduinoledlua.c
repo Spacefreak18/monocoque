@@ -167,7 +167,7 @@ int set_led_range_to_color(lua_State *L)
     lua_gettable(L, LUA_REGISTRYINDEX);
     char* bytes = lua_touserdata(L, -1);
 
-    slogt("tenth byte of buff is x%02x", bytes[10]);
+    slogt("first byte of buff is x%02x", bytes[0]);
 
     uint8_t color0 = get_color_rgb_value(color, 0);
     uint8_t color1 = get_color_rgb_value(color, 1);
@@ -228,7 +228,7 @@ int set_led_range_to_rgb_color(lua_State *L)
     lua_gettable(L, LUA_REGISTRYINDEX);
     char* bytes = lua_touserdata(L, -1);
 
-    slogt("tenth byte of buff is x%02x", bytes[10]);
+    slogt("first byte of buff is x%02x", bytes[0]);
 
     for( int i = range_start; i < range_end; i++)
     {
@@ -268,7 +268,7 @@ int set_led_to_color(lua_State *L)
     lua_gettable(L, LUA_REGISTRYINDEX);
     char* bytes = lua_touserdata(L, -1);
 
-    slogt("tenth byte of buff is x%02x", bytes[10]);
+    slogt("first byte of buff is x%02x", bytes[0]);
 
     uint8_t color0 = get_color_rgb_value(color, 0);
     uint8_t color1 = get_color_rgb_value(color, 1);
@@ -316,7 +316,7 @@ int set_led_to_rgb_color(lua_State *L)
     lua_gettable(L, LUA_REGISTRYINDEX);
     char* bytes = lua_touserdata(L, -1);
 
-    slogt("tenth byte of buff is x%02x", bytes[10]);
+    slogt("first byte of buff is x%02x", bytes[0]);
 
     bytes[(led * 3) + 0] = color0;
     bytes[(led * 3) + 1] = color1;
@@ -342,7 +342,7 @@ int led_clear_all(lua_State *L)
     lua_gettable(L, LUA_REGISTRYINDEX);
     char* bytes = lua_touserdata(L, -1);
 
-    slogt("tenth byte of buff is x%02x", bytes[10]);
+    slogt("first byte of buff is x%02x", bytes[0]);
 
     for( int i = 0; i < numlights; i++)
     {
