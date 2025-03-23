@@ -216,6 +216,7 @@ int arduino_customled_update(SerialDevice* serialdevice, SimData* simdata)
 
     int total_leds = serialdevice->numleds;
     size_t bufsize = (total_leds * 3) + 14;
+    char ledbytes[total_leds * 3];
     char bytes[bufsize];
 
     for(int j = 0; j < bufsize; j++)
@@ -241,7 +242,7 @@ int arduino_customled_update(SerialDevice* serialdevice, SimData* simdata)
     lua_State* L = serialdevice->m.L;
 
     lua_pushstring(L, "buff");
-    lua_pushlightuserdata(L, &bytes);
+    lua_pushlightuserdata(L, &ledbytes);
     lua_settable(L, LUA_REGISTRYINDEX);
 
     simdata_to_lua(L, simdata);
@@ -273,13 +274,15 @@ int arduino_customled_update(SerialDevice* serialdevice, SimData* simdata)
         fprintf(stderr, "Error calling Lua script: %s\n", lua_tostring(L, -1));
     }
 
+    for(int i = 0; i < total_leds; i++)
+    {
+        bytes[11 + (i * 3) + 0] = ledbytes[(i * 3) + 0];
+        bytes[11 + (i * 3) + 1] = ledbytes[(i * 3) + 1];
+        bytes[11 + (i * 3) + 2] = ledbytes[(i * 3) + 2];
+    }
+
     size_t size = sizeof(bytes);
-
     arduino_update(serialdevice, &bytes, size);
-
-    // move to free
-
-
 
     return result;
 }
