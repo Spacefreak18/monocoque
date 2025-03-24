@@ -86,32 +86,32 @@ int strtodevsubsubtype(const char* device_subsubtype, DeviceSettings* ds)
     if (strcicmp(device_subsubtype, "CammusC5") == 0)
     {
         ds->dev_subsubtype = SIMDEVSUBTYPE_CAMMUSC5;
-        bool devfound = true;
+        devfound = true;
     }
     if (strcicmp(device_subsubtype, "CammusC12") == 0)
     {
         ds->dev_subsubtype = SIMDEVSUBTYPE_CAMMUSC12;
-        bool devfound = true;
+        devfound = true;
     }
     if (strcicmp(device_subsubtype, "MozaR5") == 0)
     {
         ds->dev_subsubtype = SIMDEVSUBTYPE_MOZAR5;
-        bool devfound = true;
+        devfound = true;
     }
     if (strcicmp(device_subsubtype, "MozaR8") == 0)
     {
         ds->dev_subsubtype = SIMDEVSUBTYPE_MOZAR5;
-        bool devfound = true;
+        devfound = true;
     }
     if (strcicmp(device_subsubtype, "CSLELITEV3PEDALS") == 0)
     {
         ds->dev_subsubtype = SIMDEVSUBTYPE_CSLELITEV3PEDALS;
-        bool devfound = true;
+        devfound = true;
     }
     if (strcicmp(device_subsubtype, "SIMAGICP1000PEDALS") == 0)
     {
         ds->dev_subsubtype = SIMDEVSUBTYPE_SIMAGICP1000PEDALS;
-        bool devfound = true;
+        devfound = true;
     }
 
     if(devfound == false)
@@ -808,7 +808,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
     ds->has_config = false;
     const char* temp2;
     int found = config_setting_lookup_string(device_settings, "config", &temp2);
-    if(strcicmp(temp2, "none") == 0)
+    if(strcicmp(temp2, "none") == 0 || found == 0)
     {
         slogt("config set to none");
     }
