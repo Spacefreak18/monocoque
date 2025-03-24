@@ -131,7 +131,10 @@ int cammusc12_customled_update(USBDevice* usbdevice, SimData* simdata)
 
     size_t bufsize = (cammusc12_total_leds * 3);
     char ledbytes[bufsize];
-
+    for(int x = 0; x < bufsize; x++)
+    {
+        ledbytes[x] = 0x00;
+    }
 
     lua_State* L = usbdevice->m.L;
 
