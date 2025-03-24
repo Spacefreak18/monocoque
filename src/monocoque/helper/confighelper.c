@@ -712,16 +712,19 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
                 config_setting_lookup_int(device_settings, "channels", &ds->sounddevsettings.channels);
                 config_setting_lookup_float(device_settings, "duration", &ds->sounddevsettings.duration);
 
-                const char* temp;
+                const char* temp = NULL;
                 int found = 0;
                 found = config_setting_lookup_string(device_settings, "devid", &temp);
-                if (found == 0)
+                if (found == CONFIG_FALSE)
                 {
                     ds->sounddevsettings.dev = NULL;
                 }
                 else
                 {
-                    ds->sounddevsettings.dev = strdup(temp);
+                    if(temp != NULL)
+                    {
+                        ds->sounddevsettings.dev = strdup(temp);
+                    }
                 }
 
 
@@ -808,17 +811,23 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
     ds->has_config = false;
     const char* temp2;
     int found = config_setting_lookup_string(device_settings, "config", &temp2);
-    if(strcicmp(temp2, "none") == 0 || found == 0)
+    if(found == 0)
     {
+        fprintf(stderr, "Here?");
         slogt("config set to none");
     }
     else
     {
         ds->has_config = true;
         ds->specific_config_file = strdup(temp2);
+        if(strcicmp(temp2, "none") == 0)
+        {
+            ds->has_config = false;
+            free(ds->specific_config_file);
+            ds->specific_config_file = NULL;
+        }
         slogt("will try to load config file at %s", ds->specific_config_file);
     }
-
     return error;
 }
 
@@ -852,17 +861,17 @@ int uiloadconfig(const char* config_file_str, int confignum, int configureddevic
             config_setting_t* config_device = config_setting_get_elem(config_devices, i);
             const char* device_type;
             const char* device_subtype;
-            const char* device_config_file;
+            //const char* device_config_file;
             config_setting_lookup_string(config_device, "device", &device_type);
             config_setting_lookup_string(config_device, "type", &device_subtype);
-            config_setting_lookup_string(config_device, "config", &device_config_file);
+            //config_setting_lookup_string(config_device, "config", &device_config_file);
 
             //slogt("device type: %s", device_type);
             //slogt("device sub type: %s", device_subtype);
             //slogt("device config file: %s", device_config_file);
             if (error == MONOCOQUE_ERROR_NONE)
             {
-                error = devsetup(device_type, device_subtype, device_config_file, ms, &settings, config_device);
+                error = devsetup(device_type, device_subtype, NULL, ms, &settings, config_device);
             }
             if (error == MONOCOQUE_ERROR_NONE)
             {
@@ -898,6 +907,11 @@ int settingsfree(DeviceSettings ds)
         {
             free(ds.sounddevsettings.dev);
         }
+    }
+
+    if(ds.has_config && ds.specific_config_file != NULL)
+    {
+        free(ds.specific_config_file);
     }
 
     return 0;

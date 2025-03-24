@@ -237,13 +237,13 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
             slogi("looking for ui config %s pass 3", ms->config_str);
             confignum = getconfigtouse(ms->config_str, simdata->car, f->sim);
         }
+
         int configureddevices;
         configcheck(ms->config_str, confignum, &configureddevices);
-
         DeviceSettings* ds = malloc(configureddevices * sizeof(DeviceSettings));
         slogd("loading confignum %i, with %i devices.", confignum, configureddevices);
-
         f->numdevices = uiloadconfig(ms->config_str, confignum, configureddevices, ms, ds);
+
         if(ms->useconfig == 1)
         {
             ms->configcheck = 0;
@@ -251,12 +251,7 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
 
         f->simdevices = malloc(f->numdevices * sizeof(SimDevice));
         int initdevices = devinit(f->simdevices, configureddevices, ds, ms);
-        int i = 0;
-        for( i = 0; i < configureddevices; i++)
-        {
-            settingsfree(ds[i]);
-        }
-        free(ds);
+
 
 
         for(int d = 0; d < 10; d++)
@@ -285,9 +280,20 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
                 uv_handle_set_data((uv_handle_t*) dt, (void*) dld);
                 int interval = 1000/devices[x].fps;
                 uv_timer_start(dt, devicetimercallback, 0, interval);
-                slogi("starting device at %i fps (%i ms ticks)", devices[x].fps, interval);
+                slogi("starting device type %i at id at %i fps (%i ms ticks)", devices[x].type, x, devices[x].fps, interval);
+            }
+            else
+            {
+                slogw("skipped id %i of type %i", x, devices[x].type);
             }
         }
+
+        int i = 0;
+        for( i = 0; i < configureddevices; i++)
+        {
+            settingsfree(ds[i]);
+        }
+        free(ds);
 
         doui = false;
     }

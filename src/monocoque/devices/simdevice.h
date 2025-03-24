@@ -31,6 +31,7 @@ struct SimDevice
     int fps;
     bool initialized;
     lua_State* L;
+    char* device_specific_config_file;
     DeviceType type;
     HapticEffect hapticeffect;
 };
