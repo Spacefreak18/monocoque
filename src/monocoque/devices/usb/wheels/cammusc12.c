@@ -10,7 +10,7 @@
 const int cammusc12_hidupdate_buf_size = 16;
 const int cammusc12_hidledupdate_buf_size = 7;
 
-const int cammusc12_total_leds = 15;
+const int cammusc12_total_leds = 23;
 
 int cammusc12_update(USBDevice* usbdevice, int maxrpm, int rpm, int gear, int velocity)
 {
@@ -199,7 +199,7 @@ int cammusc12_customled_update(USBDevice* usbdevice, SimData* simdata)
         bytes[6] = blue;
 
         slogt("writing bytes x%02xx%02xx%02xx%02xx%02x%02x%02x from red %i green %i blue %i", bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], red, green, blue);
-        if (usbdevice->handle)
+        if (usbdevice->handle && red != 0x00 && green != 0x00 && blue != 0x00)
         {
             res = hid_write(usbdevice->handle, bytes, cammusc12_hidupdate_buf_size);
         }
