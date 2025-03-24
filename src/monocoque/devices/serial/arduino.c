@@ -9,7 +9,7 @@
 #include "../serialadapter.h"
 #include "../../slog/slog.h"
 
-#define arduino_timeout 5000
+#define arduino_timeout 9000
 
 int arduino_check(enum sp_return result)
 {
@@ -74,7 +74,7 @@ int arduino_customled_init(SerialDevice* serialdevice, const char* portdev, cons
     bytes1[10] = 0x63;
 
     int result = 0;
-    unsigned int timeout = 2000;
+    unsigned int timeout = 3000;
     result = monocoque_serial_write_block(serialdevice->id, &bytes1, bufsize1, timeout);
     result = monocoque_serial_read_block(serialdevice->id, &recv_buf1, recv_bufsize1, timeout);
     //slogi("wrote %i bytes", result);
@@ -223,6 +223,10 @@ int arduino_customled_update(SerialDevice* serialdevice, SimData* simdata)
     {
         bytes[j] = 0x00;
     }
+    for(int j = 0; j < total_leds * 3; j++)
+    {
+        ledbytes[j] = 0x00;
+    }
     bytes[0] = 0xff;
     bytes[1] = 0xff;
     bytes[2] = 0xff;
@@ -282,7 +286,9 @@ int arduino_customled_update(SerialDevice* serialdevice, SimData* simdata)
     }
 
     size_t size = sizeof(bytes);
-    arduino_update(serialdevice, &bytes, size);
+    result = arduino_update(serialdevice, &bytes, size);
+
+    slogt("custom led wrote %i bytes", result);
 
     return result;
 }
@@ -322,7 +328,9 @@ int arduino_customled_free(SerialDevice* serialdevice, bool lua)
     }
     size_t size = sizeof(bytes);
 
-    int result = monocoque_serial_write(serialdevice->id, &bytes, size, arduino_timeout);
+    // temporary hack to help it shut off
+    sleep(1);
+    int result = monocoque_serial_write_block(serialdevice->id, &bytes, size, arduino_timeout);
 
     if(lua == true)
     {
