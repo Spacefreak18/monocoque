@@ -19,6 +19,7 @@ typedef struct
 {
     int id;
     WheelType type;
+    bool useLua;
     char* port;
 }
 WheelDevice;

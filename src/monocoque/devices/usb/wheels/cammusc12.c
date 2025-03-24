@@ -92,9 +92,11 @@ int cammusc12_init_(USBDevice* wheeldevice)
 int cammusc12_init(USBDevice* wheeldevice, const char* luafile)
 {
 
+    wheeldevice->u.wheeldevice.useLua = false;
     int res = cammusc12_init_(wheeldevice);
     if(luafile == NULL)
     {
+
         return res;
     }
 
@@ -109,9 +111,11 @@ int cammusc12_init(USBDevice* wheeldevice, const char* luafile)
         /* the stack */
         sloge("There is an issue with your lua script");
         fprintf(stderr, "Couldn't load file: %s\n", lua_tostring(L, -1));
+        return -1;
         //exit(1);
     }
 
+    wheeldevice->u.wheeldevice.useLua = true;
     lua_setglobal(L,"myFunc");
 
     wheeldevice->m.L = L;

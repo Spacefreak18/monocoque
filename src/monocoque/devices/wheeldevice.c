@@ -21,7 +21,14 @@ int wheeldev_update(USBDevice* usbdevice, SimData* simdata)
             cammusc5_update(usbdevice, simdata->maxrpm, simdata->rpms, simdata->gear, simdata->velocity);
             break;
         case WHEELDEV_CAMMUSC12 :
-            cammusc12_update(usbdevice, simdata->maxrpm, simdata->rpms, simdata->gear, simdata->velocity);
+            if(usbdevice->u.wheeldevice.useLua == true)
+            {
+                cammusc12_customled_update(usbdevice, simdata);
+            }
+            else
+            {
+                cammusc12_update(usbdevice, simdata->maxrpm, simdata->rpms, simdata->gear, simdata->velocity);
+            }
             break;
 
     }
