@@ -165,7 +165,7 @@ int monocoque_serial_open(SerialDevice* serialdevice, const char* portdev)
     slogi("looking to open physical serialdevice %s", portdev);
     for(int i = 0; i < 10; i++)
     {
-        if(monocoque_serial_devices[i].open == true || monocoque_serial_devices[i].openfail == true)
+        if(monocoque_serial_devices[i].open == true && monocoque_serial_devices[i].openfail == false)
         {
             if(msastrcicmp(monocoque_serial_devices[i].portname, portdev) == 0)
             {
@@ -204,6 +204,8 @@ int monocoque_serial_open(SerialDevice* serialdevice, const char* portdev)
         if (error != 0)
         {
             sloge("Error opening serial port");
+            free(monocoque_serial_devices[i].portname);
+            monocoque_serial_devices[i].portname = NULL;
             monocoque_serial_devices[i].open = false;
             monocoque_serial_devices[i].openfail = true;
             return -1;
