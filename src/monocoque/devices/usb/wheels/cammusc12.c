@@ -189,29 +189,32 @@ int cammusc12_customled_update(USBDevice* usbdevice, SimData* simdata)
 
     for(int i = 0; i < cammusc12_total_leds; i++)
     {
-        for (int x = 3; x < cammusc12_hidledupdate_buf_size; x++)
+        if(i >= 15) // make this a setting
         {
-            bytes[x] = 0x00;
-        }
-        uint8_t led = i+1;
-        uint8_t red = ledbytes[(i * 3) + 0];
-        uint8_t green = ledbytes[(i * 3) + 1];
-        uint8_t blue = ledbytes[(i * 3) + 2];
+            for (int x = 3; x < cammusc12_hidledupdate_buf_size; x++)
+            {
+                bytes[x] = 0x00;
+            }
+            uint8_t led = i+1;
+            uint8_t red = ledbytes[(i * 3) + 0];
+            uint8_t green = ledbytes[(i * 3) + 1];
+            uint8_t blue = ledbytes[(i * 3) + 2];
 
-        bytes[3] = led;
-        bytes[4] = red;
-        bytes[5] = green;
-        bytes[6] = blue;
+            bytes[3] = led;
+            bytes[4] = red;
+            bytes[5] = green;
+            bytes[6] = blue;
 
 
-        if (usbdevice->handle)
-        {
-            res = hid_write(usbdevice->handle, bytes, cammusc12_hidupdate_buf_size);
-            slogt("writing bytes x%02xx%02xx%02xx%02xx%02xx%02xx%02x from red %i green %i blue %i", bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], red, green, blue);
-        }
-        else
-        {
-            slogd("no handle");
+            if (usbdevice->handle)
+            {
+                res = hid_write(usbdevice->handle, bytes, cammusc12_hidupdate_buf_size);
+                slogt("writing bytes x%02xx%02xx%02xx%02xx%02xx%02xx%02x from red %i green %i blue %i", bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], red, green, blue);
+            }
+            else
+            {
+                slogd("no handle");
+            }
         }
     }
 
