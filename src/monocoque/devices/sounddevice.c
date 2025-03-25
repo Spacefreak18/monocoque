@@ -160,31 +160,15 @@ int sounddev_gearshift_update(SimDevice* this, SimData* simdata)
 }
 
 
-#ifdef USE_PULSEAUDIO
-
 int sounddev_free(SimDevice* this)
 {
     SoundDevice* sounddevice = (void *) this->derived;
 
     usb_generic_shaker_free(sounddevice, mainloop);
-
     free(sounddevice);
 
     return 0;
 }
-
-#else
-int sounddev_free(SimDevice* this)
-{
-    SoundDevice* sounddevice = (void *) this->derived;
-
-    usb_generic_shaker_free(sounddevice);
-
-    free(sounddevice);
-
-    return 0;
-}
-#endif
 
 int sounddev_init(SoundDevice* sounddevice, const char* devname, MonocoqueTyreIdentifier tyre, SoundDeviceSettings sds)
 {
@@ -241,15 +225,8 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, MonocoqueTyreId
     }
 
 
-#ifdef USE_PULSEAUDIO
-
-
-    //pa_threaded_mainloop* mainloop;
-    //pa_context* context;
     usb_generic_shaker_init(sounddevice, mainloop, context, devname, sds.volume, sds.pan, sds.channels, streamname);
-#else
-    usb_generic_shaker_init(sounddevice);
-#endif
+    //usb_generic_shaker_init(sounddevice);
 }
 
 static const vtable engine_sound_simdevice_vtable = { &sounddev_engine_update, &sounddev_free };

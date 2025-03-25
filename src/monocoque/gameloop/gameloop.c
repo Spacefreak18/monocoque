@@ -11,7 +11,7 @@
 
 #include "gameloop.h"
 #include "loopdata.h"
-
+#include "../devices/sound.h"
 #include "../helper/parameters.h"
 #include "../helper/confighelper.h"
 #include "../devices/simdevice.h"
@@ -249,6 +249,8 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
             ms->configcheck = 0;
         }
 
+        setupsound();
+
         f->simdevices = malloc(f->numdevices * sizeof(SimDevice));
         int initdevices = devinit(f->simdevices, configureddevices, ds, ms);
 
@@ -280,11 +282,11 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
                 uv_handle_set_data((uv_handle_t*) dt, (void*) dld);
                 int interval = 1000/devices[x].fps;
                 uv_timer_start(dt, devicetimercallback, 0, interval);
-                slogi("starting device type %i at id at %i fps (%i ms ticks)", devices[x].type, x, devices[x].fps, interval);
+                slogi("starting device type %i at id at %i fps: %i (%i ms ticks)", devices[x].type, x, devices[x].fps, interval);
             }
             else
             {
-                slogw("skipped id %i of type %i", x, devices[x].type);
+                slogw("skipped id %i", x);
             }
         }
 
@@ -294,7 +296,6 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
             settingsfree(ds[i]);
         }
         free(ds);
-
         doui = false;
     }
     else
@@ -362,6 +363,7 @@ void shmdatamapcallback(uv_timer_t* handle)
                     devices[x].update(&devices[x], simdata);
                 }
             }
+            sleep(1);
             for (int x = 0; x < numdevices; x++)
             {
                 if (devices[x].initialized == true)
@@ -378,7 +380,7 @@ void shmdatamapcallback(uv_timer_t* handle)
                     free(monocoque_serial_devices[d].portname);
                 }
             }
-
+            freesound();
             int r = simfree(simdata, simmap, f->map);
             slogd("simfree returned %i", r);
             f->numdevices = 0;

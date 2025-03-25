@@ -250,9 +250,12 @@ int getconfigtouse2(const char* config_file_str, char* car, int sim)
 {
     slogt("inside first pass");
     config_t cfg;
+    slogt("init");
     config_init(&cfg);
+    slogt("init??");
     if (!config_read_file(&cfg, config_file_str))
     {
+        sloge("config read error on pass 1");
         fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
         config_destroy(&cfg);
         return -1;
@@ -826,7 +829,10 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
             free(ds->specific_config_file);
             ds->specific_config_file = NULL;
         }
-        slogt("will try to load config file at %s", ds->specific_config_file);
+        else
+        {
+            slogt("will try to load config file at %s", ds->specific_config_file);
+        }
     }
     return error;
 }

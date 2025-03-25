@@ -11,7 +11,7 @@ endif()
 
 
 SET_SOURCE_FILES_PROPERTIES( src/monocoque.c PROPERTIES LANGUAGE C)
-#set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Debug)
 
 
 project(monocoque)
@@ -38,14 +38,13 @@ set(HIDAPI_WITH_LIBUSB FALSE) # surely will be used only on Linux
 set(BUILD_SHARED_LIBS TRUE) # HIDAPI as static library on all platforms
 
 add_executable(monocoque src/monocoque/monocoque.c)
-if(USE_PULSEAUDIO)
-    message("Using pulseaudio backend...")
-    add_compile_definitions(USE_PULSEAUDIO=true)
-  target_link_libraries(monocoque m hidapi-hidraw pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir ${LUA_LIBRARY})
-else()
-    message("Using portaudio backend...")
-  target_link_libraries(monocoque m hidapi-hidraw portaudio serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir ${LUA_LIBRARY})
-endif()
+
+#if(USE_PULSEAUDIO)
+#else()
+#endif()
+message("Using pulseaudio backend...")
+add_compile_definitions(USE_PULSEAUDIO=true)
+target_link_libraries(monocoque m hidapi-hidraw pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir ${LUA_LIBRARY})
 
 target_include_directories(monocoque PUBLIC config ${LIBXML_INCLUDE_DIR})
 

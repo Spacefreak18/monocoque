@@ -2,8 +2,6 @@
 
 #include "../slog/slog.h"
 
-#ifdef USE_PULSEAUDIO
-
 pa_threaded_mainloop* mainloop;
 pa_context* context;
 
@@ -43,6 +41,7 @@ int setupsound()
         pa_threaded_mainloop_wait(mainloop);
     }
 
+    pa_threaded_mainloop_unlock(mainloop);
     slogi("successfully connected pulseaudio...");
     return 1;
 }
@@ -63,17 +62,14 @@ int freesound()
     }
 }
 
-#else
 
-int setupsound()
-{
-    slogi("connecting portaudio...");
-}
-
-
-int freesound()
-{
-
-}
-
-#endif
+//int setupsound()
+//{
+//    slogi("connecting portaudio...");
+//}
+//
+//
+//int freesound()
+//{
+//
+//}

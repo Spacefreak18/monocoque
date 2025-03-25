@@ -1,5 +1,3 @@
-#ifdef USE_PULSEAUDIO
-
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -17,6 +15,9 @@
 #ifndef M_PI
 #define M_PI  (3.14159265)
 #endif
+
+static int * volatile drain_result = NULL;
+static pa_context *this_context = NULL;
 
 void gear_sound_stream(pa_stream *s, size_t length, void *userdata) {
 
@@ -93,23 +94,36 @@ void stream_state_cb(pa_stream *s, void *mainloop) {
     pa_threaded_mainloop_signal(mainloop, 0);
 }
 
+
 int usb_generic_shaker_free(SoundDevice* sounddevice, pa_threaded_mainloop* mainloop)
 {
+    if(!mainloop)
+    {
+        // if this happens we are in trouble
+        return 1;
+    }
+
     pa_threaded_mainloop_lock(mainloop);
+
     int err = 0;
     if (sounddevice->stream)
     {
+        //pa_stream_cork(sounddevice->stream, 1, stream_success_cb, mainloop);
         pa_stream_disconnect(sounddevice->stream);
         pa_stream_unref(sounddevice->stream);
         // why is this wrong
         //pa_xfree(sounddevice->stream);
+
     }
+
     pa_threaded_mainloop_unlock(mainloop);
+
     return err;
 }
 
 int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* mainloop, pa_context* context, const char* devname, int volume, int pan, int channels, const char* streamname)
 {
+    this_context = context;
     pa_threaded_mainloop_lock(mainloop);
     pa_stream *stream;
 
@@ -173,12 +187,14 @@ int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* main
     // for now i'm only supporting playing on one specified channel which is the concept you should build your setups around
     cv.values[pan] = channel_volume;
 
-    assert(pa_stream_connect_playback(stream, devname, &buffer_attr, stream_flags, &cv, NULL) == 0);
+    //assert(pa_stream_connect_playback(stream, devname, &buffer_attr, stream_flags, &cv, NULL) == 0);
+    pa_stream_connect_playback(stream, devname, &buffer_attr, stream_flags, &cv, NULL);
 
     // Wait for the stream to be ready
     for(;;) {
         pa_stream_state_t stream_state = pa_stream_get_state(stream);
-        assert(PA_STREAM_IS_GOOD(stream_state));
+        //assert(PA_STREAM_IS_GOOD(stream_state));
+        PA_STREAM_IS_GOOD(stream_state);
     if (stream_state == PA_STREAM_READY) break;
         pa_threaded_mainloop_wait(mainloop);
     }
@@ -192,5 +208,3 @@ int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* main
     pa_threaded_mainloop_unlock(mainloop);
     return 0;
 }
-
-#endif

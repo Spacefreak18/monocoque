@@ -68,6 +68,8 @@ void SetSettingsFromParameters(Parameters* p, MonocoqueSettings* ms, char* confi
     {
         ms->program_action = A_CONFIG_TACH;
     }
+
+    ms->force_udp_mode = false;
 }
 
 int main(int argc, char** argv)
@@ -217,7 +219,7 @@ int main(int argc, char** argv)
 
         int error = 0;
         error = MONOCOQUE_ERROR_NONE;
-        setupsound();
+        //setupsound();
         bool pulseaudio = false;
 
         if (ms->program_action == A_PLAY)
@@ -225,7 +227,7 @@ int main(int argc, char** argv)
             ms->useconfig = 1;
             slogi("running monocoque in gameloop mode..");
 #ifdef USE_PULSEAUDIO
-            pa_threaded_mainloop_unlock(mainloop);
+            //pa_threaded_mainloop_unlock(mainloop);
             pulseaudio = true;
 #endif
 
@@ -244,11 +246,7 @@ int main(int argc, char** argv)
         {
             slogi("running monocoque in test mode...");
 
-#ifdef USE_PULSEAUDIO
-            pa_threaded_mainloop_unlock(mainloop);
-            pulseaudio = true;
-#endif
-
+            setupsound();
             ms->useconfig = 0;
 
             int configs = getNumberOfConfigs(ms->config_str);
@@ -283,9 +281,6 @@ int main(int argc, char** argv)
                     simdevices[x].free(&simdevices[x]);
                 }
             }
-        }
-        if(pulseaudio == true)
-        {
             freesound();
         }
     }
@@ -298,5 +293,3 @@ cleanup_final:
     free(ms);
     exit(0);
 }
-
-
