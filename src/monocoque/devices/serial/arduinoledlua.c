@@ -30,44 +30,14 @@ int simdata_to_lua(lua_State *L, SimData* simdata) {
     {
         lua_newtable(L);
         lua_pushinteger(L, simdata->pd[i].radius);
-        lua_setfield(L, -2, "radius");
+        lua_setfield(L, -3, "radius");
         lua_pushinteger(L, simdata->pd[i].theta);
-        lua_setfield(L, -2, "theta");
-        lua_rawseti(L, -2, i+1);
+        lua_setfield(L, -3, "theta");
+        lua_rawseti(L, -3, i+1);
     }
     lua_setfield(L, -2, "pd");
 
-    lua_pushinteger(L, simdata->pd[0].radius);
-    lua_setfield(L, -2, "radius1");
-    lua_pushinteger(L, simdata->pd[0].theta);
-    lua_setfield(L, -2, "theta1");
-
-    lua_pushinteger(L, simdata->pd[1].radius);
-    lua_setfield(L, -2, "radius2");
-    lua_pushinteger(L, simdata->pd[1].theta);
-    lua_setfield(L, -2, "theta2");
-
-    lua_pushinteger(L, simdata->pd[2].radius);
-    lua_setfield(L, -2, "radius3");
-    lua_pushinteger(L, simdata->pd[2].theta);
-    lua_setfield(L, -2, "theta3");
-
-    lua_pushinteger(L, simdata->pd[3].radius);
-    lua_setfield(L, -2, "radius4");
-    lua_pushinteger(L, simdata->pd[3].theta);
-    lua_setfield(L, -2, "theta4");
-
-    lua_pushinteger(L, simdata->pd[4].radius);
-    lua_setfield(L, -2, "radius5");
-    lua_pushinteger(L, simdata->pd[4].theta);
-    lua_setfield(L, -2, "theta5");
-
-    lua_pushinteger(L, simdata->pd[5].radius);
-    lua_setfield(L, -2, "radius6");
-    lua_pushinteger(L, simdata->pd[5].theta);
-    lua_setfield(L, -2, "theta6");
-
-    return 1; // Return the table to Lua
+    return 0; // Return the table to Lua
 }
 
 uint8_t get_color_rgb_value(int color, int rgb)
