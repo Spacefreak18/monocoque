@@ -698,6 +698,9 @@ int tester(SimDevice* devices, int numdevices)
     }
     sleep(3);
 
+    fprintf(stdout, "Green Flag!\n");
+    simdata->playerflag = 0;
+
     fprintf(stdout, "Shifting into first gear\n");
     simdata->gear = 2;
     for (int x = 0; x < numdevices; x++)
@@ -813,6 +816,9 @@ int tester(SimDevice* devices, int numdevices)
     }
     sleep(3);
 
+    fprintf(stdout, "Yellow Flag!\n");
+    simdata->playerflag = 1;
+
     fprintf(stdout, "Shifting into third gear\n");
     simdata->gear = 4;
     for (int x = 0; x < numdevices; x++)
@@ -834,6 +840,9 @@ int tester(SimDevice* devices, int numdevices)
         }
     }
     sleep(3);
+
+    fprintf(stdout, "Blue Flag!\n");
+    simdata->playerflag = 4;
 
     fprintf(stdout, "Setting rpms to 4000\n");
     simdata->rpms = 4000;
@@ -878,6 +887,9 @@ int tester(SimDevice* devices, int numdevices)
         }
     }
     sleep(3);
+
+    fprintf(stdout, "Red Flag!\n");
+    simdata->playerflag = 2;
 
     fprintf(stdout, "Setting rpms to 8000\n");
     simdata->rpms = 8000;
