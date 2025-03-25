@@ -48,11 +48,11 @@ int wheeldev_free(USBDevice* usbdevice)
             break;
         case WHEELDEV_CAMMUSC12 :
             cammusc12_update(usbdevice, 0, 0, 0, 0);
+            cammusc12_free(usbdevice);
             if(usbdevice->m.device_specific_config_file != NULL)
             {
                 free(usbdevice->m.device_specific_config_file);
             }
-            cammusc12_free(usbdevice);
             break;
     }
 
