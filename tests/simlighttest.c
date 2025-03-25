@@ -57,8 +57,9 @@ int main()
     int result = 0;
     unsigned int timeout = 2000;
     result = check(sp_blocking_write(port, &bytes1, bufsize1, timeout));
+    sleep(2);
     result = check(sp_blocking_read(port, &recv_buf1, recv_bufsize1, timeout));
-
+    sleep(2);
     char numstr[recv_bufsize1];
     for(int j = 0; j < recv_bufsize1; j++)
     {
