@@ -23,7 +23,7 @@ while(i <= proxcars and rightsideset == false) do
 
         color_perct = simdata.pd[i].radius/10
         yellow = math.floor(color_perct * 255)
-        local rgb = (0 << 24) | (yellow << 16) | (255 << 8)
+        local rgb = (255 << 16) | (yellow << 8) | (0 << 0)
         if simdata.pd[1].theta >= 90 then
             -- car is behind
             set_led_range_to_rgb_color(right_leds_start, right_leds_start + litleds, rgb)
@@ -46,7 +46,7 @@ while(i <= proxcars and leftsideset == false) do
 
         color_perct = simdata.pd[i].radius/10
         yellow = math.floor(color_perct * 255)
-        local rgb = (0 << 24) | (yellow << 16) | (255 << 8)
+        local rgb = (255 << 16) | (yellow << 8) | (0 << 0)
         if simdata.pd[1].theta <= 270 then
             -- car is behind
             set_led_range_to_rgb_color(left_leds_start, left_leds_start + litleds, rgb)
