@@ -46,9 +46,10 @@ int cammusc12_update(USBDevice* usbdevice, int maxrpm, int rpm, int gear, int ve
     // byte 4 is gear
     bytes[6] = gear-1;
 
-    slogt("writing bytes x%02xx%02xx%02xx%02xx%02x%02x%02x from rpm %i velocity %i gear %i", bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], rpm, velocity, gear);
+
     if (usbdevice->handle)
     {
+        slogt("writing bytes x%02xx%02xx%02xx%02xx%02xx%02xx%02x from rpm %i velocity %i gear %i", bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], rpm, velocity, gear);
         res = hid_write(usbdevice->handle, bytes, cammusc12_hidupdate_buf_size);
     }
     else
@@ -65,6 +66,11 @@ int cammusc12_free(USBDevice* wheeldevice)
 
     hid_close(wheeldevice->handle);
     res = hid_exit();
+
+    if(wheeldevice->m.device_specific_config_file != NULL)
+    {
+        lua_close(wheeldevice->m.L);
+    }
 
     return res;
 }
