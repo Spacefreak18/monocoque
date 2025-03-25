@@ -30,10 +30,10 @@ int simdata_to_lua(lua_State *L, SimData* simdata) {
     {
         lua_newtable(L);
         lua_pushinteger(L, simdata->pd[i].radius);
-        lua_setfield(L, -3, "radius");
+        lua_setfield(L, -2, "radius");
         lua_pushinteger(L, simdata->pd[i].theta);
-        lua_setfield(L, -3, "theta");
-        lua_rawseti(L, -3, i+1);
+        lua_setfield(L, -2, "theta");
+        lua_rawseti(L, -2, i+1);
     }
     lua_setfield(L, -2, "pd");
 
@@ -161,9 +161,9 @@ int set_led_range_to_rgb_color(lua_State *L)
     int range_end = lua_tonumber(L, 2);
     int color = lua_tonumber(L, 3);
 
-    int color0 = (color >> 8) & 0xff;
-    int color1 = (color >> 16) & 0xff;
-    int color2 = (color >> 24) & 0xff;
+    uint8_t color0 = (color >> 16) & 0xff;
+    uint8_t color1 = (color >> 8) & 0xff;
+    uint8_t color2 = (color >> 0) & 0xff;
     //int color0 = lua_tonumber(L, 3);
     //int color1 = lua_tonumber(L, 4);
     //int color2 = lua_tonumber(L, 5);
@@ -258,9 +258,9 @@ int set_led_to_rgb_color(lua_State *L)
     int led = lua_tonumber(L, 1);
     int color = lua_tonumber(L, 2);
 
-    int color0 = (color >> 8) & 0xff;
-    int color1 = (color >> 16) & 0xff;
-    int color2 = (color >> 24) & 0xff;
+    uint8_t color0 = (color >> 16) & 0xff;
+    uint8_t color1 = (color >> 8) & 0xff;
+    uint8_t color2 = (color >> 0) & 0xff;
 
     slogd("lua led is %i", led);
     slogd("lua color0 is %i", color0);
