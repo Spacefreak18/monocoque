@@ -82,7 +82,8 @@ int main(int argc, char** argv)
         fprintf(stderr, "You need a home directory");
         return 0;
     }
-    Parameters* p = malloc(sizeof(Parameters));
+    Parameters* p = NULL;
+    p = malloc(sizeof(Parameters));
     MonocoqueSettings* ms = malloc(sizeof(MonocoqueSettings));;
 
     ConfigError ppe = getParameters(argc, argv, p);
@@ -95,6 +96,7 @@ int main(int argc, char** argv)
     if(!xdgInitHandle(&xdg))
     {
         fprintf(stderr, "Function xdgInitHandle() failed, is $HOME unset?");
+        goto cleanup_final;
     }
 
     const char* config_home_str = xdgConfigHome(&xdg);
@@ -226,10 +228,10 @@ int main(int argc, char** argv)
         {
             ms->useconfig = 1;
             slogi("running monocoque in gameloop mode..");
-#ifdef USE_PULSEAUDIO
+//#ifdef USE_PULSEAUDIO
             //pa_threaded_mainloop_unlock(mainloop);
             pulseaudio = true;
-#endif
+//#endif
 
             //error = looper(devices, numdevices, p);
             error = monocoque_mainloop(ms);
@@ -288,7 +290,7 @@ int main(int argc, char** argv)
 
 
 cleanup_final:
-
+    xdgWipeHandle(&xdg);
     monocoquesettingsfree(ms);
     free(ms);
     exit(0);
