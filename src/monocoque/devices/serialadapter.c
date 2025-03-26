@@ -204,6 +204,7 @@ int monocoque_serial_open(SerialDevice* serialdevice, const char* portdev)
         if (error != 0)
         {
             sloge("Error opening serial port");
+            free(port_name);
             free(monocoque_serial_devices[i].portname);
             monocoque_serial_devices[i].portname = NULL;
             monocoque_serial_devices[i].open = false;
