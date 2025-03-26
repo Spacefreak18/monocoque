@@ -233,6 +233,7 @@ int main(int argc, char** argv)
             pulseaudio = true;
 //#endif
 
+            setupsound();
             //error = looper(devices, numdevices, p);
             error = monocoque_mainloop(ms);
             if (error == MONOCOQUE_ERROR_NONE)
@@ -243,6 +244,7 @@ int main(int argc, char** argv)
             {
                 sloge("Game loop exited with error code: %i", error);
             }
+            freesound();
         }
         else
         {

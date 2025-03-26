@@ -249,11 +249,8 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
             ms->configcheck = 0;
         }
 
-        setupsound();
-
         f->simdevices = malloc(f->numdevices * sizeof(SimDevice));
         int initdevices = devinit(f->simdevices, configureddevices, ds, ms);
-
 
 
         for(int d = 0; d < 10; d++)
@@ -380,7 +377,6 @@ void shmdatamapcallback(uv_timer_t* handle)
                     free(monocoque_serial_devices[d].portname);
                 }
             }
-            freesound();
             int r = simfree(simdata, simmap, f->map);
             slogd("simfree returned %i", r);
             f->numdevices = 0;

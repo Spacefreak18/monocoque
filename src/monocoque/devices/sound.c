@@ -19,8 +19,10 @@ int setupsound()
     slogi("connecting pulseaudio...");
     // Get a mainloop and its context
     mainloop = pa_threaded_mainloop_new();
+    assert(mainloop);
     mainloop_api = pa_threaded_mainloop_get_api(mainloop);
     context = pa_context_new(mainloop_api, "Monocoque");
+    assert(context);
 
     pa_context_set_state_callback(context, &context_state_cb, mainloop);
 
@@ -28,22 +30,21 @@ int setupsound()
     pa_threaded_mainloop_lock(mainloop);
 
     // Start the mainloop
-    pa_threaded_mainloop_start(mainloop);
-    pa_context_connect(context, NULL, PA_CONTEXT_NOAUTOSPAWN, NULL);
+    assert(pa_threaded_mainloop_start(mainloop) == 0);
+    assert(pa_context_connect(context, NULL, PA_CONTEXT_NOAUTOSPAWN, NULL) == 0);
 
     // Wait for the context to be ready
     for(;;) {
         pa_context_state_t context_state = pa_context_get_state(context);
-        PA_CONTEXT_IS_GOOD(context_state);
+        assert(PA_CONTEXT_IS_GOOD(context_state));
         if (context_state == PA_CONTEXT_READY) break;
         pa_threaded_mainloop_wait(mainloop);
     }
 
     pa_threaded_mainloop_unlock(mainloop);
     slogi("successfully connected pulseaudio...");
-    return 1;
+    return 0;
 }
-
 
 int freesound()
 {
@@ -62,6 +63,8 @@ int freesound()
         pa_threaded_mainloop_unlock(mainloop);
         pa_threaded_mainloop_free(mainloop);
     }
+
+    return 0;
 }
 
 
