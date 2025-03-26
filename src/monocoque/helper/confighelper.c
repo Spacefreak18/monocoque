@@ -243,6 +243,7 @@ int getNumberOfConfigs(const char* config_file_str)
     config = config_lookup(&cfg, "configs");
     int configs = config_setting_length(config);
 
+    config_destroy(&cfg);
     return configs;
 }
 
@@ -898,14 +899,12 @@ int uiloadconfig(const char* config_file_str, int confignum, int configureddevic
 
 int settingsfree(DeviceSettings ds)
 {
-
-    if (ds.dev_subtype == SIMDEVTYPE_SIMWIND || ds.dev_subtype == SIMDEVTYPE_SHIFTLIGHTS || ds.dev_subtype == SIMDEVTYPE_SIMLED)
+    if (ds.dev_type == SIMDEV_SERIAL)
     {
         if (ds.serialdevsettings.portdev != NULL)
         {
             free(ds.serialdevsettings.portdev);
         }
-
     }
     if (ds.dev_type == SIMDEV_SOUND)
     {
