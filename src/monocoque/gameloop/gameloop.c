@@ -361,6 +361,13 @@ void shmdatamapcallback(uv_timer_t* handle)
                 }
             }
             sleep(1);
+            for(int d = 0; d < 10; d++)
+            {
+                if(monocoque_serial_devices[d].portname != NULL)
+                {
+                    free(monocoque_serial_devices[d].portname);
+                }
+            }
             for (int x = 0; x < numdevices; x++)
             {
                 if (devices[x].initialized == true)
@@ -370,13 +377,7 @@ void shmdatamapcallback(uv_timer_t* handle)
             }
             free(devices);
 
-            for(int d = 0; d < 10; d++)
-            {
-                if(monocoque_serial_devices[d].portname != NULL)
-                {
-                    free(monocoque_serial_devices[d].portname);
-                }
-            }
+
             int r = simfree(simdata, simmap, f->map);
             slogd("simfree returned %i", r);
             f->numdevices = 0;
