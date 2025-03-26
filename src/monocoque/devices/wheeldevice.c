@@ -47,7 +47,7 @@ int wheeldev_free(USBDevice* usbdevice)
             cammusc5_free(usbdevice);
             break;
         case WHEELDEV_CAMMUSC12 :
-            cammusc12_update(usbdevice, 0, 0, 0, 0);
+            //cammusc12_update(usbdevice, 0, 0, 0, 0);
             cammusc12_free(usbdevice);
             if(usbdevice->m.device_specific_config_file != NULL)
             {
@@ -80,6 +80,13 @@ int wheeldev_init(USBDevice* usbdevice, DeviceSettings* ds)
             {
                 usbdevice->m.device_specific_config_file = strdup(ds->specific_config_file);
                 error = cammusc12_init(usbdevice, usbdevice->m.device_specific_config_file);
+                if(error != 0)
+                {
+                    if(usbdevice->m.device_specific_config_file != NULL)
+                    {
+                        free(usbdevice->m.device_specific_config_file);
+                    }
+                }
             }
             else
             {
@@ -92,6 +99,8 @@ int wheeldev_init(USBDevice* usbdevice, DeviceSettings* ds)
             error = cammusc5_init(usbdevice);
             break;
     }
+
+
 
     return error;
 }
