@@ -882,7 +882,7 @@ int uiloadconfig(const char* config_file_str, int confignum, int configureddevic
             slogt("device config file: %s", device_config_file);
             if (error == MONOCOQUE_ERROR_NONE)
             {
-                error = devsetup(device_type, device_subtype, NULL, ms, &settings, config_device);
+                error = devsetup(device_type, device_subtype, device_config_file, ms, &settings, config_device);
             }
             if (error == MONOCOQUE_ERROR_NONE)
             {
