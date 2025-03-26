@@ -870,16 +870,24 @@ int uiloadconfig(const char* config_file_str, int confignum, int configureddevic
             DeviceSettings settings;
 
             config_setting_t* config_device = config_setting_get_elem(config_devices, i);
-            const char* device_type;
-            const char* device_subtype;
-            const char* device_config_file;
+            const char* device_type = NULL;
+            const char* device_subtype = NULL;
+            const char* device_config_file = NULL;
+            int found = 0;
             config_setting_lookup_string(config_device, "device", &device_type);
             config_setting_lookup_string(config_device, "type", &device_subtype);
-            config_setting_lookup_string(config_device, "config", &device_config_file);
+            found = config_setting_lookup_string(config_device, "config", &device_config_file);
 
             slogt("device type: %s", device_type);
             slogt("device sub type: %s", device_subtype);
-            slogt("device config file: %s", device_config_file);
+            if(found == CONFIG_FALSE)
+            {
+                device_config_file = NULL;
+            }
+            else
+            {
+                slogt("device config file: %s", device_config_file);
+            }
             if (error == MONOCOQUE_ERROR_NONE)
             {
                 error = devsetup(device_type, device_subtype, device_config_file, ms, &settings, config_device);
