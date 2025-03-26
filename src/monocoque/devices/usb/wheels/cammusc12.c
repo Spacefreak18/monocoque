@@ -67,9 +67,10 @@ int cammusc12_free(USBDevice* wheeldevice)
     hid_close(wheeldevice->handle);
     res = hid_exit();
 
-    if(wheeldevice->m.device_specific_config_file != NULL)
+    if(wheeldevice->u.wheeldevice.useLua == true)
     {
-        lua_close(wheeldevice->m.L);
+        slogt("closing lua");
+        //lua_close(wheeldevice->m.L);
     }
 
     return res;
@@ -100,15 +101,22 @@ int cammusc12_init(USBDevice* wheeldevice, const char* luafile)
 
     wheeldevice->u.wheeldevice.useLua = false;
     int res = cammusc12_init_(wheeldevice);
-    if(luafile == NULL)
+
+    if(res == 1)
     {
         return res;
     }
 
+    if(luafile == NULL)
+    {
+        return res;
+    }
+    slogt("Using lua file for cammus c12 device");
+
     lua_State* L = luaL_newstate();
     luaL_openlibs(L);
 
-    int top=lua_gettop(L);
+    //int top=lua_gettop(L);
     int status = luaL_loadfile(L, luafile);
 
     if (status) {
@@ -116,6 +124,7 @@ int cammusc12_init(USBDevice* wheeldevice, const char* luafile)
         /* the stack */
         sloge("There is an issue with your lua script");
         fprintf(stderr, "Couldn't load file: %s\n", lua_tostring(L, -1));
+        lua_close(L);
         return -1;
         //exit(1);
     }
