@@ -251,9 +251,7 @@ int getconfigtouse2(const char* config_file_str, char* car, int sim)
 {
     slogt("inside first pass");
     config_t cfg;
-    slogt("init");
     config_init(&cfg);
-    slogt("init??");
     if (!config_read_file(&cfg, config_file_str))
     {
         sloge("config read error on pass 1");
