@@ -108,11 +108,11 @@ int usb_generic_shaker_free(SoundDevice* sounddevice, pa_threaded_mainloop* main
     int err = 0;
     if (sounddevice->stream)
     {
-        //pa_stream_cork(sounddevice->stream, 1, stream_success_cb, mainloop);
+        pa_stream_cork(sounddevice->stream, 1, stream_success_cb, mainloop);
         pa_stream_disconnect(sounddevice->stream);
         pa_stream_unref(sounddevice->stream);
         // why is this wrong
-        //pa_xfree(sounddevice->stream);
+
 
     }
 

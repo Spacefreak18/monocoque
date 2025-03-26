@@ -123,12 +123,12 @@ typedef struct
     int configcheck;
     SoundEffectModulationType modulationType;
     SoundData sounddata;
-#ifdef USE_PULSEAUDIO
+//#ifdef USE_PULSEAUDIO
     pa_stream *stream;
-#else
-    PaStreamParameters outputParameters;
-    PaStream* stream;
-#endif
+//#else
+    //PaStreamParameters outputParameters;
+    //PaStream* stream;
+//#endif
 }
 SoundDevice;
 

@@ -1,11 +1,11 @@
 #ifndef _SOUNDDEVICE_H
 #define _SOUNDDEVICE_H
 
-#ifdef USE_PULSEAUDIO
+//#ifdef USE_PULSEAUDIO
 #include <pulse/pulseaudio.h>
-#else
-#include "portaudio.h"
-#endif
+//#else
+//#include "portaudio.h"
+//#endif
 
 
 typedef enum
