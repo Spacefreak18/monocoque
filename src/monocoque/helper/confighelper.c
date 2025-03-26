@@ -585,10 +585,38 @@ int gettyre(config_setting_t* device_settings, DeviceSettings* ds) {
 
 }
 
-int loadconfig(const char* config_file, DeviceSettings* ds)
+static int load_device_specific_config(const char* config_file, DeviceSettings* ds)
 {
+
+    ds->has_config = false;
+    if(config_file == NULL)
+    {
+        slogt("config set to none");
+    }
+    else
+    {
+        ds->has_config = true;
+
+        if(strcicmp(config_file, "none") == 0)
+        {
+            ds->has_config = false;
+            ds->specific_config_file = NULL;
+        }
+        else
+        {
+            ds->specific_config_file = strdup(config_file);
+            slogt("will try to load config file at %s", ds->specific_config_file);
+        }
+    }
+
+    // in the case of the revburner tachometer, we can parse once and store
     if (ds->dev_subtype == SIMDEVTYPE_TACHOMETER)
     {
+        if(ds->has_config == false)
+        {
+            slogw("Tachometer must have a device specific config file!");
+            return 1;
+        }
         return loadtachconfig(config_file, ds);
     }
     return 0;
@@ -631,7 +659,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
 
     if (ms->program_action == A_PLAY || ms->program_action == A_TEST)
     {
-        error = loadconfig(config_file, ds);
+        error = load_device_specific_config(config_file, ds);
     }
     if (error != MONOCOQUE_ERROR_NONE)
     {
@@ -810,29 +838,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
 
     }
 
-    ds->has_config = false;
-    const char* temp2;
-    int found = config_setting_lookup_string(device_settings, "config", &temp2);
-    if(found == 0)
-    {
-        fprintf(stderr, "Here?");
-        slogt("config set to none");
-    }
-    else
-    {
-        ds->has_config = true;
-        ds->specific_config_file = strdup(temp2);
-        if(strcicmp(temp2, "none") == 0)
-        {
-            ds->has_config = false;
-            free(ds->specific_config_file);
-            ds->specific_config_file = NULL;
-        }
-        else
-        {
-            slogt("will try to load config file at %s", ds->specific_config_file);
-        }
-    }
+
     return error;
 }
 
