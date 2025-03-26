@@ -174,6 +174,7 @@ int serialdev_free(SimDevice* this)
             break;
         case ARDUINODEV__SIMLED__CUSTOM:
             arduino_customled_free(serialdevice, true);
+            free(serialdevice->m.device_specific_config_file);
             break;
         case ARDUINODEV__SIMLED:
             arduino_customled_free(serialdevice, false);
@@ -217,7 +218,12 @@ int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds)
             error = moza_init(serialdevice, ds->serialdevsettings.portdev);
             break;
         case ARDUINODEV__SIMLED__CUSTOM:
-            error = arduino_customled_init(serialdevice, ds->serialdevsettings.portdev, ds->specific_config_file);
+            serialdevice->m.device_specific_config_file = strdup(ds->specific_config_file);
+            error = arduino_customled_init(serialdevice, ds->serialdevsettings.portdev, serialdevice->m.device_specific_config_file);
+            if(error < 0)
+            {
+                free(serialdevice->m.device_specific_config_file);
+            }
             break;
         case ARDUINODEV__SIMLED:
             error = arduino_customled_init(serialdevice, ds->serialdevsettings.portdev, NULL);

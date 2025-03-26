@@ -115,6 +115,8 @@ int arduino_customled_init(SerialDevice* serialdevice, const char* portdev, cons
         /* If something went wrong, error message is at the top of */
         /* the stack */
         fprintf(stderr, "Couldn't load file: %s\n", lua_tostring(L, -1));
+        lua_close(serialdevice->m.L);
+        return -1;
         exit(1);
     }
     lua_setglobal(L,"myFunc");
@@ -328,13 +330,9 @@ int arduino_customled_free(SerialDevice* serialdevice, bool lua)
     }
     size_t size = sizeof(bytes);
 
-    // temporary hack to help it shut off
-    sleep(1);
     int result = monocoque_serial_write_block(serialdevice->id, &bytes, size, arduino_timeout);
 
-    if(lua == true)
-    {
-        lua_close(serialdevice->m.L);
-    }
+    lua_close(serialdevice->m.L);
+
     return result;
 }
