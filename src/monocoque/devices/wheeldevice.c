@@ -39,6 +39,7 @@ int wheeldev_update(USBDevice* usbdevice, SimData* simdata)
 int wheeldev_free(USBDevice* usbdevice)
 {
     WheelDevice* wheeldevice = &usbdevice->u.wheeldevice;
+    slogt("wheel device free");
     switch ( wheeldevice->type )
     {
         case WHEELDEV_UNKNOWN :
@@ -47,9 +48,8 @@ int wheeldev_free(USBDevice* usbdevice)
             cammusc5_free(usbdevice);
             break;
         case WHEELDEV_CAMMUSC12 :
-            //cammusc12_update(usbdevice, 0, 0, 0, 0);
             cammusc12_free(usbdevice);
-            if(usbdevice->m.device_specific_config_file != NULL)
+            if(wheeldevice->useLua == true)
             {
                 free(usbdevice->m.device_specific_config_file);
             }

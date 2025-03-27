@@ -102,6 +102,10 @@ int cammusc12_init(USBDevice* wheeldevice, const char* luafile)
     wheeldevice->u.wheeldevice.useLua = false;
     int res = cammusc12_init_(wheeldevice);
 
+    if(!wheeldevice->handle)
+    {
+        return 1;
+    }
 
     if(luafile == NULL)
     {
