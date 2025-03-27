@@ -64,6 +64,6 @@ int revburner_init(USBDevice* tachdevice)
         res = hid_exit();
         return 1;
     }
-    slogd("Found RevBurner Tachometer...");
+    slogd("Found RevBurner Tachometer handle %i...", tachdevice->handle);
     return res;
 }
