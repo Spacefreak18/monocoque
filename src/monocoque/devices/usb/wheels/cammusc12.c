@@ -70,7 +70,7 @@ int cammusc12_free(USBDevice* wheeldevice)
     if(wheeldevice->u.wheeldevice.useLua == true)
     {
         slogt("closing lua");
-        //lua_close(wheeldevice->m.L);
+        lua_close(wheeldevice->m.L);
     }
 
     return res;
@@ -102,10 +102,6 @@ int cammusc12_init(USBDevice* wheeldevice, const char* luafile)
     wheeldevice->u.wheeldevice.useLua = false;
     int res = cammusc12_init_(wheeldevice);
 
-    if(res == 1)
-    {
-        return res;
-    }
 
     if(luafile == NULL)
     {
