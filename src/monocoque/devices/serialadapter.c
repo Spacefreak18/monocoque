@@ -57,10 +57,13 @@ int monocoque_serial_free(SerialDevice* serialdevice)
             slogd("freeing physical device %s", monocoque_serial_devices[serialdevice->id].portname);
             sp_close(monocoque_serial_devices[serialdevice->id].port);
             sp_free_port(monocoque_serial_devices[serialdevice->id].port);
+            free(monocoque_serial_devices[serialdevice->id].portname);
+
+            monocoque_serial_devices[serialdevice->id].port = NULL;
+            monocoque_serial_devices[serialdevice->id].portname = NULL;
             monocoque_serial_devices[serialdevice->id].busy = false;
             monocoque_serial_devices[serialdevice->id].open = false;
             monocoque_serial_devices[serialdevice->id].openfail = false;
-            free(monocoque_serial_devices[serialdevice->id].portname);
         }
         else
         {
@@ -208,7 +211,7 @@ int monocoque_serial_open(SerialDevice* serialdevice, const char* portdev)
             free(monocoque_serial_devices[i].portname);
             monocoque_serial_devices[i].portname = NULL;
             monocoque_serial_devices[i].open = false;
-            monocoque_serial_devices[i].openfail = true;
+            monocoque_serial_devices[i].openfail = false;
             return -1;
         }
 

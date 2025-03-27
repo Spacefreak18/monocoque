@@ -11,11 +11,8 @@
 
 #include "gameloop.h"
 #include "loopdata.h"
-#include "../devices/sound.h"
-#include "../helper/parameters.h"
 #include "../helper/confighelper.h"
 #include "../devices/simdevice.h"
-#include "../devices/serialadapter.h"
 #include "../simulatorapi/simapi/simapi/simdata.h"
 #include "../simulatorapi/simapi/simapi/simmapper.h"
 #include "../slog/slog.h"
@@ -252,15 +249,11 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
         f->simdevices = malloc(f->numdevices * sizeof(SimDevice));
         int initdevices = devinit(f->simdevices, configureddevices, ds, ms);
 
-
-        for(int d = 0; d < 10; d++)
+        for( int i = 0; i < configureddevices; i++)
         {
-            monocoque_serial_devices[d].open = false;
-            monocoque_serial_devices[d].openfail = false;
-            monocoque_serial_devices[d].busy = false;
-            monocoque_serial_devices[d].refs = 0;
+            settingsfree(ds[i]);
         }
-
+        free(ds);
 
         int numdevices = f->numdevices;
         SimDevice* devices = f->simdevices;
@@ -287,12 +280,7 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
             }
         }
 
-        int i = 0;
-        for( i = 0; i < configureddevices; i++)
-        {
-            settingsfree(ds[i]);
-        }
-        free(ds);
+
         doui = false;
     }
     else
@@ -361,13 +349,6 @@ void shmdatamapcallback(uv_timer_t* handle)
                 }
             }
             sleep(1);
-            for(int d = 0; d < 10; d++)
-            {
-                if(monocoque_serial_devices[d].portname != NULL)
-                {
-                    free(monocoque_serial_devices[d].portname);
-                }
-            }
             for (int x = 0; x < numdevices; x++)
             {
                 if (devices[x].initialized == true)

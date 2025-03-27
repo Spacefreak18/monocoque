@@ -18,7 +18,7 @@ typedef struct
 }
 monocoque_serial_device;
 
-static monocoque_serial_device monocoque_serial_devices[10];
+static monocoque_serial_device monocoque_serial_devices[20];
 
 int monocoque_serial_write(uint8_t serialdevicenum, void* data, size_t size, int timeout);
 int monocoque_serial_write_block(uint8_t serialdevicenum, void* data, size_t size, int timeout);
