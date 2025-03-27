@@ -105,6 +105,9 @@ int arduino_customled_init(SerialDevice* serialdevice, const char* portdev, cons
         return serialdevice->id;
     }
 
+
+    slogi("LUA config specified for this device... initializing...");
+
     lua_State* L = luaL_newstate();
     luaL_openlibs(L);
 
@@ -331,6 +334,12 @@ int arduino_customled_free(SerialDevice* serialdevice, bool lua)
     size_t size = sizeof(bytes);
 
     int result = monocoque_serial_write_block(serialdevice->id, &bytes, size, arduino_timeout);
+
+    if(lua == false)
+    {
+        return result;
+    }
+
 
     lua_close(serialdevice->m.L);
 

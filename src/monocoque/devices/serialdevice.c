@@ -173,7 +173,7 @@ int serialdev_free(SimDevice* this)
             slogi("set zero to arduino device");
             break;
         case ARDUINODEV__SIMLED__CUSTOM:
-            arduino_customled_free(serialdevice, true);
+            //arduino_customled_free(serialdevice, true);
             free(serialdevice->m.device_specific_config_file);
             break;
         case ARDUINODEV__SIMLED:
