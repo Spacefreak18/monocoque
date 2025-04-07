@@ -61,7 +61,7 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
 
     struct arg_rex* cmd1             = arg_rex1(NULL, NULL, "play", NULL, REG_ICASE, NULL);
     struct arg_lit* arg_udp          = arg_lit0("d", "udp", "force udp mode for sims which support it");
-    struct arg_file* arg_conf        = arg_filen(NULL, "uiconf", "<config_file>", 0, 1, NULL);
+    struct arg_file* arg_conf        = arg_file0("c", "uiconf", "<config_file>", NULL);
     struct arg_file* arg_log         = arg_filen("l", "log", "<log_file>", 0, 1, NULL);
     struct arg_str* arg_confdir      = arg_strn(NULL, "configdir", "config_dir>", 0, 1, NULL);
     struct arg_int* arg_fps          = arg_int0("f", "fps", "fps", "main data refresh rate");
