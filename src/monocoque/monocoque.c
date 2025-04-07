@@ -87,15 +87,16 @@ int main(int argc, char** argv)
     MonocoqueSettings* ms = malloc(sizeof(MonocoqueSettings));;
 
     ConfigError ppe = getParameters(argc, argv, p);
-    if (ppe == E_SUCCESS_AND_EXIT)
+    if (ppe == E_SUCCESS_AND_EXIT || ppe == E_SOMETHING_BAD)
     {
+        printf("invalid parameters\n");
         goto cleanup_final;
     }
 
     xdgHandle xdg;
     if(!xdgInitHandle(&xdg))
     {
-        fprintf(stderr, "Function xdgInitHandle() failed, is $HOME unset?");
+        fprintf(stderr, "Function xdgInitHandle() failed, is $HOME unset?\n");
         goto cleanup_final;
     }
 
@@ -116,16 +117,18 @@ int main(int argc, char** argv)
         cachedir_str = create_user_dir(home_dir_str, ".cache", PROGRAM_NAME);
     }
 
+    fprintf(stderr, "applying settings\n");
     SetSettingsFromParameters(p, ms, configdir_str, cachedir_str);
-    freeparams(p);
-    free(p);
 
-    //char* config_file_str = ( char* ) malloc(1 + strlen(home_dir_str) + strlen("/.config/") + strlen("monocoque/monocoque.config"));
-
-    size_t diameters_file_sz = snprintf(NULL, 0, "%s/.config/monocoque/diameters.config", home_dir_str);
-    diameters_file_sz += 1;
-    char* diameters_file_str = ( char* ) malloc(diameters_file_sz);
-    snprintf(diameters_file_str, diameters_file_sz, "%s/.config/monocoque/diameters.config", home_dir_str);
+    if(cachedir_str != NULL)
+    {
+      free(cachedir_str);
+    }
+    if(configdir_str != NULL)
+    {
+      free(configdir_str);
+    }
+    fprintf(stderr, "settings applied\n");
 
     slog_config_t slgCfg;
     slog_config_get(&slgCfg);
@@ -149,10 +152,15 @@ int main(int argc, char** argv)
         slog_disable(SLOG_DEBUG);
     }
 
+    slogi("checking for diameters config");
+    char* diameters_file_str;
+    asprintf(&diameters_file_str, "%s/.config/monocoque/diameters.config", home_dir_str);
     ms->tyre_diameter_config = strdup(diameters_file_str);
+    free(diameters_file_str);
+
     ms->useconfig = 0;
     ms->configcheck = 0;
-    free(diameters_file_str);
+
 
     slogi("Testing monocoque config file: %s", ms->config_str);
     slogd("using diameters file %s %i", ms->tyre_diameter_config, ms->configcheck);
@@ -167,7 +175,7 @@ int main(int argc, char** argv)
     }
     else
     {
-        slogi("Openend monocoque configuration file");
+        slogi("Opened and validated monocoque configuration file");
     }
     config_destroy(&cfg);
 
@@ -177,6 +185,7 @@ int main(int argc, char** argv)
     {
         int error = 0;
         SimDevice* tachdev = malloc(sizeof(SimDevice));
+        tachdev->initialized = false;
         SimData* sdata = malloc(sizeof(SimData));
         DeviceSettings* ds = malloc(sizeof(DeviceSettings));
 
@@ -189,6 +198,7 @@ int main(int argc, char** argv)
         else
         {
             int devices = 0;
+
             devices = devinit(tachdev, 1, ds, ms);
             if(devices < 1)
             {
@@ -295,5 +305,7 @@ cleanup_final:
     xdgWipeHandle(&xdg);
     monocoquesettingsfree(ms);
     free(ms);
+    freeparams(p);
+    free(p);
     exit(0);
 }
