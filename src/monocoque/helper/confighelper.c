@@ -10,7 +10,7 @@
 #include <libxml/tree.h>
 
 #include "confighelper.h"
-
+#include "dirhelper.h"
 
 #include "../slog/slog.h"
 #include "parameters.h"
@@ -458,7 +458,7 @@ int getconfigtouse(const char* config_file_str, char* car, int sim)
 }
 
 
-int loadtachconfig(const char* config_file, DeviceSettings* ds)
+int loadtachconfig(char* config_file, DeviceSettings* ds)
 {
 
 
@@ -605,6 +605,7 @@ static int load_device_specific_config(const char* config_file, DeviceSettings* 
         else
         {
             ds->specific_config_file = strdup(config_file);
+            ds->specific_config_file = expand_tilde(ds->specific_config_file);
             slogt("will try to load config file at %s", ds->specific_config_file);
         }
     }
@@ -617,7 +618,7 @@ static int load_device_specific_config(const char* config_file, DeviceSettings* 
             slogw("Tachometer must have a device specific config file!");
             return 1;
         }
-        return loadtachconfig(config_file, ds);
+        loadtachconfig(ds->specific_config_file, ds);
     }
     return 0;
 }

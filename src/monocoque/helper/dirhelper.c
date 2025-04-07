@@ -48,19 +48,12 @@ char* gethome()
     char* homedir = getenv("HOME");
     return homedir;
 
-    if (homedir != NULL)
-    {
-        printf("Home dir in enviroment");
-        printf("%s\n", homedir);
-    }
-
     uid_t uid = getuid();
     struct passwd* pw = getpwuid(uid);
 
     if (pw == NULL)
     {
-        printf("Failed\n");
-        exit(EXIT_FAILURE);
+        return NULL;
     }
 
     return pw->pw_dir;
@@ -268,4 +261,31 @@ bool does_file_exist(const char* file)
     }
     return false;
 #endif
+}
+
+char* expand_tilde(char* path) {
+    if (path[0] != '~') {
+        return path;
+    }
+
+    const char* home_dir = getenv("HOME");
+    if (!home_dir) {
+        return path;
+    }
+
+    size_t expanded_size = strlen(home_dir) + strlen(path);
+    char* expanded_path = (char*)malloc(expanded_size + 1);
+
+    if (!expanded_path) {
+        return path;
+    }
+
+    strcpy(expanded_path, home_dir);
+    strcat(expanded_path, path + 1);
+
+    if (path) {
+        free(path);
+    }
+
+    return expanded_path;
 }
