@@ -19,7 +19,7 @@ int senddevreport(USBGenericHapticDevice* usbhapticdevice, unsigned char* buf, s
     int res = 0;
     if (usbhapticdevice->handle)
     {
-        res = hid_write(usbhapticdevice->handle, buf, SIMAGIC_P1000_BUFSIZE);
+        res = hid_send_feature_report(usbhapticdevice->handle, buf, SIMAGIC_P1000_BUFSIZE);
         slogd("sent %i bytes to %s", bufsize, SIMAGICP1000DEVSTRING);
         slogt("sent bytes %02x %02x %02x %02x %02x %02x %02x", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6]);
     }
@@ -27,7 +27,7 @@ int senddevreport(USBGenericHapticDevice* usbhapticdevice, unsigned char* buf, s
     {
         slogd("no handle");
     }
-    return res;
+    return res != bufsize;
 }
 
 int simagicp1000_update(USBGenericHapticDevice* usbhapticdevice, int effecttype, int play)
@@ -44,34 +44,36 @@ int simagicp1000_update(USBGenericHapticDevice* usbhapticdevice, int effecttype,
 
     if (play > 0)
     {
-        bytes[0] = 0xEC;
+        bytes[0] = 241;
+        bytes[1] = 0xEC;
         // we can add config settings for these values
-        bytes[2] = 0x01;
-        bytes[3] = 0x0A;
-        bytes[4] = 0xFF;
+        bytes[3] = 0x01;
+        bytes[4] = 0x0A;
+        bytes[5] = 0xFF;
         switch (effecttype)
         {
             case (EFFECT_TYRESLIP):
-                bytes[1] = 0x02;
+                bytes[2] = 0x02;
                 senddevreport(usbhapticdevice, bytes, SIMAGIC_P1000_BUFSIZE);
                 break;
             case (EFFECT_TYRELOCK):
-                bytes[1] = 0x01;
+                bytes[2] = 0x01;
                 senddevreport(usbhapticdevice, bytes, SIMAGIC_P1000_BUFSIZE);
                 break;
             case (EFFECT_ABSBRAKES):
-                bytes[1] = 0x02;
+                bytes[2] = 0x02;
                 senddevreport(usbhapticdevice, bytes, SIMAGIC_P1000_BUFSIZE);
-                bytes[1] = 0x01;
+                bytes[2] = 0x01;
                 senddevreport(usbhapticdevice, bytes, SIMAGIC_P1000_BUFSIZE);
                 break;
         }
     }
     else
     {
-        bytes[1] = 0x01;
+        bytes[0] = 241;
+        bytes[2] = 0x01;
         senddevreport(usbhapticdevice, bytes, SIMAGIC_P1000_BUFSIZE);
-        bytes[1] = 0x02;
+        bytes[2] = 0x02;
         senddevreport(usbhapticdevice, bytes, SIMAGIC_P1000_BUFSIZE);
     }
 
@@ -113,13 +115,14 @@ int simagicp1000_init(USBGenericHapticDevice* usbhapticdevice)
         {
             bytes[x] = 0x00;
         }
-        bytes[0] = 0xF1;
-        bytes[1] = 0x17;
-        bytes[2] = 0x00;
+        bytes[0] = 241;
+        bytes[1] = 0xF1;
+        bytes[2] = 0x17;
         bytes[3] = 0x00;
         bytes[4] = 0x00;
-        bytes[5] = 0x01;
-        bytes[6] = 0x02;
+        bytes[5] = 0x00;
+        bytes[6] = 0x01;
+        bytes[7] = 0x02;
         res = senddevreport(usbhapticdevice, bytes, SIMAGIC_P1000_BUFSIZE);
         slogd("Initialization returned %i", res);
         if(res != 0)
