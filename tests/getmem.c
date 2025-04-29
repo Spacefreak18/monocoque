@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
     pid = getpid();
 
     // get shared memory file descriptor (NOT a file)
-    fd = shm_open(TEST_MEM_FILE_LOCATION, O_RDONLY, S_IRUSR | S_IWUSR);
+    fd = shm_open(SIMAPI_MEM_FILE, O_RDONLY, S_IRUSR | S_IWUSR);
     if (fd == -1)
     {
         return 10;

@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 
     pid = getpid();
 
-    fd = shm_open(TEST_MEM_FILE_LOCATION, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    fd = shm_open(SIMAPI_MEM_FILE, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     if (fd == -1)
     {
         perror("open");
@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
     }
     tcsetattr(0, TCSANOW, &canonicalmode);
 
-    fd = shm_unlink(TEST_MEM_FILE_LOCATION);
+    fd = shm_unlink(SIMAPI_MEM_FILE);
     if (fd == -1)
     {
         perror("unlink");
