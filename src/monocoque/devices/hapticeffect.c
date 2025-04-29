@@ -76,7 +76,7 @@ int loadtyreconfig(SimData* simdata, char* configfile)
             config_setting_lookup_float(config_car, "tyre2", &tyre2);
             config_setting_lookup_float(config_car, "tyre3", &tyre3);
             int found = config_setting_lookup_string(config_car, "sim", &simstr);
-            if(found == 0)
+            if(found == CONFIG_FALSE)
             {
                 int found = config_setting_lookup_int(config_car, "sim", &sim);
             }
@@ -142,7 +142,7 @@ int savetyreconfig(SimData* simdata, char* configfile)
 
     setting = config_setting_add(carobject, "car", CONFIG_TYPE_STRING);
     config_setting_set_string(setting, simdata->car);
-    setting = config_setting_add(carobject, "sim", CONFIG_TYPE_INT);
+    setting = config_setting_add(carobject, "sim", CONFIG_TYPE_STRING);
     config_setting_set_string(setting, simapi_gametostr(simdata->simexe));
     setting = config_setting_add(carobject, "tyre0", CONFIG_TYPE_FLOAT);
     config_setting_set_float(setting, simdata->tyrediameter[0]);
@@ -205,7 +205,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
         return 0;
     }
 
-    slogt("wheel vibration calculation with wheel config set to %i configchecked %i configfile %s car %s", useconfig, *configcheck, configfile, simdata->car);
+    slogt("wheel vibration calculation with wheel config set to %i configchecked %i configfile %s car %s sim %i", useconfig, *configcheck, configfile, simdata->car, simdata->simexe);
 
     switch (effecttype)
     {
