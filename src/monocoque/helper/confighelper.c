@@ -113,6 +113,11 @@ int strtodevsubsubtype(const char* device_subsubtype, DeviceSettings* ds)
         ds->dev_subsubtype = SIMDEVSUBTYPE_SIMAGICP1000PEDALS;
         devfound = true;
     }
+    if (strcicmp(device_subsubtype, "SIMAGICGTNEO") == 0)
+    {
+        ds->dev_subsubtype = SIMDEVSUBTYPE_SIMAGICGTNEO;
+        devfound = true;
+    }
 
     if(devfound == false)
     {
