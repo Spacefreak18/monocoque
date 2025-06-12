@@ -4,6 +4,7 @@
 
 #include "usb/wheels/cammusc5.h"
 #include "usb/wheels/cammusc12.h"
+#include "usb/wheels/gtneo.h"
 #include "serial/moza.h"
 
 #include "simdevice.h"
@@ -30,7 +31,16 @@ int wheeldev_update(USBDevice* usbdevice, SimData* simdata)
                 cammusc12_update(usbdevice, simdata->maxrpm, simdata->rpms, simdata->gear, simdata->velocity);
             }
             break;
-
+        case WHEELDEV_SIMAGICGTNEO :
+            if(usbdevice->u.wheeldevice.useLua == true)
+            {
+                simagic_gtneo_customled_update(usbdevice, simdata);
+            }
+            else
+            {
+                sloge("GT Neo requires config file");
+            }
+            break;    
     }
 
     return 0;
@@ -91,6 +101,28 @@ int wheeldev_init(USBDevice* usbdevice, DeviceSettings* ds)
             else
             {
                 error = cammusc12_init(usbdevice, NULL);
+            }
+            break;
+        case SIMDEVSUBTYPE_SIMAGICGTNEO:
+            wheeldevice->type = WHEELDEV_SIMAGICGTNEO;
+            slogi("Attempting to initialize Simagic GT Neo");
+
+            if(ds->has_config == true)
+            {
+                usbdevice->m.device_specific_config_file = strdup(ds->specific_config_file);
+                error = simagic_gtneo_init(usbdevice, usbdevice->m.device_specific_config_file);
+                if(error != 0)
+                {
+                    if(usbdevice->m.device_specific_config_file != NULL)
+                    {
+                        free(usbdevice->m.device_specific_config_file);
+                    }
+                }
+            }
+            else
+            {
+                sloge("Simagic GT Neo requires lua config file to function");
+                error = -1;
             }
             break;
         default:
