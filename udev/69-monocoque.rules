@@ -6,3 +6,6 @@ SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0043", ATTRS{seria
 
 # Simagic P1000
 SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="0525", MODE="0666"
+
+# Simagic GT NEO
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="3670", ATTRS{idProduct}=="0805", MODE="0666"
