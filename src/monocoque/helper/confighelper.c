@@ -139,7 +139,7 @@ int strtodevsubtype(const char* device_subtype, DeviceSettings* ds, int simdev)
                 ds->dev_subtype = SIMDEVTYPE_TACHOMETER;
                 break;
             }
-            if (strcicmp(device_subtype, "Wheel") == 0)
+            if (strcicmp(device_subtype, "Wheel") == 0 || strcicmp(device_subtype, "UsbWheel") == 0)
             {
                 ds->dev_subtype = SIMDEVTYPE_USBWHEEL;
                 break;
