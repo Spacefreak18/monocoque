@@ -50,16 +50,16 @@ int moza_update(SerialDevice* serialdevice, unsigned short maxrpm, unsigned shor
         bytes[9] |= BIT(4);
 
     if (perct >= .6)
-        bytes[9] |= BIT(4);
-
-    if (perct >= .7)
         bytes[9] |= BIT(5);
 
+    if (perct >= .7)
+        bytes[9] |= BIT(6);
+
     if (perct >= .8)
-        bytes[8] |= BIT(6);
+        bytes[8] |= BIT(7);
 
     if (perct >= .9)
-        bytes[8] |= BIT(7);
+        bytes[8] |= BIT(8);
 
     // blinking
     if (perct >= .95)
