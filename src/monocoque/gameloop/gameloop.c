@@ -968,7 +968,7 @@ int tester(SimDevice* devices, int numdevices)
     }
     sleep(1);
 
-    fprintf(stdout, "Setting rpms to 8000\n");
+    fprintf(stdout, "Setting rpms to 9000\n");
     simdata->rpms = 9000;
     for (int x = 0; x < numdevices; x++)
     {
@@ -979,7 +979,7 @@ int tester(SimDevice* devices, int numdevices)
     }
     sleep(1);
 
-    fprintf(stdout, "Setting rpms to 8000\n");
+    fprintf(stdout, "Setting rpms to 10000\n");
     simdata->rpms = 10000;
     for (int x = 0; x < numdevices; x++)
     {
