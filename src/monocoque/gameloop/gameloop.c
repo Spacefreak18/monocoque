@@ -653,7 +653,7 @@ int tester(SimDevice* devices, int numdevices)
     simdata->gear = MONOCOQUE_GEAR_NEUTRAL;
     simdata->velocity = 16;
     simdata->rpms = 100;
-    simdata->maxrpm = 10000;
+    simdata->maxrpm = 8000;
     simdata->abs = 0;
     simdata->tyrediameter[0] = -1;
     simdata->tyrediameter[1] = -1;
@@ -664,7 +664,7 @@ int tester(SimDevice* devices, int numdevices)
     simdata->Zvelocity = 0;
 
     sleep(3);
-/**
+
     fprintf(stdout, "Setting rpms to 1000\n");
     simdata->rpms = 1000;
     for (int x = 0; x < numdevices; x++)
@@ -879,108 +879,10 @@ int tester(SimDevice* devices, int numdevices)
         }
     }
     sleep(3);
-**/
-    fprintf(stdout, "Setting rpms to 1000\n");
-    simdata->rpms = 1000;
-    for (int x = 0; x < numdevices; x++)
-    {
-        if (devices[x].initialized == true)
-        {
-            devices[x].update(&devices[x], simdata);
-        }
-    }
-    sleep(1);
 
-    fprintf(stdout, "Setting rpms to 2000\n");
-    simdata->rpms = 2000;
-    for (int x = 0; x < numdevices; x++)
-    {
-        if (devices[x].initialized == true)
-        {
-            devices[x].update(&devices[x], simdata);
-        }
-    }
-    sleep(1);
-
-    fprintf(stdout, "Setting rpms to 3000\n");
-    simdata->rpms = 3000;
-    for (int x = 0; x < numdevices; x++)
-    {
-        if (devices[x].initialized == true)
-        {
-            devices[x].update(&devices[x], simdata);
-        }
-    }
-    sleep(1);
-
-    fprintf(stdout, "Setting rpms to 4000\n");
-    simdata->rpms = 4000;
-    for (int x = 0; x < numdevices; x++)
-    {
-        if (devices[x].initialized == true)
-        {
-            devices[x].update(&devices[x], simdata);
-        }
-    }
-    sleep(1);
-
-    fprintf(stdout, "Setting rpms to 5000\n");
-    simdata->rpms = 5000;
-    for (int x = 0; x < numdevices; x++)
-    {
-        if (devices[x].initialized == true)
-        {
-            devices[x].update(&devices[x], simdata);
-        }
-    }
-    sleep(1);
-
-    fprintf(stdout, "Setting rpms to 6000\n");
-    simdata->rpms = 6000;
-    for (int x = 0; x < numdevices; x++)
-    {
-        if (devices[x].initialized == true)
-        {
-            devices[x].update(&devices[x], simdata);
-        }
-    }
-    sleep(1);
-
-    fprintf(stdout, "Setting rpms to 7000\n");
-    simdata->rpms = 7000;
-    for (int x = 0; x < numdevices; x++)
-    {
-        if (devices[x].initialized == true)
-        {
-            devices[x].update(&devices[x], simdata);
-        }
-    }
-    sleep(1);
-
-    fprintf(stdout, "Setting rpms to 8000\n");
-    simdata->rpms = 8000;
-    for (int x = 0; x < numdevices; x++)
-    {
-        if (devices[x].initialized == true)
-        {
-            devices[x].update(&devices[x], simdata);
-        }
-    }
-    sleep(1);
-
-    fprintf(stdout, "Setting rpms to 9000\n");
-    simdata->rpms = 9000;
-    for (int x = 0; x < numdevices; x++)
-    {
-        if (devices[x].initialized == true)
-        {
-            devices[x].update(&devices[x], simdata);
-        }
-    }
-    sleep(1);
-
-    fprintf(stdout, "Setting rpms to 10000\n");
-    simdata->rpms = 10000;
+    simdata->velocity = 0;
+    simdata->rpms = 100;
+    simdata->gear = MONOCOQUE_GEAR_NEUTRAL;
     for (int x = 0; x < numdevices; x++)
     {
         if (devices[x].initialized == true)
