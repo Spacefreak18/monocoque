@@ -9,7 +9,7 @@
 #include "../serialadapter.h"
 #include "../../slog/slog.h"
 
-#define MOZA_TIMEOUT 2000
+#define MOZA_TIMEOUT 1000
 #define MOZA_SERIAL_TEMPLATE {0x7e, 0x06, 0x41, 0x13, 0xfd, 0xde, 0x0, 0x0, 0x0, 0x0, 0x0}
 #define MOZA_NUM_AVAILABLE_LEDS 10
 #define MOZA_BLINKING_BIT 7
