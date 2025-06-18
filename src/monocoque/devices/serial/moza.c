@@ -14,7 +14,7 @@
 #define MOZA_NUM_AVAILABLE_LEDS 10
 #define MOZA_BLINKING_BIT 7
 #define MOZA_PAYLOAD_SIZE 11
-#define MOZA_MAGIC_VALUE 13
+#define MOZA_MAGIC_VALUE 0x0d
 #define BIT(nr) (1UL << (nr))
 
 unsigned char moza_checksum(unsigned char *data)
