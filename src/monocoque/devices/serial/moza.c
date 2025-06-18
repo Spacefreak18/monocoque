@@ -9,17 +9,17 @@
 #include "../serialadapter.h"
 #include "../../slog/slog.h"
 
-#define MOZA_TIMEOUT 1000
+#define MOZA_TIMEOUT 2000
 #define MOZA_SERIAL_TEMPLATE {0x7e, 0x06, 0x41, 0x13, 0xfd, 0xde, 0x0, 0x0, 0x0, 0x0, 0x0}
 #define MOZA_NUM_AVAILABLE_LEDS 10
 #define MOZA_BLINKING_BIT 7
 #define MOZA_PAYLOAD_SIZE 11
-#define MOZA_MAGIC_VALUE 0x0d
+#define MOZA_MAGIC_VALUE 13
 #define BIT(nr) (1UL << (nr))
 
 unsigned char moza_checksum(unsigned char *data)
 {
-    unsigned char ret = MOZA_MAGIC_VALUE;
+    unsigned int ret = MOZA_MAGIC_VALUE;
     for (short i = 0; i < MOZA_PAYLOAD_SIZE; i++)
     {
         ret += data[i];
@@ -32,37 +32,41 @@ int moza_update(SerialDevice* serialdevice, unsigned short maxrpm, unsigned shor
 {
     unsigned char bytes[] = MOZA_SERIAL_TEMPLATE;
     int size = MOZA_PAYLOAD_SIZE;
-    float perct = (float)rpm/(float)maxrpm;
+    float perctflt = ((float)rpm/(float)maxrpm)*100;
+    int perct = round(perctflt);
 
-    if (perct >= .1)
+    if (perct >= 10)
         bytes[9] |= BIT(0);
 
-    if (perct >= .2)
+    if (perct >= 20)
         bytes[9] |= BIT(1);
 
-    if (perct >= .3)
+    if (perct >= 30)
         bytes[9] |= BIT(2);
 
-    if (perct >= .4)
+    if (perct >= 40)
         bytes[9] |= BIT(3);
 
-    if (perct >= .5)
+    if (perct >= 50)
         bytes[9] |= BIT(4);
 
-    if (perct >= .6)
+    if (perct >= 60)
         bytes[9] |= BIT(5);
 
-    if (perct >= .7)
+    if (perct >= 70)
         bytes[9] |= BIT(6);
 
-    if (perct >= .8)
-        bytes[8] |= BIT(7);
+    if (perct >= 80)
+        bytes[9] |= BIT(7);
 
-    if (perct >= .9)
-        bytes[8] |= BIT(8);
+    if (perct >= 90)
+        bytes[8] |= BIT(0);
+
+    if (perct >= 92)
+        bytes[8] |= BIT(1);
 
     // blinking
-    if (perct >= .95)
+    if (perct >= 94)
         bytes[8] |= BIT(MOZA_BLINKING_BIT);
 
     bytes[10] = moza_checksum(bytes);
