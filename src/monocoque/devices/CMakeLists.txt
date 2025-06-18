@@ -29,6 +29,8 @@ set(devices_source_files
   usb/wheels/cammusc5.c
   usb/wheels/cammusc12.h
   usb/wheels/cammusc12.c
+  usb/wheels/gtneo.h
+  usb/wheels/gtneo.c
   sound/usb_generic_shaker_pulse.c
   serial/arduino.h
   serial/arduino.c

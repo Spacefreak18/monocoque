@@ -235,7 +235,7 @@ int monocoque_serial_open(SerialDevice* serialdevice, const char* portdev)
         serial_device_num = i;
 
         free(port_name);
-        slogd("Successfully setup arduino serial device...");
+        slogd("Successfully setup monocoque serial device...");
     }
 
     return serial_device_num;
