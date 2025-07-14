@@ -20,6 +20,8 @@ monocoque_serial_device;
 
 static monocoque_serial_device monocoque_serial_devices[20];
 
+int monocoque_input_wait(uint8_t serialdevicenum);
+int monocoque_wait_for_event(uint8_t serialdevicenum, int event);
 int monocoque_serial_write(uint8_t serialdevicenum, void* data, size_t size, int timeout);
 int monocoque_serial_write_block(uint8_t serialdevicenum, void* data, size_t size, int timeout);
 int monocoque_serial_read_block(uint8_t serialdevicenum, void* data, size_t size, int timeout);

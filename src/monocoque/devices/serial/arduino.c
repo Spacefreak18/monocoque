@@ -42,63 +42,111 @@ int arduino_update(SerialDevice* serialdevice, void* data, size_t size)
     return result;
 }
 
+// the input event waiting and flushing is the right way to do this
+// most of the time i'm just "bit blasting" and the only receiving
+// happens initially to get the number of lights
+int GetNumberOfLeds(SerialDevice* serialdevice, int* numlights)
+
+{
+    int count = 0;
+    int bytesWaiting;
+    char buf[256];
+    int retval = 0;
+    int i;
+
+    //sp_flush(port, SP_BUF_INPUT);
+
+    while (count < 4)
+    {
+        slogi("Attempting to retrieve num lights from port...");
+
+        size_t bufsize1 = 11;
+        size_t recv_bufsize1 = 5;
+        char recv_buf1[recv_bufsize1];
+        char bytes1[bufsize1];
+
+        for(int j = 0; j < bufsize1; j++)
+        {
+            bytes1[j] = 0x00;
+        }
+        bytes1[0] = 0xff;
+        bytes1[1] = 0xff;
+        bytes1[2] = 0xff;
+        bytes1[3] = 0xff;
+        bytes1[4] = 0xff;
+        bytes1[5] = 0xff;
+        bytes1[6] = 0x6c;
+        bytes1[7] = 0x65;
+        bytes1[8] = 0x64;
+        bytes1[9] = 0x73;
+        bytes1[10] = 0x63;
+
+        int result = 0;
+        unsigned int timeout = 6000;
+        slogd("Sending message to get num lights");
+        monocoque_wait_for_event(serialdevice->id, 6);
+
+        result = monocoque_serial_write(serialdevice->id, &bytes1, bufsize1, arduino_timeout);
+
+
+        monocoque_wait_for_event(serialdevice->id, 5);
+        bytesWaiting = monocoque_input_wait(serialdevice->id);
+        if (bytesWaiting > 0)
+        {
+            memset(buf, 0, sizeof(buf));
+            retval = monocoque_serial_read_block(serialdevice->id, buf, sizeof(buf)-1, 10);
+            if (retval < 0)
+            {
+                retval = -1;
+                break;
+            }
+            else
+            {
+                for(i=0; i<retval; i++)
+                {
+                    if (buf[i] == 13)
+                    {
+                        count++;
+                    }
+                }
+                int ret = atoi(buf);
+                *numlights = ret;
+                return retval;
+            }
+        }
+        else
+            if (bytesWaiting < 0)
+            {
+                sloge("Error getting bytes available from serial port: %d", bytesWaiting);
+                retval = -1;
+                break;
+            }
+        retval = 0;
+    }
+    return retval;
+}
+
 int arduino_init(SerialDevice* serialdevice, const char* portdev)
 {
     serialdevice->id = monocoque_serial_open(serialdevice, portdev);
     return serialdevice->id;
 }
 
+
+
 int arduino_customled_init(SerialDevice* serialdevice, const char* portdev, const char* luafile)
 {
     serialdevice->id = monocoque_serial_open(serialdevice, portdev);
 
-    size_t bufsize1 = 11;
-    size_t recv_bufsize1 = 5;
-    char recv_buf1[recv_bufsize1];
-    char bytes1[bufsize1];
 
-    for(int j = 0; j < bufsize1; j++)
-    {
-        bytes1[j] = 0x00;
-    }
-    bytes1[0] = 0xff;
-    bytes1[1] = 0xff;
-    bytes1[2] = 0xff;
-    bytes1[3] = 0xff;
-    bytes1[4] = 0xff;
-    bytes1[5] = 0xff;
-    bytes1[6] = 0x6c;
-    bytes1[7] = 0x65;
-    bytes1[8] = 0x64;
-    bytes1[9] = 0x73;
-    bytes1[10] = 0x63;
+    int numlights = 0;
 
-    int result = 0;
-    unsigned int timeout = 3000;
-    result = monocoque_serial_write_block(serialdevice->id, &bytes1, bufsize1, timeout);
-    result = monocoque_serial_read_block(serialdevice->id, &recv_buf1, recv_bufsize1, timeout);
-    //slogi("wrote %i bytes", result);
-    //sleep(2);
-    //monocoque_serial_device monocoque_serial_dev = monocoque_serial_devices[serialdevice->id];
-    //result = arduino_check(sp_blocking_read(monocoque_serial_dev.port, &recv_buf1, recv_bufsize1, 5000));
-    //slogi("read %i bytes", result);
-    //result = sp_blocking_read(serialdevice->port, &recv_buf1, recv_bufsize1, timeout);
+    monocoque_serial_device serialdev = monocoque_serial_devices[serialdevice->id];
+    int error = GetNumberOfLeds(serialdevice, &numlights);
 
-    char numstr[recv_bufsize1];
-    for(int j = 0; j < recv_bufsize1; j++)
-    {
-        numstr[j] = '\0';
-    }
-    for(int j = 0; j < recv_bufsize1; j++)
-    {
-        if(recv_buf1[j] != 0 && recv_buf1[j] != 0x0d && recv_buf1[j] != 0x0a)
-        {
-            numstr[j] = recv_buf1[j];
-        }
-    }
-    int numlights = atoi(numstr);
-    serialdevice->numleds = numlights;
     slogi("numlights is %i\n", numlights);
+    // close, error and free if numlights is 0
+    serialdevice->numleds = numlights;
 
     if(luafile == NULL)
     {

@@ -73,6 +73,47 @@ int monocoque_serial_free(SerialDevice* serialdevice)
     }
 }
 
+
+int monocoque_wait_for_event(uint8_t serialdevicenum, int event)
+{
+
+    slogt("serial device id %i", serialdevicenum);
+    monocoque_serial_device monocoque_serial_dev = monocoque_serial_devices[serialdevicenum];
+
+    int retval;
+    struct sp_event_set* eventSet = NULL;
+
+    retval = sp_new_event_set(&eventSet);
+    if (retval == SP_OK)
+    {
+        retval = sp_add_port_events(eventSet, monocoque_serial_dev.port, event);
+        if (retval == SP_OK)
+        {
+            slogd("set event on port");
+            retval = sp_wait(eventSet, 5000);
+        }
+        else
+        {
+            sloge("Unable to add events to port.");
+            retval = -1;
+        }
+    }
+    else
+    {
+        sloge("Unable to create new event set.");
+        retval = -1;
+    }
+    sp_free_event_set(eventSet);
+
+    return retval;
+}
+
+int monocoque_input_wait(uint8_t serialdevicenum)
+{
+    monocoque_serial_device monocoque_serial_dev = monocoque_serial_devices[serialdevicenum];
+    return sp_input_waiting(monocoque_serial_dev.port);
+}
+
 int monocoque_serial_write(uint8_t serialdevicenum, void* data, size_t size, int timeout)
 {
     slogt("serial device id %i", serialdevicenum);
@@ -216,7 +257,7 @@ int monocoque_serial_open(SerialDevice* serialdevice, const char* portdev)
         }
 
         slogd("Opening port");
-        check(sp_open(sp, SP_MODE_READ_WRITE));
+        check(sp_open(sp, SP_MODE_READ | SP_MODE_WRITE));
 
         slogd("Setting port to %i 8N1, no flow control", serialdevice->baudrate);
         check(sp_set_baudrate(sp, serialdevice->baudrate));
@@ -224,6 +265,9 @@ int monocoque_serial_open(SerialDevice* serialdevice, const char* portdev)
         check(sp_set_parity(sp, SP_PARITY_NONE));
         check(sp_set_stopbits(sp, 1));
         check(sp_set_flowcontrol(sp, SP_FLOWCONTROL_NONE));
+
+        check(sp_set_rts(sp, 1));
+        check(sp_set_dtr(sp, 1));
 
         monocoque_serial_devices[i].port = sp;
 
