@@ -3,14 +3,29 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <sys/time.h>
 
 #include "arduinoledlua.h"
 #include "arduino.h"
 
 #include "../../slog/slog.h"
 
+long long ledTimeInMilliseconds(void) {
+    struct timeval tv;
+
+    gettimeofday(&tv,NULL);
+    return (((long long)tv.tv_sec)*1000)+(tv.tv_usec/1000);
+}
+
 
 int simdata_to_lua(lua_State *L, SimData* simdata) {
+
+    // make the time up now if we are running in test mode
+    if(simdata->mtick == 0)
+    {
+        simdata->mtick = ledTimeInMilliseconds();
+    }
+
     lua_newtable(L);
 
     lua_pushinteger(L, simdata->playerflag);
@@ -18,6 +33,9 @@ int simdata_to_lua(lua_State *L, SimData* simdata) {
 
     lua_pushinteger(L, simdata->rpms);
     lua_setfield(L, -2, "rpm");
+
+    lua_pushinteger(L, simdata->mtick);
+    lua_setfield(L, -2, "mtick");
 
     lua_pushinteger(L, simdata->maxrpm);
     lua_setfield(L, -2, "maxrpm");

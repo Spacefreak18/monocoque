@@ -10,8 +10,6 @@
  --   SIMAPI_FLAG_BLACK_ORANGE     = 8,
  --   SIMAPI_FLAG_ORANGE           = 9
 
-led_clear_all()
-
 if simdata.rpm > 0 and simdata.maxrpm > 0 then
     rpmmargin = .05*simdata.maxrpm;
     rpminterval = (simdata.maxrpm-rpmmargin) / 6;
@@ -30,7 +28,16 @@ if simdata.rpm > 0 and simdata.maxrpm > 0 then
     if litleds >= 6 then
         color = RED
     end
-    set_led_range_to_color(1, litleds, color)
+    if litleds >=  6 then
+
+        if simdata.mtick % 2 == 0 then
+            set_led_range_to_color(1, litleds, color)
+        else
+            led_clear_all()
+        end
+    else
+        set_led_range_to_color(1, litleds, color)
+    end
 end
 
 if simdata.playerflag == 0 then

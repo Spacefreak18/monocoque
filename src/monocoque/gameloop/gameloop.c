@@ -878,6 +878,16 @@ int tester(SimDevice* devices, int numdevices)
             devices[x].update(&devices[x], simdata);
         }
     }
+    for(int x = 0; x < 100; x++)
+    {
+        for (int x = 0; x < numdevices; x++)
+        {
+            if (devices[x].initialized == true)
+            {
+                devices[x].update(&devices[x], simdata);
+            }
+        }
+    }
     sleep(3);
 
     simdata->velocity = 0;
