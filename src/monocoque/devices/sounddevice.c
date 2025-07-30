@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <math.h>
 
 #include "sound.h"
 #include "simdevice.h"
@@ -20,6 +21,7 @@ int gear_sound_set(SoundDevice* sounddevice, SimData* simdata)
     {
         //sounddevice->sounddata.gear_sound_data = 3.14;
         sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency;
+        sounddevice->sounddata.curr_amplitude = sounddevice->sounddata.amplitude;
         sounddevice->sounddata.curr_duration = 0;
     }
     sounddevice->sounddata.last_gear = simdata->gear;
@@ -35,12 +37,14 @@ double modulate(SoundDevice* sounddevice, double raw_effect, SoundEffectModulati
     {
         case SOUND_EFFECT_MODULATION_FREQUENCY:
             modulated_effect = ((sounddevice->sounddata.frequencyMax - sounddevice->sounddata.frequency) * raw_effect) + sounddevice->sounddata.frequency;
-            sounddevice->sounddata.curr_frequency = modulated_effect;
-            slogt("set frequency to %i from raw effect %f and base frequency %i", sounddevice->sounddata.curr_frequency, raw_effect, sounddevice->sounddata.frequency);
+            sounddevice->sounddata.curr_frequency = trunc(modulated_effect);
+            sounddevice->sounddata.curr_amplitude = sounddevice->sounddata.amplitude;
+            slogt("set curr frequency to %i from raw effect %f and base frequency %i", sounddevice->sounddata.curr_frequency, raw_effect, sounddevice->sounddata.frequency);
             break;
         case SOUND_EFFECT_MODULATION_AMPLIFY:
             modulated_effect = ((sounddevice->sounddata.amplitudeMax - sounddevice->sounddata.amplitude) * raw_effect) + sounddevice->sounddata.amplitude;
             sounddevice->sounddata.curr_amplitude = modulated_effect;
+            sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency;
             slogt("set curr amplitude to %i from raw effect %f and base amplitude %i", sounddevice->sounddata.curr_amplitude, raw_effect, sounddevice->sounddata.amplitude);
             break;
         case SOUND_EFFECT_MODULATION_NONE:
@@ -59,6 +63,7 @@ int sounddev_engine_update(SimDevice* this, SimData* simdata)
     SoundDevice* sounddevice = (void *) this->derived;
 
     double effect = ((double)simdata->rpms/60)/((double)simdata->maxrpm/60);
+    slogt("Set base effect of %f from rpms of %i", effect, simdata->rpms);
     modulate(sounddevice, effect, sounddevice->modulationType);
 }
 
@@ -71,10 +76,7 @@ int sounddev_tyreslip_update(SimDevice* this, SimData* simdata)
 
     if (effect > 0)
     {
-        sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency;
-        sounddevice->sounddata.curr_amplitude = sounddevice->sounddata.amplitude;
-        sounddevice->sounddata.curr_duration = sounddevice->sounddata.duration;
-        effect = modulate(sounddevice, effect, sounddevice->modulationType);
+        modulate(sounddevice, effect, sounddevice->modulationType);
     }
     else
     {
@@ -94,9 +96,6 @@ int sounddev_tyrelock_update(SimDevice* this, SimData* simdata)
 
     if (play > 0)
     {
-        sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency;
-        sounddevice->sounddata.curr_amplitude = sounddevice->sounddata.amplitude;
-        sounddevice->sounddata.curr_duration = sounddevice->sounddata.duration;
         modulate(sounddevice, play, sounddevice->modulationType);
     }
     else
@@ -115,9 +114,6 @@ int sounddev_absbrakes_update(SimDevice* this, SimData* simdata)
 
     if (play > 0)
     {
-        sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency;
-        sounddevice->sounddata.curr_amplitude = sounddevice->sounddata.amplitude;
-        sounddevice->sounddata.curr_duration = sounddevice->sounddata.duration;
         modulate(sounddevice, play, sounddevice->modulationType);
     }
     else
@@ -138,9 +134,6 @@ int sounddev_suspension_update(SimDevice* this, SimData* simdata)
 
     if (effect > 0)
     {
-        sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency;
-        sounddevice->sounddata.curr_amplitude = sounddevice->sounddata.amplitude;
-        sounddevice->sounddata.curr_duration = sounddevice->sounddata.duration;
         effect = modulate(sounddevice, effect, sounddevice->modulationType);
     }
     else
