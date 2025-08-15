@@ -70,6 +70,7 @@ void SetSettingsFromParameters(Parameters* p, MonocoqueSettings* ms, char* confi
     }
 
     ms->force_udp_mode = false;
+    ms->disable_audio = p->disable_audio;
 }
 
 int main(int argc, char** argv)
@@ -243,7 +244,10 @@ int main(int argc, char** argv)
             pulseaudio = true;
 //#endif
 
-            setupsound();
+            if(ms->disable_audio == false)
+            {
+                setupsound();
+            }
             //error = looper(devices, numdevices, p);
             error = monocoque_mainloop(ms);
             if (error == MONOCOQUE_ERROR_NONE)
@@ -254,13 +258,19 @@ int main(int argc, char** argv)
             {
                 sloge("Game loop exited with error code: %i", error);
             }
-            freesound();
+            if(ms->disable_audio == false)
+            {
+                freesound();
+            }
         }
         else
         {
             slogi("running monocoque in test mode...");
 
-            setupsound();
+            if(ms->disable_audio == false)
+            {
+                setupsound();
+            }
             ms->useconfig = 0;
 
             int configs = getNumberOfConfigs(ms->config_str);
@@ -295,7 +305,10 @@ int main(int argc, char** argv)
                     simdevices[x].free(&simdevices[x]);
                 }
             }
-            freesound();
+            if(ms->disable_audio == false)
+            {
+                freesound();
+            }
         }
     }
 

@@ -17,6 +17,7 @@ typedef struct
     SimulatorAPI sim;
     bool simon;
     bool  udp;
+    bool disable_audio;
 
     char* config_filepath;
     char* config_dirpath;

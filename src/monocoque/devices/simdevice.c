@@ -50,20 +50,26 @@ int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds, Monocoque
         }
 
         if (ds[j].dev_type == SIMDEV_SOUND) {
-
-            SoundDevice* sim = new_sound_device(&ds[j], ms);
-            if (sim != NULL)
+            if(ms->disable_audio == true)
             {
-
-                simdevices[j] = sim->m;
-                simdevices[j].initialized = true;
-                simdevices[j].type = SIMDEV_SOUND;
-                simdevices[j].fps = ds[j].fps;
-                devices++;
+                slogi("skipping configured sound device due to disable_audio being specified...");
             }
             else
             {
-                slogw("Could not initialize Sound Device");
+                SoundDevice* sim = new_sound_device(&ds[j], ms);
+                if (sim != NULL)
+                {
+
+                    simdevices[j] = sim->m;
+                    simdevices[j].initialized = true;
+                    simdevices[j].type = SIMDEV_SOUND;
+                    simdevices[j].fps = ds[j].fps;
+                    devices++;
+                }
+                else
+                {
+                    slogw("Could not initialize Sound Device");
+                }
             }
         }
 

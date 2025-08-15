@@ -136,6 +136,7 @@ typedef struct
     int verbosity_count;
     int fps;
     bool  force_udp_mode;
+    bool  disable_audio;
     char* tyre_diameter_config;
     char* config_str;
     char* log_filename_str;

@@ -46,6 +46,7 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
     p->verbosity_count     = 0;
     p->fps                 = 60;
 
+    p->disable_audio       = false;
     p->udp                 = false;
 
     p->user_specified_config_file = false;
@@ -61,6 +62,7 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
 
     struct arg_rex* cmd1             = arg_rex1(NULL, NULL, "play", NULL, REG_ICASE, NULL);
     struct arg_lit* arg_udp          = arg_lit0("d", "udp", "force udp mode for sims which support it");
+    struct arg_lit* arg_audio1       = arg_lit0("a", "disable_audio", "force disable of audio devices");
     struct arg_file* arg_conf        = arg_file0("c", "uiconf", "<config_file>", NULL);
     struct arg_file* arg_log         = arg_filen("l", "log", "<log_file>", 0, 1, NULL);
     struct arg_str* arg_confdir      = arg_strn(NULL, "configdir", "config_dir>", 0, 1, NULL);
@@ -68,7 +70,7 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
     struct arg_lit* help             = arg_litn(NULL,"help", 0, 1, "print this help and exit");
     struct arg_lit* vers             = arg_litn(NULL,"version", 0, 1, "print version information and exit");
     struct arg_end* end1             = arg_end(20);
-    void* argtable1[]                = {cmd1,arg_log,arg_conf,arg_fps,arg_udp,arg_verbosity1,help,vers,end1};
+    void* argtable1[]                = {cmd1,arg_log,arg_conf,arg_fps,arg_udp,arg_audio1,arg_verbosity1,help,vers,end1};
     int nerrors1;
 
     struct arg_rex* cmd2a            = arg_rex1(NULL, NULL, "config", NULL, REG_ICASE, NULL);
@@ -83,10 +85,11 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
     int nerrors2;
 
     struct arg_rex* cmd3             = arg_rex1(NULL, NULL, "test", NULL, REG_ICASE, NULL);
+    struct arg_lit* arg_audio2       = arg_lit0("a", "disable_audio", "force disable of audio devices");
     struct arg_lit* help3            = arg_litn(NULL,"help", 0, 1, "print this help and exit");
     struct arg_lit* vers3            = arg_litn(NULL,"version", 0, 1, "print version information and exit");
     struct arg_end* end3             = arg_end(20);
-    void* argtable3[]                = {cmd3,arg_verbosity3,help3,vers3,end3};
+    void* argtable3[]                = {cmd3,arg_verbosity3,arg_audio2,help3,vers3,end3};
     int nerrors3;
 
     struct arg_lit*  help0           = arg_lit0(NULL,"help",     "print this help and exit");
@@ -132,6 +135,10 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
         {
             p->udp = true;
         }
+        if (arg_audio1->count > 0)
+        {
+            p->disable_audio = true;
+        }
         if(arg_fps->count > 0)
         {
             p->fps = arg_fps->ival[0];
@@ -167,6 +174,10 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
         {
             p->program_action = A_TEST;
             p->verbosity_count = arg_verbosity3->count;
+            if (arg_audio2->count > 0)
+            {
+                p->disable_audio = true;
+            }
             exitcode = E_SUCCESS_AND_DO;
         }
         else
