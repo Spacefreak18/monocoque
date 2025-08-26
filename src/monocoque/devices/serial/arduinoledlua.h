@@ -21,5 +21,6 @@ int set_led_to_color(lua_State *L);
 int set_led_range_to_rgb_color(lua_State *L);
 int set_led_to_rgb_color(lua_State *L);
 int led_clear_all(lua_State *L);
+int led_clear_range(lua_State *L);
 
 #endif

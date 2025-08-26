@@ -313,6 +313,7 @@ int arduino_customled_update(SerialDevice* serialdevice, SimData* simdata)
     lua_register(L, "set_led_to_rgb_color", set_led_to_rgb_color);
     lua_register(L, "set_led_range_to_rgb_color", set_led_range_to_rgb_color);
     lua_register(L, "led_clear_all", led_clear_all);
+    lua_register(L, "led_clear_range", led_clear_all);
 
     lua_pushinteger(L, LUALEDCOLOR_RED);
     lua_setglobal(L, "RED");

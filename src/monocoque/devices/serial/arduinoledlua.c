@@ -340,3 +340,49 @@ int led_clear_all(lua_State *L)
     }
 
 }
+
+int led_clear_range(lua_State *L)
+{
+
+    slogt("lua called c function led_clear_range");
+
+    int range_start = lua_tonumber(L, 1);
+    int range_end = lua_tonumber(L, 2);
+
+    slogd("lua range start is %i", range_start);
+    slogd("lua range end is %i", range_end);
+
+    range_start = range_start - 1;
+
+    lua_getglobal(L, "TotalLeds");
+    int numlights = 0;
+    if (lua_isnumber(L, -1))
+    {
+        numlights = lua_tonumber(L, -1);
+    }
+    slogd("num leds is %i", numlights);
+
+    if(range_end > numlights)
+    {
+        range_end = numlights;
+    }
+
+    if(range_end == 0)
+    {
+        return 1;
+    }
+
+    lua_pushstring(L, "buff");
+    lua_gettable(L, LUA_REGISTRYINDEX);
+    char* bytes = lua_touserdata(L, -1);
+
+    slogt("first byte of buff is x%02x", bytes[0]);
+
+    for( int i = 0; i < numlights; i++)
+    {
+        bytes[(i * 3) + 0] = 0x00;
+        bytes[(i * 3) + 1] = 0x00;
+        bytes[(i * 3) + 2] = 0x00;
+    }
+
+}

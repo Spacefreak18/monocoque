@@ -58,11 +58,11 @@ while(i <= proxcars and leftsideset == false) do
     i = i + 1
 end
 
-
+rpm_leds = 6
 -- rpm stuff
 if simdata.rpm > 0 and simdata.maxrpm > 0 then
     rpmmargin = .05*simdata.maxrpm;
-    rpminterval = (simdata.maxrpm-rpmmargin) / 6;
+    rpminterval = (simdata.maxrpm-rpmmargin) / rpm_leds;
 
     litleds = 0
     for i = 1,6 do
@@ -72,18 +72,18 @@ if simdata.rpm > 0 and simdata.maxrpm > 0 then
     end
 
     color = GREEN
-    if litleds > 3 and litleds < 6 then
+    if litleds > rpm_leds/2 and litleds < rpm_leds then
         color = YELLOW
     end
-    if litleds >= 6 then
+    if litleds >= rpm_leds then
         color = RED
     end
-    if litleds >=  6 then
+    if litleds >= rpm_leds then
 
         if simdata.mtick % 2 == 0 then
             set_led_range_to_color(1, litleds, color)
         else
-            led_clear_all()
+            led_clear_range(1, rpm_leds)
         end
     else
         set_led_range_to_color(1, litleds, color)
