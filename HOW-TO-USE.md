@@ -11,7 +11,7 @@
 * create Monocoque config in `~/.config/monocque/monocoque.config` - [example](https://github.com/Spacefreak18/monocoque/blob/master/conf/monocoque.config)
     * Adapt the config to your needs, remove unused entries
     * [Documentation for Bass Shaker Config](https://spacefreak18.github.io/simapi/shakers)
-
+    * Test your config as described in the [README](README.md#testing)
 ## Steam & Game Config
 ### Steam
 * Adapt Steam Launch Commands from [simshbridge](https://github.com/spacefreak18/simshmbridge?tab=readme-ov-file#basic-mapping-examples)
