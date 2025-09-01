@@ -130,6 +130,9 @@ make  # Make sure serial connection is the same as on the host pc and it have th
 ## Getting car tyre diameter for rumbles to work
 - User needs to start monocoque and drive the new car straight at 70 kmph and then stop steering, acc or brake input 
 
+## User Setup Guide
+See the dedicated [How To](HOW-TO-USE.md) for detailed instructions to set up and run 'monocoque`
+
 ## Testing
 ```
 ./monocoque test -vv # Make sure that ~/.config/monocque/monocoque.config only contains the devices you have connected.
