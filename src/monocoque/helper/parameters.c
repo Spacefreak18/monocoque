@@ -65,7 +65,7 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
     struct arg_lit* arg_audio1       = arg_lit0("a", "disable_audio", "force disable of audio devices");
     struct arg_file* arg_conf        = arg_file0("c", "uiconf", "<config_file>", NULL);
     struct arg_file* arg_log         = arg_filen("l", "log", "<log_file>", 0, 1, NULL);
-    struct arg_str* arg_confdir      = arg_strn(NULL, "configdir", "config_dir>", 0, 1, NULL);
+    struct arg_str* arg_confdir      = arg_str1(NULL, NULL, "configdir", "<config_dir>");
     struct arg_int* arg_fps          = arg_int0("f", "fps", "fps", "main data refresh rate");
     struct arg_lit* help             = arg_litn(NULL,"help", 0, 1, "print this help and exit");
     struct arg_lit* vers             = arg_litn(NULL,"version", 0, 1, "print version information and exit");
@@ -113,8 +113,6 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
         printf("%s: insufficient memory\n",progname);
         goto cleanup;
     }
-
-    arg_granularity->ival[0] = 1;
 
     nerrors0 = arg_parse(argc,argv,argtable0);
     nerrors1 = arg_parse(argc,argv,argtable1);
@@ -241,5 +239,4 @@ cleanup:
     arg_freetable(argtable2,sizeof(argtable2)/sizeof(argtable2[0]));
     arg_freetable(argtable3,sizeof(argtable3)/sizeof(argtable3[0]));
     return exitcode;
-
 }
