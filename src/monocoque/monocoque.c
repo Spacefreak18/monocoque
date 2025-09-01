@@ -98,7 +98,7 @@ int main(int argc, char** argv)
     if(!xdgInitHandle(&xdg))
     {
         fprintf(stderr, "Function xdgInitHandle() failed, is $HOME unset?\n");
-        goto cleanup_final;
+        goto cleanup;
     }
 
     const char* config_home_str = xdgConfigHome(&xdg);
@@ -172,7 +172,7 @@ int main(int argc, char** argv)
     {
         fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
         config_destroy(&cfg);
-        goto cleanup_final;
+        goto cleanup;
     }
     else
     {
@@ -314,8 +314,9 @@ int main(int argc, char** argv)
 
 
 
-cleanup_final:
+cleanup:
     xdgWipeHandle(&xdg);
+cleanup_final:
     monocoquesettingsfree(ms);
     free(ms);
     freeparams(p);
