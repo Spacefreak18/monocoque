@@ -30,7 +30,8 @@ typedef enum
     SIMDEVTYPE_SERIALHAPTIC      = 5,
     SIMDEVTYPE_USBWHEEL          = 6,
     SIMDEVTYPE_SERIALWHEEL       = 7,
-    SIMDEVTYPE_SIMLED            = 8
+    SIMDEVTYPE_SIMLED            = 8,
+    SIMDEVTYPE_ARDUINOCUSTOM     = 9
 }
 DeviceSubType;
 

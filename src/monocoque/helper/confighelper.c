@@ -160,6 +160,11 @@ int strtodevsubtype(const char* device_subtype, DeviceSettings* ds, int simdev)
                 ds->dev_subtype = SIMDEVTYPE_SIMLED;
                 break;
             }
+            if (strcicmp(device_subtype, "ArduinoCustom") == 0)
+            {
+                ds->dev_subtype = SIMDEVTYPE_ARDUINOCUSTOM;
+                break;
+            }
             if (strcicmp(device_subtype, "SimWind") == 0)
             {
                 ds->dev_subtype = SIMDEVTYPE_SIMWIND;

@@ -6,12 +6,13 @@
 
 typedef enum
 {
-    ARDUINODEV__SHIFTLIGHTS   = 0,
-    ARDUINODEV__SIMWIND       = 1,
-    ARDUINODEV__HAPTIC        = 2,
-    SERIALDEV__MOZAR5         = 3,
-    ARDUINODEV__SIMLED        = 4,
-    ARDUINODEV__SIMLED__CUSTOM        = 5
+    ARDUINODEV__SHIFTLIGHTS           = 0,
+    ARDUINODEV__SIMWIND               = 1,
+    ARDUINODEV__HAPTIC                = 2,
+    SERIALDEV__MOZAR5                 = 3,
+    ARDUINODEV__SIMLED                = 4,
+    ARDUINODEV__SIMLED__CUSTOM        = 5,
+    ARDUINODEV__CUSTOM                = 6
 }
 SerialDeviceType;
 

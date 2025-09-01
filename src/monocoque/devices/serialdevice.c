@@ -34,6 +34,15 @@ int serialdev_update(SimDevice* this, SimData* simdata)
     return 0;
 }
 
+int arduino_custom_updater(SimDevice* this, SimData* simdata)
+{
+    SerialDevice* serialdevice = (void *) this->derived;
+
+    arduino_custom_update(serialdevice, simdata);
+
+    return 0;
+}
+
 int arduino_customled_updater(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
@@ -219,14 +228,22 @@ int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds)
             break;
         case ARDUINODEV__SIMLED__CUSTOM:
             serialdevice->m.device_specific_config_file = strdup(ds->specific_config_file);
-            error = arduino_customled_init(serialdevice, ds->serialdevsettings.portdev, serialdevice->m.device_specific_config_file);
+            error = arduino_custom_init(serialdevice, ds->serialdevsettings.portdev, serialdevice->m.device_specific_config_file, true);
+            if(error < 0)
+            {
+                free(serialdevice->m.device_specific_config_file);
+            }
+            break;
+        case ARDUINODEV__CUSTOM:
+            serialdevice->m.device_specific_config_file = strdup(ds->specific_config_file);
+            error = arduino_custom_init(serialdevice, ds->serialdevsettings.portdev, serialdevice->m.device_specific_config_file, false);
             if(error < 0)
             {
                 free(serialdevice->m.device_specific_config_file);
             }
             break;
         case ARDUINODEV__SIMLED:
-            error = arduino_customled_init(serialdevice, ds->serialdevsettings.portdev, NULL);
+            error = arduino_custom_init(serialdevice, ds->serialdevsettings.portdev, NULL, false);
             break;
         default:
             error = arduino_init(serialdevice, ds->serialdevsettings.portdev);
@@ -240,6 +257,7 @@ int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds)
 static const vtable serial_simdevice_vtable = { &serialdev_update, &serialdev_free };
 static const vtable arduino_shiftlights_vtable = { &arduino_shiftlights_update, &serialdev_free };
 static const vtable arduino_simled_vtable = { &arduino_simled_updater, &serialdev_free };
+static const vtable arduino_custom_vtable = { &arduino_custom_updater, &serialdev_free };
 static const vtable arduino_simled_custom_vtable = { &arduino_customled_updater, &serialdev_free };
 static const vtable arduino_simwind_vtable = { &arduino_simwind_update, &serialdev_free };
 static const vtable arduino_simhaptic_vtable = { &arduino_simhaptic_update, &serialdev_free };
@@ -287,6 +305,11 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
             this->devicetype = ARDUINODEV__SIMWIND;
             this->m.vtable = &arduino_simwind_vtable;
             slogi("Initializing arduino devices for sim wind.");
+            break;
+        case (SIMDEVTYPE_ARDUINOCUSTOM):
+            this->devicetype = ARDUINODEV__CUSTOM;
+            this->m.vtable = &arduino_simwind_vtable;
+            slogi("Initializing custom arduino device.");
             break;
         case (SIMDEVTYPE_SERIALHAPTIC):
             this->devicetype = ARDUINODEV__HAPTIC;
