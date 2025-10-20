@@ -308,7 +308,7 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
             break;
         case (SIMDEVTYPE_ARDUINOCUSTOM):
             this->devicetype = ARDUINODEV__CUSTOM;
-            this->m.vtable = &arduino_simwind_vtable;
+            this->m.vtable = &arduino_custom_vtable;
             slogi("Initializing custom arduino device.");
             break;
         case (SIMDEVTYPE_SERIALHAPTIC):

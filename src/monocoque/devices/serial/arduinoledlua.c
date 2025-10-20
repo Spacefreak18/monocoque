@@ -33,6 +33,12 @@ int simdata_to_lua(lua_State *L, SimData* simdata) {
 
     lua_pushinteger(L, simdata->rpms);
     lua_setfield(L, -2, "rpm");
+    
+    lua_pushinteger(L, simdata->gear);
+    lua_setfield(L, -2, "gear");
+    
+    lua_pushinteger(L, simdata->velocity);
+    lua_setfield(L, -2, "velocity");
 
     lua_pushinteger(L, simdata->mtick);
     lua_setfield(L, -2, "mtick");

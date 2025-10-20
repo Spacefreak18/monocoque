@@ -177,6 +177,8 @@ int arduino_custom_init(SerialDevice* serialdevice, const char* portdev, const c
 
     serialdevice->m.L = L;
 
+    slogi("LUA config setup successful.");
+    
     return serialdevice->id;
 }
 
@@ -400,17 +402,12 @@ int arduino_customled_free(SerialDevice* serialdevice, bool lua)
 
 int arduino_custom_update(SerialDevice* serialdevice, SimData* simdata)
 {
-
     size_t bufsize = 14;
     char bytes[bufsize];
     lua_State* L = serialdevice->m.L;
 
-    lua_pushstring(L, "buff");
-    lua_settable(L, LUA_REGISTRYINDEX);
-
     simdata_to_lua(L, simdata);
     lua_setglobal(L, "simdata");
-
 
     lua_getglobal(L,"myFunc");
     if (lua_pcall(L, 0, 0, 0) != LUA_OK)
@@ -418,11 +415,16 @@ int arduino_custom_update(SerialDevice* serialdevice, SimData* simdata)
         fprintf(stderr, "Error calling Lua script: %s\n", lua_tostring(L, -1));
     }
 
+    lua_getglobal(L, "Message");
+    int result = 0;
+    if (lua_isstring(L, -1)) {
+        const char *msg = lua_tostring(L, -1);
+        size_t size = strlen(msg);
+        result = arduino_update(serialdevice, (void*) msg, size);
+        slogt("custom arduino wrote message %s of %i bytes", msg, result);
+    }
 
-    size_t size = sizeof(bytes);
-    int result = arduino_update(serialdevice, &bytes, size);
-
-    slogt("custom led wrote %i bytes", result);
-
+    // Clean up
+    lua_pop(L, 1);
     return result;
 }
