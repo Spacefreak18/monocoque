@@ -10,6 +10,7 @@
 #include "hapticeffect.h"
 #include "serial/arduino.h"
 #include "serial/moza.h"
+#include "serial/moza_new.h"
 #include "../helper/parameters.h"
 #include "../simulatorapi/simapi/simapi/simdata.h"
 #include "../slog/slog.h"
@@ -20,7 +21,16 @@ int serial_wheel_update(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
 
-    moza_update(serialdevice, simdata->maxrpm, simdata->rpms);
+    switch (serialdevice->devicetype) {
+      case SIMDEVSUBTYPE_MOZA_NEW:
+        moza_new_update(serialdevice, simdata);
+        break;
+
+      case SIMDEVSUBTYPE_MOZAR5:
+      default:
+        moza_update(serialdevice, simdata->rpms, simdata->maxrpm);
+        break;
+    }
 
     return 0;
 }
@@ -226,6 +236,9 @@ int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds)
             // maybe this call a more generic serial wheel init first
             error = moza_init(serialdevice, ds->serialdevsettings.portdev);
             break;
+        case SERIALDEV__MOZA_NEW:
+            error = moza_new_init(serialdevice, ds->serialdevsettings.portdev);
+            break;
         case ARDUINODEV__SIMLED__CUSTOM:
             serialdevice->m.device_specific_config_file = strdup(ds->specific_config_file);
             error = arduino_custom_init(serialdevice, ds->serialdevsettings.portdev, serialdevice->m.device_specific_config_file, true);
@@ -329,16 +342,20 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
         case (SIMDEVTYPE_SERIALWHEEL):
             this->type = SERIALDEV_WHEEL;
 
-            slogi("Initializing serial wheel device.");
             switch (ds->dev_subsubtype) {
 
+                case SIMDEVSUBTYPE_MOZA_NEW:
+                  slogi("Initializing new firmware Moza serial wheel device.");
+                  this->devicetype = SERIALDEV__MOZA_NEW;
+                  this->m.vtable = &serialwheel_vtable;
+                  break;
                 case SIMDEVSUBTYPE_MOZAR5:
                 default:
-                //move this stuff to wheeldevice or it's own serial wheel device module
-                this->devicetype = SERIALDEV__MOZAR5;
-                this->m.vtable = &serialwheel_vtable;
-
-                break;
+                  //move this stuff to wheeldevice or it's own serial wheel device module
+                  slogi("Initializing Moza serial wheel device.");
+                  this->devicetype = SERIALDEV__MOZAR5;
+                  this->m.vtable = &serialwheel_vtable;
+                  break;
             }
     }
 

@@ -38,6 +38,8 @@ set(devices_source_files
   serial/arduinoledlua.c
   serial/moza.h
   serial/moza.c
+  serial/moza_new.h
+  serial/moza_new.c
 )
 
 include_directories("." "usb" "sound" "serial")
