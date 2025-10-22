@@ -28,6 +28,9 @@ int simdata_to_lua(lua_State *L, SimData* simdata) {
 
     lua_newtable(L);
 
+    lua_pushstring(L, simdata->gearc);
+    lua_setfield(L, -2, "gearc");
+
     lua_pushinteger(L, simdata->playerflag);
     lua_setfield(L, -2, "playerflag");
 

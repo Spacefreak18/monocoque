@@ -651,6 +651,8 @@ int tester(SimDevice* devices, int numdevices)
     simdata->car[3] = '\0';
 
     simdata->gear = MONOCOQUE_GEAR_NEUTRAL;
+    simdata->gearc[0] = 0x4e;
+    simdata->gearc[1] = 0;
     simdata->velocity = 16;
     simdata->rpms = 100;
     simdata->maxrpm = 8000;
@@ -681,6 +683,7 @@ int tester(SimDevice* devices, int numdevices)
 
     fprintf(stdout, "Shifting into first gear\n");
     simdata->gear = 2;
+    simdata->gearc[0] = 0x31;
     for (int x = 0; x < numdevices; x++)
     {
         if (devices[x].initialized == true)
@@ -746,6 +749,7 @@ int tester(SimDevice* devices, int numdevices)
     simdata->tyrediameter[3] = -1;
     simdata->abs = 0;
     simdata->gear = 3;
+    simdata->gearc[0] = 0x32;
     for (int x = 0; x < numdevices; x++)
     {
         if (devices[x].initialized == true)
@@ -799,6 +803,7 @@ int tester(SimDevice* devices, int numdevices)
 
     fprintf(stdout, "Shifting into third gear\n");
     simdata->gear = 4;
+    simdata->gearc[0] = 0x33;
     for (int x = 0; x < numdevices; x++)
     {
         if (devices[x].initialized == true)
@@ -835,6 +840,7 @@ int tester(SimDevice* devices, int numdevices)
 
     fprintf(stdout, "Shifting into fourth gear\n");
     simdata->gear = 5;
+    simdata->gearc[0] = 0x34;
     for (int x = 0; x < numdevices; x++)
     {
         if (devices[x].initialized == true)
@@ -893,6 +899,7 @@ int tester(SimDevice* devices, int numdevices)
     simdata->velocity = 0;
     simdata->rpms = 100;
     simdata->gear = MONOCOQUE_GEAR_NEUTRAL;
+    simdata->gearc[0] = 0x4e;
     for (int x = 0; x < numdevices; x++)
     {
         if (devices[x].initialized == true)
