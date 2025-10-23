@@ -14,6 +14,10 @@ set(simulatorapi_source_files
   simapi/simapi/rf2.h
   simapi/simapi/pcars2.h
   simapi/simapi/scs2.h
+  simapi/simapi/mapping/acmapper.c
+  simapi/simapi/mapping/rf2mapper.c
+  simapi/simapi/mapping/pcars2mapper.c
+  simapi/simapi/mapping/scs2mapper.c
   simapi/simapi/getpid.c
   simapi/simapi/getpid.h
 )
