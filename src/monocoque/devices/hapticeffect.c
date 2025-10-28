@@ -75,15 +75,15 @@ int loadtyreconfig(SimData* simdata, char* configfile)
             config_setting_lookup_float(config_car, "tyre1", &tyre1);
             config_setting_lookup_float(config_car, "tyre2", &tyre2);
             config_setting_lookup_float(config_car, "tyre3", &tyre3);
-            int found = config_setting_lookup_string(config_car, "sim", &simstr);
-            if(found == CONFIG_FALSE)
-            {
-                int found = config_setting_lookup_int(config_car, "sim", &sim);
-            }
-            else
-            {
-                sim = simapi_strtogame(simstr);
-            }
+            int found = config_setting_lookup_int(config_car, "sim", &sim);
+            //if(found == CONFIG_FALSE)
+            //{
+            //    int found = config_setting_lookup_int(config_car, "sim", &sim);
+            //}
+            //else
+            //{
+            //    sim = simapi_strtogame(simstr);
+            //}
 
 
             if(simdata->car != NULL && car != NULL)
@@ -142,8 +142,8 @@ int savetyreconfig(SimData* simdata, char* configfile)
 
     setting = config_setting_add(carobject, "car", CONFIG_TYPE_STRING);
     config_setting_set_string(setting, simdata->car);
-    setting = config_setting_add(carobject, "sim", CONFIG_TYPE_STRING);
-    config_setting_set_string(setting, simapi_gametostr(simdata->simexe));
+    setting = config_setting_add(carobject, "sim", CONFIG_TYPE_INT64);
+    config_setting_set_int64(setting, simdata->simexe);
     setting = config_setting_add(carobject, "tyre0", CONFIG_TYPE_FLOAT);
     config_setting_set_float(setting, simdata->tyrediameter[0]);
     setting = config_setting_add(carobject, "tyre1", CONFIG_TYPE_FLOAT);
@@ -160,7 +160,7 @@ int savetyreconfig(SimData* simdata, char* configfile)
       config_destroy(&cfg);
     }
 
-    slogi("New configuration successfully written to: %s\n", configfile);
+    slogi("New configuration successfully written to: %s for sim %i, car %s\n", configfile, simdata->simexe, simdata->car);
 
     config_destroy(&cfg);
 
