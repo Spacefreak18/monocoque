@@ -17,10 +17,10 @@
 #define MOZA_MAGIC_VALUE 0x0d
 #define BIT(nr) (1UL << (nr))
 
-unsigned char moza_checksum(unsigned char *data)
+unsigned char moza_checksum(unsigned char *data, unsigned short size)
 {
     unsigned int ret = MOZA_MAGIC_VALUE;
-    for (short i = 0; i < MOZA_PAYLOAD_SIZE; i++)
+    for (unsigned short i = 0; i < size; i++)
     {
         ret += data[i];
     }
@@ -31,7 +31,7 @@ unsigned char moza_checksum(unsigned char *data)
 int moza_update(SerialDevice* serialdevice, unsigned short maxrpm, unsigned short rpm)
 {
     unsigned char bytes[] = MOZA_SERIAL_TEMPLATE;
-    int size = MOZA_PAYLOAD_SIZE;
+    unsigned short size = MOZA_PAYLOAD_SIZE;
     float perctflt = ((float)rpm/(float)maxrpm)*100;
     int perct = round(perctflt);
 
@@ -69,7 +69,7 @@ int moza_update(SerialDevice* serialdevice, unsigned short maxrpm, unsigned shor
     if (perct >= 94)
         bytes[8] |= BIT(MOZA_BLINKING_BIT);
 
-    bytes[10] = moza_checksum(bytes);
+    bytes[10] = moza_checksum(bytes, size);
 
     int result = 1;
     if (serialdevice->port)

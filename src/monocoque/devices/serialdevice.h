@@ -12,7 +12,8 @@ typedef enum
     SERIALDEV__MOZAR5                 = 3,
     ARDUINODEV__SIMLED                = 4,
     ARDUINODEV__SIMLED__CUSTOM        = 5,
-    ARDUINODEV__CUSTOM                = 6
+    ARDUINODEV__CUSTOM                = 6,
+    SERIALDEV__MOZA_NEW               = 7
 }
 SerialDeviceType;
 

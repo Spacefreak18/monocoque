@@ -93,6 +93,11 @@ int strtodevsubsubtype(const char* device_subsubtype, DeviceSettings* ds)
         ds->dev_subsubtype = SIMDEVSUBTYPE_CAMMUSC12;
         devfound = true;
     }
+    if (strcicmp(device_subsubtype, "MozaNew") == 0)
+    {
+        ds->dev_subsubtype = SIMDEVSUBTYPE_MOZA_NEW;
+        devfound = true;
+    }
     if (strcicmp(device_subsubtype, "MozaR5") == 0)
     {
         ds->dev_subsubtype = SIMDEVSUBTYPE_MOZAR5;
@@ -811,6 +816,12 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         if (device_settings != NULL)
         {
             const char* temp;
+            int found = config_setting_lookup_string(device_settings, "subtype", &temp);
+            if(temp != NULL && found > 0)
+            {
+              strtodevsubsubtype(temp, ds);
+            }
+
             config_setting_lookup_string(device_settings, "devpath", &temp);
             ds->serialdevsettings.portdev = strdup(temp);
 
@@ -840,7 +851,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
 
             double ampfactor = 1.0;
             ds->serialdevsettings.ampfactor = 1.0;
-            int found = config_setting_lookup_float(device_settings, "ampfactor", &ampfactor);
+            found = config_setting_lookup_float(device_settings, "ampfactor", &ampfactor);
             ds->serialdevsettings.ampfactor = ampfactor;
 
             slogt("set port baud rate to %i, ampfactor %f", baud, ampfactor);
