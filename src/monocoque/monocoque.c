@@ -131,6 +131,8 @@ int main(int argc, char** argv)
     }
     fprintf(stderr, "settings applied\n");
 
+  
+    slog_init("monocoque", SLOG_FLAGS_ALL, 1);
     slog_config_t slgCfg;
     slog_config_get(&slgCfg);
     slgCfg.eColorFormat = SLOG_COLORING_TAG;
@@ -173,6 +175,7 @@ int main(int argc, char** argv)
     {
         fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
         config_destroy(&cfg);
+        slog_destroy();
         goto cleanup_final;
     }
     else
@@ -311,6 +314,7 @@ int main(int argc, char** argv)
                 freesound();
             }
         }
+        slog_destroy();
     }
 
 
