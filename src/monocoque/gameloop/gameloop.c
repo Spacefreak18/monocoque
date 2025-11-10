@@ -650,7 +650,7 @@ int tester(SimDevice* devices, int numdevices)
     simdata->car[2] = 'R';
     simdata->car[3] = '\0';
 
-    simdata->gear = MONOCOQUE_GEAR_NEUTRAL;
+    simdata->gear = SIMAPI_GEAR_NEUTRAL;
     simdata->gearc[0] = 0x4e;
     simdata->gearc[1] = 0;
     simdata->velocity = 16;
@@ -679,10 +679,10 @@ int tester(SimDevice* devices, int numdevices)
     sleep(3);
 
     fprintf(stdout, "Green Flag!\n");
-    simdata->playerflag = 0;
+    simdata->playerflag = SIMAPI_FLAG_GREEN;
 
     fprintf(stdout, "Shifting into first gear\n");
-    simdata->gear = 2;
+    simdata->gear = SIMAPI_GEAR_FIRST;
     simdata->gearc[0] = 0x31;
     for (int x = 0; x < numdevices; x++)
     {
@@ -748,7 +748,7 @@ int tester(SimDevice* devices, int numdevices)
     simdata->tyrediameter[2] = -1;
     simdata->tyrediameter[3] = -1;
     simdata->abs = 0;
-    simdata->gear = 3;
+    simdata->gear = SIMAPI_GEAR_SECOND;
     simdata->gearc[0] = 0x32;
     for (int x = 0; x < numdevices; x++)
     {
@@ -799,10 +799,10 @@ int tester(SimDevice* devices, int numdevices)
     sleep(3);
 
     fprintf(stdout, "Yellow Flag!\n");
-    simdata->playerflag = 1;
+    simdata->playerflag = SIMAPI_FLAG_YELLOW;
 
     fprintf(stdout, "Shifting into third gear\n");
-    simdata->gear = 4;
+    simdata->gear = SIMAPI_GEAR_THIRD;
     simdata->gearc[0] = 0x33;
     for (int x = 0; x < numdevices; x++)
     {
@@ -825,7 +825,7 @@ int tester(SimDevice* devices, int numdevices)
     sleep(3);
 
     fprintf(stdout, "Blue Flag!\n");
-    simdata->playerflag = 4;
+    simdata->playerflag = SIMAPI_FLAG_BLUE;
 
     fprintf(stdout, "Setting rpms to 4000\n");
     simdata->rpms = 4000;
@@ -839,7 +839,7 @@ int tester(SimDevice* devices, int numdevices)
     sleep(3);
 
     fprintf(stdout, "Shifting into fourth gear\n");
-    simdata->gear = 5;
+    simdata->gear = SIMAPI_GEAR_FIFTH;
     simdata->gearc[0] = 0x34;
     for (int x = 0; x < numdevices; x++)
     {
@@ -873,7 +873,7 @@ int tester(SimDevice* devices, int numdevices)
     sleep(3);
 
     fprintf(stdout, "Red Flag!\n");
-    simdata->playerflag = 2;
+    simdata->playerflag = SIMAPI_FLAG_RED;
 
     fprintf(stdout, "Setting rpms to 8000\n");
     simdata->rpms = 8000;
@@ -898,7 +898,7 @@ int tester(SimDevice* devices, int numdevices)
 
     simdata->velocity = 0;
     simdata->rpms = 100;
-    simdata->gear = MONOCOQUE_GEAR_NEUTRAL;
+    simdata->gear = SIMAPI_GEAR_NEUTRAL;
     simdata->gearc[0] = 0x4e;
     for (int x = 0; x < numdevices; x++)
     {
