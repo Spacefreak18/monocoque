@@ -839,7 +839,7 @@ int tester(SimDevice* devices, int numdevices)
     sleep(3);
 
     fprintf(stdout, "Shifting into fourth gear\n");
-    simdata->gear = SIMAPI_GEAR_FIFTH;
+    simdata->gear = SIMAPI_GEAR_FOURTH;
     simdata->gearc[0] = 0x34;
     for (int x = 0; x < numdevices; x++)
     {
