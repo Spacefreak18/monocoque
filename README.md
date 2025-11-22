@@ -46,11 +46,12 @@ Cross Platform device manager for driving and flight simulators, for use with co
 - argtable2
 - libconfig
 - xdg-basedir
+- lua
 - [slog](https://github.com/kala13x/slog) (static)
 - [simshmbridge](https://github.com/spacefreak18/simshmbridge) - for sims that need shared memory mapping like AC and Project Cars related.
 - [simapi](https://github.com/spacefreak18/simapi)
 ```
-pacman -Syu git cmake pulse-native-provider libxdg-basedir libserialport libconfig libuv argtable hidapi
+pacman -Syu git cmake pulse-native-provider libxdg-basedir libserialport libconfig libuv argtable hidapi lua
 ```
 
 ## Building
