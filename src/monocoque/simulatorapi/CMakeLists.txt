@@ -7,6 +7,7 @@ set(simulatorapi_source_files
   simapi/include/rf2data.h
   simapi/include/pcars2data.h
   simapi/include/scs2data.h
+  simapi/include/outgauge.h
   simapi/simmap/basicmap.h
   simapi/simmap/mapacdata.c
   simapi/simmap/mapacdata.h
@@ -14,10 +15,12 @@ set(simulatorapi_source_files
   simapi/simapi/rf2.h
   simapi/simapi/pcars2.h
   simapi/simapi/scs2.h
+  simapi/simapi/outgauge.h
   simapi/simapi/mapping/acmapper.c
   simapi/simapi/mapping/rf2mapper.c
   simapi/simapi/mapping/pcars2mapper.c
   simapi/simapi/mapping/scs2mapper.c
+  simapi/simapi/mapping/outgaugemapper.c
   simapi/simapi/getpid.c
   simapi/simapi/getpid.h
 )
