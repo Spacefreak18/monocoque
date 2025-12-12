@@ -26,6 +26,7 @@ struct sigaction act;
 
 uv_idle_t idler;
 uv_timer_t datachecktimer;
+uv_timer_t showstatstimer;
 uv_timer_t datamaptimer;
 uv_udp_t recv_socket;
 
@@ -33,6 +34,7 @@ bool doui = false;
 int appstate = 0;
 
 void shmdatamapcallback(uv_timer_t* handle);
+void showstatscallback(uv_timer_t* handle);
 void datacheckcallback(uv_timer_t* handle);
 void startdatalogger(MonocoqueSettings* ms, loop_data* l);
 
@@ -281,11 +283,12 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
         }
 
 
+        uv_timer_start(&showstatstimer, showstatscallback, 0, 100);
         doui = false;
     }
     else
     {
-        showstats(simdata);
+        //showstats(simdata);
         //SimDevice* devices = f->simdevices;
         //int numdevices = f->numdevices;
         //for (int x = 0; x < numdevices; x++)
@@ -295,6 +298,17 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
         //        devices[x].update(&devices[x], simdata);
         //    }
         //}
+    }
+}
+
+void showstatscallback(uv_timer_t* handle)
+{
+    void* b = uv_handle_get_data((uv_handle_t*) handle);
+    loop_data* f = (loop_data*) b;
+    SimData* simdata = f->simdata;
+    if(appstate == 2)
+    {
+        showstats(simdata);
     }
 }
 
@@ -318,6 +332,7 @@ void shmdatamapcallback(uv_timer_t* handle)
         {
             f->releasing = true;
             uv_timer_stop(handle);
+            uv_timer_stop(&showstatstimer);
             slogi("releasing devices, please wait");
             f->uion = false;
             SimDevice* devices = f->simdevices;
@@ -390,6 +405,10 @@ static void on_udp_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf,
     if (nread > 0) {
         slogt("udp data received");
     }
+    if (nread <= 0) {
+        free(rcvbuf->base);
+        return;
+    }
 
     char* a;
     a = rcvbuf->base;
@@ -412,6 +431,7 @@ static void on_udp_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf,
         {
             f->releasing = true;
             uv_udp_recv_stop(handle);
+            uv_timer_stop(&showstatstimer);
             slogi("releasing devices, please wait");
             f->uion = false;
             SimDevice* devices = f->simdevices;
@@ -611,11 +631,13 @@ int monocoque_mainloop(MonocoqueSettings* ms)
     baton->req.data = (void*) baton;
     uv_handle_set_data((uv_handle_t*) &datachecktimer, (void*) baton);
     uv_handle_set_data((uv_handle_t*) &datamaptimer, (void*) baton);
+    uv_handle_set_data((uv_handle_t*) &showstatstimer, (void*) baton);
     uv_handle_set_data((uv_handle_t*) &recv_socket, (void*) baton);
     uv_handle_set_data((uv_handle_t*) poll, (void*) baton);
     appstate = 1;
     slogd("setting initial app state");
     uv_timer_init(uv_default_loop(), &datachecktimer);
+    uv_timer_init(uv_default_loop(), &showstatstimer);
     fprintf(stdout, "Searching for sim data... Press q to quit...\n");
     uv_timer_start(&datachecktimer, datacheckcallback, 1000, 1000);
 
