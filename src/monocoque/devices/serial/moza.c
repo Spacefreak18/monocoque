@@ -28,7 +28,7 @@ unsigned char moza_checksum(unsigned char *data, unsigned short size)
     return ret % 0x100;
 }
 
-int moza_update(SerialDevice* serialdevice, unsigned short maxrpm, unsigned short rpm)
+int moza_update(SerialDevice* serialdevice, unsigned short rpm, unsigned short maxrpm)
 {
     unsigned char bytes[] = MOZA_SERIAL_TEMPLATE;
     unsigned short size = MOZA_PAYLOAD_SIZE;
