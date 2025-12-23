@@ -312,26 +312,14 @@ void showstatscallback(uv_timer_t* handle)
     }
 }
 
-void shmdatamapcallback(uv_timer_t* handle)
+void releaseloop(loop_data* f, SimData* simdata, SimMap* simmap)
 {
-    void* b = uv_handle_get_data((uv_handle_t*) handle);
-    loop_data* f = (loop_data*) b;
-    SimData* simdata = f->simdata;
-    SimMap* simmap = f->simmap;
-    MonocoqueSettings* ms = f->ms;
-    //appstate = 2;
-    if (appstate == 2)
-    {
-        simdatamap(simdata, simmap, NULL, f->map, false, NULL);
-        looprun(ms, f, simdata);
-    }
 
-    if (f->simstate == false || simdata->simstatus <= 1 || appstate <= 1)
-    {
         if(f->releasing == false)
         {
             f->releasing = true;
-            uv_timer_stop(handle);
+            uv_udp_recv_stop(&recv_socket);
+            uv_timer_stop(&datamaptimer);
             uv_timer_stop(&showstatstimer);
             slogi("releasing devices, please wait");
             f->uion = false;
@@ -339,6 +327,7 @@ void shmdatamapcallback(uv_timer_t* handle)
             int numdevices = f->numdevices;
 
             // help things spin down
+            simdata->simstatus = 0;
             simdata->rpms = 0;
             simdata->velocity = 0;
 
@@ -373,7 +362,6 @@ void shmdatamapcallback(uv_timer_t* handle)
             }
             free(devices);
 
-
             int r = simfree(simdata, simmap, f->map);
             slogd("simfree returned %i", r);
             f->numdevices = 0;
@@ -391,6 +379,25 @@ void shmdatamapcallback(uv_timer_t* handle)
                 appstate = 1;
             }
         }
+}
+
+void shmdatamapcallback(uv_timer_t* handle)
+{
+    void* b = uv_handle_get_data((uv_handle_t*) handle);
+    loop_data* f = (loop_data*) b;
+    SimData* simdata = f->simdata;
+    SimMap* simmap = f->simmap;
+    MonocoqueSettings* ms = f->ms;
+    //appstate = 2;
+    if (appstate == 2)
+    {
+        simdatamap(simdata, simmap, NULL, f->map, false, NULL);
+        looprun(ms, f, simdata);
+    }
+
+    if (f->simstate == false || simdata->simstatus <= 1 || appstate <= 1)
+    {
+        releaseloop(f, simdata, simmap);
     }
 }
 
@@ -427,68 +434,7 @@ static void on_udp_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf,
 
     if (f->simstate == false || simdata->simstatus <= 1 || appstate <= 1)
     {
-        if(f->releasing == false)
-        {
-            f->releasing = true;
-            uv_udp_recv_stop(handle);
-            uv_timer_stop(&showstatstimer);
-            slogi("releasing devices, please wait");
-            f->uion = false;
-            SimDevice* devices = f->simdevices;
-            int numdevices = f->numdevices;
-
-            // help things spin down
-            simdata->rpms = 0;
-            simdata->velocity = 0;
-
-            for (int x = 0; x < numdevices; x++)
-            {
-                if (devices[x].initialized == true)
-                {
-                    uv_timer_t* dt = &f->device_timers[x];
-                    slogt("attempting device timer stop and release");
-                    slogt("timer active status %i", uv_is_active((uv_handle_t*) dt));
-                    uv_timer_stop(dt);
-                    //uv_close((uv_handle_t*) dt, on_timer_close_complete);
-                }
-            }
-            free(f->device_batons);
-            free(f->device_timers);
-            slogt("stopped device timers");
-            for (int x = 0; x < numdevices; x++)
-            {
-                if (devices[x].initialized == true)
-                {
-                    devices[x].update(&devices[x], simdata);
-                }
-            }
-            sleep(1);
-            for (int x = 0; x < numdevices; x++)
-            {
-                if (devices[x].initialized == true)
-                {
-                    devices[x].free(&devices[x]);
-                }
-            }
-            free(devices);
-
-            int r = simfree(simdata, simmap, f->map);
-            slogd("simfree returned %i", r);
-            f->numdevices = 0;
-            slogi("stopped mapping data, press q again to quit");
-            //stopui(ms->ui_type, f);
-            // free loop data
-
-            if(appstate > 0)
-            {
-                uv_timer_start(&datachecktimer, datacheckcallback, 3000, 1000);
-            }
-            f->releasing = false;
-            if(appstate > 1)
-            {
-                appstate = 1;
-            }
-        }
+        releaseloop(f, simdata, simmap);
     }
 
     slogt("udp free  :%lu %p\n",rcvbuf->len,rcvbuf->base);
@@ -564,7 +510,16 @@ void datacheckcallback(uv_timer_t* handle)
                 slogd("starting telemetry mapping at %i fps (%i ms ticks)", f->ms->fps, interval);
                 uv_timer_start(&datamaptimer, shmdatamapcallback, 2000, interval);
             }
-            uv_timer_stop(handle);
+            //uv_timer_stop(handle);
+        }
+        if(appstate == 2)
+        {
+            SimInfo si = getSim(simdata, simmap, f->ms->force_udp_mode, NULL, false);
+            if(si.isSimOn == false)
+            {
+                appstate = 1;
+                releaseloop(f, simdata, simmap);
+            }
         }
     }
 
