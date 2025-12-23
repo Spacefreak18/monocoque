@@ -1,0 +1,606 @@
+#!/usr/bin/env python3
+"""
+Monocoque Manager - Simple TUI for managing monocoque telemetry system
+"""
+
+import subprocess
+import sys
+import os
+import time
+from pathlib import Path
+
+try:
+    import curses
+except ImportError:
+    print("Error: curses module not available")
+    sys.exit(1)
+
+# Constants to avoid magic numbers
+MIN_TERMINAL_HEIGHT = 20
+MIN_TERMINAL_WIDTH = 60
+PROCESS_STOP_WAIT_TIME = 1  # seconds
+SIMD_START_DELAY = 2  # seconds
+
+
+class MonocoqueManager:
+    def __init__(self):
+        self.install_dir = Path.home() / ".local/share/monocoque"
+        self.config_dir = Path.home() / ".config"
+        self.simd_running = False
+        self.monocoque_running = False
+        self.last_cleaned_pid_files = []  # Track cleaned stale PID files
+        
+    def check_processes(self):
+        """Check if simd and monocoque are running using careful detection"""
+        try:
+            manager_pid = os.getpid()  # Our own PID to exclude
+            
+            # Method 1: Exact name matching (safest)
+            result = subprocess.run(['pgrep', '-x', 'simd'], 
+                                  capture_output=True, text=True)
+            simd_exact = bool(result.stdout.strip())
+            
+            result = subprocess.run(['pgrep', '-x', 'monocoque'], 
+                                  capture_output=True, text=True)
+            monocoque_exact = bool(result.stdout.strip())
+            
+            # Method 2: Careful process scanning
+            simd_found = False
+            monocoque_found = False
+            
+            ps_result = subprocess.run(['ps', 'axo', 'pid,comm,args'], 
+                                     capture_output=True, text=True)
+            if ps_result.returncode == 0:
+                for line in ps_result.stdout.split('\n')[1:]:  # Skip header
+                    parts = line.strip().split(None, 2)
+                    if len(parts) >= 3:
+                        pid, comm, args = parts
+                        
+                        # Skip our own process
+                        if pid == str(manager_pid):
+                            continue
+                        
+                        # Look for simd executable
+                        if (comm == 'simd' or 
+                            (comm.endswith('simd') and 'manager' not in comm) or
+                            ('/simd' in args and 'manager' not in args)):
+                            simd_found = True
+                        
+                        # Look for monocoque executable (not manager)
+                        elif ((comm == 'monocoque' or 
+                               (comm.endswith('monocoque') and 'manager' not in comm)) and
+                              'manager' not in args and
+                              'monocoque-manager' not in args and
+                              'python' not in args):
+                            monocoque_found = True
+            
+            # Set final status
+            self.simd_running = simd_exact or simd_found
+            self.monocoque_running = monocoque_exact or monocoque_found
+            
+            # Check for stale PID files and clean them up
+            self.cleanup_stale_pid_files()
+            
+        except Exception:
+            # Fallback: set both to False if detection fails
+            self.simd_running = False
+            self.monocoque_running = False
+    
+    def cleanup_stale_pid_files(self):
+        """Clean up stale PID files when processes aren't actually running"""
+        pid_files = [
+            ('/tmp/simd.pid', self.simd_running),
+            ('/tmp/monocoque.pid', self.monocoque_running),
+        ]
+        
+        cleaned_files = []
+        
+        for pid_file_path, process_running in pid_files:
+            if os.path.exists(pid_file_path) and not process_running:
+                try:
+                    # Read the PID and check if that process exists
+                    with open(pid_file_path, 'r') as f:
+                        pid_str = f.read().strip()
+                    
+                    if pid_str.isdigit():
+                        pid = int(pid_str)
+                        # Check if this PID actually exists and is the right process
+                        try:
+                            ps_result = subprocess.run(['ps', '-p', str(pid), '-o', 'comm='], 
+                                                     capture_output=True, text=True)
+                            if ps_result.returncode != 0:
+                                # Process doesn't exist, PID file is stale
+                                os.remove(pid_file_path)
+                                cleaned_files.append(os.path.basename(pid_file_path))
+                            else:
+                                # Process exists, check if it's actually simd/monocoque
+                                comm = ps_result.stdout.strip()
+                                service_name = os.path.basename(pid_file_path).replace('.pid', '')
+                                if service_name not in comm:
+                                    # Wrong process, PID file is stale
+                                    os.remove(pid_file_path)
+                                    cleaned_files.append(os.path.basename(pid_file_path))
+                        except:
+                            # Error checking process, assume stale and remove
+                            os.remove(pid_file_path)
+                            cleaned_files.append(os.path.basename(pid_file_path))
+                    else:
+                        # Invalid PID format, remove stale file
+                        os.remove(pid_file_path)
+                        cleaned_files.append(os.path.basename(pid_file_path))
+                        
+                except Exception:
+                    # Error reading/processing PID file, try to remove it
+                    try:
+                        os.remove(pid_file_path)
+                        cleaned_files.append(os.path.basename(pid_file_path))
+                    except:
+                        pass
+        
+        # Store cleaned files for potential user feedback
+        self.last_cleaned_pid_files = cleaned_files
+        return cleaned_files
+    
+    def check_installation(self):
+        """Check if monocoque is installed"""
+        simd_exists = (self.install_dir / "simapi/simd/build/simd").exists() or \
+                      subprocess.run(['which', 'simd'], capture_output=True).returncode == 0
+        monocoque_exists = (self.install_dir / "monocoque/build/monocoque").exists() or \
+                          subprocess.run(['which', 'monocoque'], capture_output=True).returncode == 0
+        
+        return simd_exists and monocoque_exists
+    
+    def draw_header(self, stdscr):
+        """Draw header"""
+        height, width = stdscr.getmaxyx()
+        title = "Monocoque Manager"
+        stdscr.attron(curses.color_pair(2) | curses.A_BOLD)
+        stdscr.addstr(0, (width - len(title)) // 2, title)
+        stdscr.attroff(curses.color_pair(2) | curses.A_BOLD)
+        stdscr.addstr(1, 0, "─" * width)
+    
+    def draw_status(self, stdscr, row):
+        """Draw status section"""
+        self.check_processes()
+        
+        stdscr.attron(curses.A_BOLD)
+        stdscr.addstr(row, 2, "Status:")
+        stdscr.attroff(curses.A_BOLD)
+        
+        # simd status
+        status_str = "● simd:      "
+        stdscr.addstr(row + 1, 4, status_str)
+        if self.simd_running:
+            stdscr.attron(curses.color_pair(1))
+            stdscr.addstr("RUNNING")
+            stdscr.attroff(curses.color_pair(1))
+        else:
+            stdscr.attron(curses.color_pair(3))
+            stdscr.addstr("STOPPED")
+            stdscr.attroff(curses.color_pair(3))
+        
+        # monocoque status
+        status_str = "● monocoque: "
+        stdscr.addstr(row + 2, 4, status_str)
+        if self.monocoque_running:
+            stdscr.attron(curses.color_pair(1))
+            stdscr.addstr("RUNNING")
+            stdscr.attroff(curses.color_pair(1))
+        else:
+            stdscr.attron(curses.color_pair(3))
+            stdscr.addstr("STOPPED")
+            stdscr.attroff(curses.color_pair(3))
+        
+        # Show notification about cleaned PID files
+        current_row = row + 3
+        if self.last_cleaned_pid_files:
+            cleaned_msg = f"● Cleaned stale PID files: {', '.join(self.last_cleaned_pid_files)}"
+            stdscr.attron(curses.color_pair(4))
+            stdscr.addstr(current_row, 4, cleaned_msg)
+            stdscr.attroff(curses.color_pair(4))
+            current_row += 1
+            # Clear the notification after showing it once
+            self.last_cleaned_pid_files = []
+        
+        return current_row
+    
+    def draw_menu(self, stdscr, row, selected):
+        """Draw menu options"""
+        height, width = stdscr.getmaxyx()
+        
+        stdscr.addstr(row, 0, "─" * width)
+        row += 1
+        
+        stdscr.attron(curses.A_BOLD)
+        stdscr.addstr(row, 2, "Actions:")
+        stdscr.attroff(curses.A_BOLD)
+        row += 1
+        
+        menu_items = [
+            ("1", "Start simd", not self.simd_running),
+            ("2", "Start monocoque", not self.monocoque_running and self.simd_running),
+            ("3", "Test configuration", True),
+            ("4", "Edit monocoque config", True),
+            ("5", "View logs", True),
+            ("6", "Restart services", self.simd_running or self.monocoque_running),
+            ("7", "Stop all", self.simd_running or self.monocoque_running),
+            ("0", "Quit", True),
+        ]
+        
+        for i, (key, label, enabled) in enumerate(menu_items):
+            if enabled:
+                if i == selected:
+                    stdscr.attron(curses.A_REVERSE)
+                stdscr.addstr(row + i, 4, f"[{key}] {label}")
+                if i == selected:
+                    stdscr.attroff(curses.A_REVERSE)
+            else:
+                stdscr.attron(curses.color_pair(4))
+                stdscr.addstr(row + i, 4, f"[{key}] {label}")
+                stdscr.attroff(curses.color_pair(4))
+        
+        return row + len(menu_items)
+    
+    def get_enabled_menu_items(self):
+        """Get list of currently enabled menu items with their indices"""
+        menu_items = [
+            ("1", "Start simd", not self.simd_running),
+            ("2", "Start monocoque", not self.monocoque_running and self.simd_running),
+            ("3", "Test configuration", True),
+            ("4", "Edit monocoque config", True),
+            ("5", "View logs", True),
+            ("6", "Restart services", self.simd_running or self.monocoque_running),
+            ("7", "Stop all", self.simd_running or self.monocoque_running),
+            ("0", "Quit", True),
+        ]
+        
+        enabled_items = []
+        for i, (key, label, enabled) in enumerate(menu_items):
+            if enabled:
+                enabled_items.append((i, key))
+        return enabled_items
+    
+    def draw_footer(self, stdscr):
+        """Draw footer"""
+        height, width = stdscr.getmaxyx()
+        footer = "↑↓/j/k: Navigate | Enter: Select | Numbers: Direct | q/ESC: Quit"
+        stdscr.addstr(height - 2, 0, "─" * width)
+        stdscr.attron(curses.color_pair(4))
+        stdscr.addstr(height - 1, (width - len(footer)) // 2, footer)
+        stdscr.attroff(curses.color_pair(4))
+    
+    def run_command(self, cmd, terminal=True):
+        """Run a command"""
+        if terminal:
+            # Try to find a terminal emulator
+            terminals = ['konsole', 'gnome-terminal', 'xfce4-terminal', 
+                        'alacritty', 'kitty', 'xterm']
+            
+            for term in terminals:
+                if subprocess.run(['which', term], capture_output=True).returncode == 0:
+                    if term == 'konsole':
+                        subprocess.Popen([term, '-e', 'bash', '-c', cmd])
+                    elif term == 'gnome-terminal':
+                        subprocess.Popen([term, '--', 'bash', '-c', cmd])
+                    elif term in ['xfce4-terminal', 'alacritty', 'kitty', 'xterm']:
+                        subprocess.Popen([term, '-e', 'bash', '-c', cmd])
+                    return True
+            return False
+        else:
+            subprocess.run(cmd, shell=True)
+            return True
+    
+    def handle_action(self, action):
+        """Handle menu action"""
+        if action == '1':  # Start simd
+            cmd = "start-simd || $HOME/.local/bin/start-simd; exec bash"
+            self.run_command(cmd)
+            
+        elif action == '2':  # Start monocoque
+            cmd = "start-monocoque || $HOME/.local/bin/start-monocoque; exec bash"
+            self.run_command(cmd)
+            
+        elif action == '3':  # Test configuration
+            cmd = "test-monocoque || $HOME/.local/bin/test-monocoque; read -p 'Press Enter to close...'"
+            self.run_command(cmd)
+            
+        elif action == '4':  # Edit config
+            editor = os.environ.get('EDITOR', 'nano')
+            config_file = self.config_dir / "monocoque/monocoque.config"
+            subprocess.run([editor, str(config_file)])
+            
+        elif action == '5':  # View logs
+            log_dir = Path.home() / ".cache/monocoque"
+            if log_dir.exists():
+                cmd = f"find {log_dir} -name '*.log' -exec ls -la {{}} + 2>/dev/null; find {log_dir} -name '*.log' -exec tail -f {{}} + 2>/dev/null; read -p 'Press Enter to close...'"
+                self.run_command(cmd)
+            else:
+                # Create a simple message if no logs exist
+                cmd = f"echo 'No log directory found at {log_dir}'; echo 'Logs will appear here when monocoque runs'; read -p 'Press Enter to close...'"
+                self.run_command(cmd)
+            
+        elif action == '6':  # Restart services
+            stopped = self.stop_all_services()
+            if stopped:
+                print(f"Stopped: {', '.join(stopped)}")
+            # Wait a moment for processes to stop
+            time.sleep(PROCESS_STOP_WAIT_TIME)
+            # Restart simd first
+            cmd = f"start-simd || $HOME/.local/bin/start-simd; sleep {SIMD_START_DELAY}; start-monocoque || $HOME/.local/bin/start-monocoque; exec bash"
+            self.run_command(cmd)
+            print("Restarting services in terminal window...")
+            
+        elif action == '7':  # Stop all
+            stopped = self.stop_all_services()
+            if stopped:
+                print(f"Stopped: {', '.join(stopped)}")
+            else:
+                print("No running services found to stop")
+    
+    def stop_all_services(self):
+        """Carefully stop simd and monocoque processes while preserving the manager"""
+        stopped_services = []
+        manager_pid = os.getpid()  # Get our own PID to exclude it
+        
+        # Method 1: Try exact name matching (safest)
+        for service in ['simd', 'monocoque']:
+            result = subprocess.run(['pkill', '-x', service], 
+                                  capture_output=True, text=True)
+            if result.returncode == 0:
+                stopped_services.append(f"{service} (exact)")
+        
+        # Method 2: Carefully search ps output and target specific processes
+        try:
+            ps_result = subprocess.run(['ps', 'axo', 'pid,ppid,comm,args'], 
+                                     capture_output=True, text=True)
+            if ps_result.returncode == 0:
+                lines = ps_result.stdout.split('\n')[1:]  # Skip header
+                for line in lines:
+                    parts = line.strip().split(None, 3)  # Split into PID, PPID, COMM, ARGS
+                    if len(parts) >= 4:
+                        pid, ppid, comm, args = parts
+                        
+                        # Skip our own process
+                        if pid == str(manager_pid):
+                            continue
+                        
+                        # Target simd: look for executables ending in 'simd' or containing '/simd'
+                        if (comm == 'simd' or 
+                            (comm.endswith('simd') and not 'manager' in comm) or
+                            ('/simd' in args and 'manager' not in args)):
+                            try:
+                                subprocess.run(['kill', '-TERM', pid], capture_output=True)
+                                stopped_services.append(f"simd (PID {pid})")
+                                time.sleep(0.1)  # Brief pause between kills
+                            except:
+                                pass
+                        
+                        # Target monocoque: be very specific to avoid manager
+                        elif ((comm == 'monocoque' or 
+                               (comm.endswith('monocoque') and not 'manager' in comm)) and
+                              'manager' not in args and
+                              'monocoque-manager' not in args and
+                              'python' not in args):  # Avoid Python scripts
+                            try:
+                                subprocess.run(['kill', '-TERM', pid], capture_output=True)
+                                stopped_services.append(f"monocoque (PID {pid})")
+                                time.sleep(0.1)  # Brief pause between kills
+                            except:
+                                pass
+        except:
+            pass
+        
+        # Wait for graceful shutdown
+        time.sleep(PROCESS_STOP_WAIT_TIME)
+        
+        # Method 3: Force kill stubborn processes (but still be careful)
+        try:
+            # Only force kill exact matches, never pattern matches
+            for service in ['simd', 'monocoque']:
+                subprocess.run(['pkill', '-9', '-x', service], 
+                              capture_output=True, text=True)
+        except:
+            pass
+        
+        return stopped_services
+    
+    def main(self, stdscr):
+        """Main TUI loop"""
+        try:
+            curses.curs_set(0)
+        except curses.error:
+            pass  # Some terminals don't support cursor visibility changes
+        
+        try:
+            stdscr.keypad(True)  # Enable keypad mode for arrow keys
+        except curses.error:
+            pass  # Fallback if keypad mode fails
+            
+        # Initialize colors if available
+        if curses.has_colors():
+            curses.start_color()
+            try:
+                curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
+                curses.init_pair(2, curses.COLOR_CYAN, curses.COLOR_BLACK)
+                curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)
+                curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+            except curses.error:
+                pass  # Fallback for terminals with limited color support
+        
+        selected = 0
+        
+        while True:
+            stdscr.clear()
+            height, width = stdscr.getmaxyx()
+            
+            # Ensure selected index is valid for current state
+            self.check_processes()
+            enabled_items = self.get_enabled_menu_items()
+            enabled_indices = [item[0] for item in enabled_items]
+            if enabled_indices and selected not in enabled_indices:
+                selected = enabled_indices[0]
+            
+            if height < MIN_TERMINAL_HEIGHT or width < MIN_TERMINAL_WIDTH:
+                stdscr.addstr(0, 0, "Terminal too small!")
+                stdscr.addstr(1, 0, f"Minimum: {MIN_TERMINAL_WIDTH}x{MIN_TERMINAL_HEIGHT}")
+                stdscr.refresh()
+                stdscr.getch()
+                continue
+            
+            self.draw_header(stdscr)
+            row = self.draw_status(stdscr, 3)
+            row = self.draw_menu(stdscr, row + 1, selected)
+            self.draw_footer(stdscr)
+            
+            stdscr.refresh()
+            
+            key = stdscr.getch()
+            
+            # Get currently enabled menu items
+            enabled_items = self.get_enabled_menu_items()
+            enabled_indices = [item[0] for item in enabled_items]
+            
+            # Handle arrow key navigation (with multiple key codes for compatibility)
+            if key in [curses.KEY_UP, 259, ord('k'), ord('K')]:  # UP arrow or k/K
+                if enabled_indices:
+                    current_pos = enabled_indices.index(selected) if selected in enabled_indices else 0
+                    new_pos = (current_pos - 1) % len(enabled_indices)
+                    selected = enabled_indices[new_pos]
+            elif key in [curses.KEY_DOWN, 258, ord('j'), ord('J')]:  # DOWN arrow or j/J
+                if enabled_indices:
+                    current_pos = enabled_indices.index(selected) if selected in enabled_indices else 0
+                    new_pos = (current_pos + 1) % len(enabled_indices)
+                    selected = enabled_indices[new_pos]
+            elif key in [curses.KEY_ENTER, ord('\n'), ord('\r'), 10, 13]:  # Various ENTER codes
+                # Execute currently selected action
+                action_key = None
+                for idx, key_char in enabled_items:
+                    if idx == selected:
+                        action_key = key_char
+                        break
+                if action_key and action_key == '0':
+                    break
+                elif action_key:
+                    self.handle_action(action_key)
+                    # Force a refresh after action
+                    stdscr.clear()
+            elif key in [ord('q'), ord('Q'), 27]:  # q/Q or ESC
+                break
+            elif key == ord('1'):
+                self.handle_action('1')
+                stdscr.clear()  # Force refresh after action
+            elif key == ord('2'):
+                self.handle_action('2')
+                stdscr.clear()  # Force refresh after action
+            elif key == ord('3'):
+                self.handle_action('3')
+                stdscr.clear()  # Force refresh after action
+            elif key == ord('4'):
+                self.handle_action('4')
+                stdscr.clear()  # Force refresh after action
+            elif key == ord('5'):
+                self.handle_action('5')
+                stdscr.clear()  # Force refresh after action
+            elif key == ord('6'):
+                self.handle_action('6')
+                stdscr.clear()  # Force refresh after action
+            elif key == ord('7'):
+                self.handle_action('7')
+                stdscr.clear()  # Force refresh after action
+            elif key == ord('0'):
+                break
+
+
+    def text_interface(self):
+        """Fallback text-based interface when curses is not available"""
+        print("Monocoque Manager - Text Mode")
+        print("=" * 40)
+        
+        while True:
+            self.check_processes()
+            
+            print("\nStatus:")
+            print(f"  simd:      {'RUNNING' if self.simd_running else 'STOPPED'}")
+            print(f"  monocoque: {'RUNNING' if self.monocoque_running else 'STOPPED'}")
+            
+            # Show notification about cleaned PID files
+            if self.last_cleaned_pid_files:
+                print(f"  Note: Cleaned stale PID files: {', '.join(self.last_cleaned_pid_files)}")
+                # Clear the notification after showing it once
+                self.last_cleaned_pid_files = []
+            
+            print("\nActions:")
+            menu_items = [
+                ("1", "Start simd", not self.simd_running),
+                ("2", "Start monocoque", not self.monocoque_running and self.simd_running),
+                ("3", "Test configuration", True),
+                ("4", "Edit monocoque config", True),
+                ("5", "View logs", True),
+                ("6", "Restart services", self.simd_running or self.monocoque_running),
+                ("7", "Stop all", self.simd_running or self.monocoque_running),
+                ("0", "Quit", True),
+            ]
+            
+            for key, label, enabled in menu_items:
+                if enabled:
+                    print(f"  [{key}] {label}")
+                else:
+                    print(f"  [{key}] {label} (disabled)")
+            
+            try:
+                choice = input("\nEnter your choice: ").strip()
+                if choice == '0':
+                    break
+                elif choice in ['1', '2', '3', '4', '5', '6', '7']:
+                    # Check if action is enabled
+                    for key, label, enabled in menu_items:
+                        if key == choice and enabled:
+                            self.handle_action(choice)
+                            if choice in ['4']:  # Actions that don't need terminal
+                                print("Action completed.")
+                            elif choice in ['6', '7']:  # Stop/restart actions provide their own feedback
+                                pass  # Feedback already provided by handle_action
+                            else:
+                                print("Command executed. Check the terminal output.")
+                            break
+                        elif key == choice and not enabled:
+                            print("That action is currently disabled.")
+                            break
+                else:
+                    print("Invalid choice. Please try again.")
+            except (KeyboardInterrupt, EOFError):
+                print("\nExiting...")
+                break
+
+
+def main():
+    """Entry point"""
+    manager = MonocoqueManager()
+    
+    if not manager.check_installation():
+        print("Error: Monocoque does not appear to be installed")
+        print("Run the installer first: ./universal-install.sh")
+        sys.exit(1)
+    
+    # Check if we can use curses (proper terminal environment)
+    term = os.environ.get('TERM', 'dumb')
+    if term == 'dumb' or not sys.stdout.isatty():
+        print("Note: Using text mode (terminal doesn't support full TUI)")
+        manager.text_interface()
+    else:
+        try:
+            curses.wrapper(manager.main)
+        except KeyboardInterrupt:
+            print("\nExiting...")
+        except curses.error as e:
+            print(f"Terminal error: {e}")
+            print("Falling back to text mode...")
+            manager.text_interface()
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
+
