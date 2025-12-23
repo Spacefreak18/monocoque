@@ -8,6 +8,8 @@ _  /  / / / /_/ /  / / / /_/ / /__ / /_/ / /_/ // /_/ //  __/
 ```
 Cross Platform device manager for driving and flight simulators, for use with common simulator software titles.
 
+📚 **Documentation:** [spacefreak18.github.io/simapi/](https://spacefreak18.github.io/simapi/)
+
 ## Features
 - Updates at 60 frames per seconds.
 - Modular design for support with various titles and devices.
@@ -17,6 +19,34 @@ Cross Platform device manager for driving and flight simulators, for use with co
 - Can send data to any serial device. So far only tested with arduino. Includes sample arduino sketch for sim lights, simwind, and simhaptic effects for motors.
 - Convincing shaker effects for noise tranducers for wheel slip, wheel lock, and abs, as well as engine rpm and gear shifts.
 - Choice of Portaudio or Pulseaudio (libpulse) backend.
+
+## Quick Install
+
+**One-Line Installation:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/Spacefreak18/monocoque/master/install.sh | bash
+```
+
+**Or download and review first:**
+```bash
+wget https://raw.githubusercontent.com/Spacefreak18/monocoque/master/install.sh
+chmod +x install.sh
+./install.sh
+```
+
+**TUI Manager:**
+After installation, use the interactive manager:
+```bash
+monocoque-manager
+```
+
+**Supported Distributions:**
+- ✅ Arch Linux (with AUR support)
+- ✅ Debian/Ubuntu  
+- ✅ Fedora/RHEL/CentOS
+- ✅ openSUSE
+
+For manual installation or troubleshooting, see [HOW-TO-USE.md](HOW-TO-USE.md).
 
 ## Supported Games ( see [simapi](https://github.com/spacefreak18/simapi) for more details of what is supported from each sim )
   - Using [SimSHMBridge](https://github.com/spacefreak18/simshmbridge)
