@@ -24,8 +24,13 @@ SIMD_START_DELAY = 2  # seconds
 
 class MonocoqueManager:
     def __init__(self):
-        self.install_dir = Path.home() / ".local/share/monocoque"
-        self.config_dir = Path.home() / ".config"
+        # Mirror the shell script's robust path detection
+        xdg_data = os.environ.get('XDG_DATA_HOME', os.path.join(Path.home(), ".local/share"))
+        self.install_dir = Path(os.environ.get('MONOCOQUE_INSTALL_DIR', os.path.join(xdg_data, "monocoque")))
+        
+        xdg_config = os.environ.get('XDG_CONFIG_HOME', os.path.join(Path.home(), ".config"))
+        self.config_dir = Path(xdg_config)
+        
         self.simd_running = False
         self.monocoque_running = False
         self.last_cleaned_pid_files = []  # Track cleaned stale PID files
@@ -282,8 +287,12 @@ class MonocoqueManager:
                         subprocess.Popen([term, '-e', 'bash', '-c', cmd])
                     elif term == 'gnome-terminal':
                         subprocess.Popen([term, '--', 'bash', '-c', cmd])
-                    elif term in ['xfce4-terminal', 'alacritty', 'kitty', 'xterm']:
-                        subprocess.Popen([term, '-e', 'bash', '-c', cmd])
+                    elif term == 'kitty':
+                        # Kitty prefers commands as positional arguments
+                        subprocess.Popen([term, 'bash', '-c', cmd])
+                    elif term in ['xfce4-terminal', 'alacritty', 'xterm']:
+                        # Ensure the whole bash command is quoted correctly for -e
+                        subprocess.Popen([term, '-e', f"bash -c '{cmd}'"])
                     return True
             return False
         else:
@@ -310,7 +319,8 @@ class MonocoqueManager:
             subprocess.run([editor, str(config_file)])
             
         elif action == '5':  # View logs
-            log_dir = Path.home() / ".cache/monocoque"
+            xdg_cache = os.environ.get('XDG_CACHE_HOME', os.path.join(Path.home(), ".cache"))
+            log_dir = Path(xdg_cache) / "monocoque"
             if log_dir.exists():
                 cmd = f"find {log_dir} -name '*.log' -exec ls -la {{}} + 2>/dev/null; find {log_dir} -name '*.log' -exec tail -f {{}} + 2>/dev/null; read -p 'Press Enter to close...'"
                 self.run_command(cmd)
@@ -579,7 +589,7 @@ def main():
     
     if not manager.check_installation():
         print("Error: Monocoque does not appear to be installed")
-        print("Run the installer first: ./universal-install.sh")
+        print("Run the installer first: ./install.sh")
         sys.exit(1)
     
     # Check if we can use curses (proper terminal environment)

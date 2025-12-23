@@ -6,7 +6,7 @@ set -e
 # Version: 1.0.0
 
 SCRIPT_VERSION="1.0.0"
-INSTALL_DIR="${MONOCOQUE_INSTALL_DIR:-$HOME/.local/share/monocoque}"
+INSTALL_DIR="${MONOCOQUE_INSTALL_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/monocoque}"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 BIN_DIR="${HOME}/.local/bin"
 
@@ -375,7 +375,7 @@ create_launcher_scripts() {
     cat > "$BIN_DIR/start-simd" << EOF
 #!/bin/bash
 export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/lib:/usr/local/lib64
-exec $SIMD_BIN --no-daemon -vv "\$@"
+exec $SIMD_BIN -vv "\$@"
 EOF
     chmod +x "$BIN_DIR/start-simd"
     
@@ -456,13 +456,13 @@ setup_systemd_services() {
     cat > "$SYSTEMD_DIR/simd.service" << EOF
 [Unit]
 Description=Sim Telemetry Daemon
-Documentation=https://github.com/Spacefreak18/simapi
+Documentation=https://spacefreak18.github.io/simapi/
 After=network.target
 
 [Service]
 Type=simple
 Environment="LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64"
-ExecStart=$SIMD_BIN --no-daemon
+ExecStart=$SIMD_BIN
 Restart=on-failure
 RestartSec=5
 
@@ -514,7 +514,7 @@ print_next_steps() {
     echo "   • RFactor 2"
     echo "   • Euro/American Truck Simulator"
     echo ""
-    echo "📚 Documentation: https://github.com/Spacefreak18/monocoque"
+    echo "📚 Documentation: https://spacefreak18.github.io/simapi/"
     echo ""
 }
 

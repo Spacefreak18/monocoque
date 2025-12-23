@@ -8,6 +8,8 @@ _  /  / / / /_/ /  / / / /_/ / /__ / /_/ / /_/ // /_/ //  __/
 ```
 Cross Platform device manager for driving and flight simulators, for use with common simulator software titles.
 
+📚 **Documentation:** [spacefreak18.github.io/simapi/](https://spacefreak18.github.io/simapi/)
+
 ## Features
 - Updates at 60 frames per seconds.
 - Modular design for support with various titles and devices.

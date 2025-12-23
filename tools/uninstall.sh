@@ -10,10 +10,11 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-INSTALL_DIR="${MONOCOQUE_INSTALL_DIR:-$HOME/.local/share/monocoque}"
+INSTALL_DIR="${MONOCOQUE_INSTALL_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/monocoque}"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}"
 BIN_DIR="$HOME/.local/bin"
-SYSTEMD_DIR="$HOME/.config/systemd/user"
+SYSTEMD_DIR="$CONFIG_DIR/systemd/user"
 
 log_info() {
     echo -e "${BLUE}[INFO]${NC} $1"
@@ -45,9 +46,9 @@ log_warn "This will remove:"
 echo "  • Monocoque installation ($INSTALL_DIR)"
 echo "  • Configuration files ($CONFIG_DIR/monocoque, $CONFIG_DIR/simd)"
 echo "  • Launcher scripts ($BIN_DIR/start-*, test-monocoque)"
-echo "  • systemd service files ($SYSTEMD_DIR/simd.service)"
-echo "  • Log files (~/.cache/monocoque)"
-echo ""
+    echo "  • systemd service files ($SYSTEMD_DIR/simd.service)"
+    echo "  • Log files ($CACHE_DIR/monocoque)"
+    echo ""
 echo "This will NOT remove:"
 echo "  • System dependencies (yder, libuv, etc.)"
 echo "  • Compiled simapi library (/usr/local/lib/libsimapi.so)"
@@ -106,10 +107,10 @@ if [ -f "$SYSTEMD_DIR/simd.service" ]; then
 fi
 
 # Remove logs
-if [ -d "$HOME/.cache/monocoque" ]; then
+if [ -d "$CACHE_DIR/monocoque" ]; then
     read -p "Remove log files? [y/N]: " remove_logs
     if [[ $remove_logs =~ ^[Yy]$ ]]; then
-        rm -rf "$HOME/.cache/monocoque"
+        rm -rf "$CACHE_DIR/monocoque"
         log_success "Log files removed"
     else
         log_info "Keeping log files"
