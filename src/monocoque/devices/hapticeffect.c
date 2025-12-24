@@ -21,7 +21,7 @@
 
 bool hasTyreDiameter(SimData* simdata)
 {
-    if (simdata->tyrediameter[0] == -1 || simdata->tyrediameter[1] == -1 || simdata->tyrediameter[2] == -1 || simdata->tyrediameter[3] == -1)
+    if (simdata->tyrediameter[0] <= 0 || simdata->tyrediameter[1] <= 0 || simdata->tyrediameter[2] <= 0 || simdata->tyrediameter[3] <= 0)
     {
         slogt("failed to find tyre diameter data");
         return false;
@@ -194,15 +194,9 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
     wheelslip[2] = 0;
     wheelslip[3] = 0;
 
-    if(simdata->car == NULL)
+    if(simdata->car == NULL || simdata->car[0] == 0)
     {
-        slogw("sim is not compatible with wheel and tyre effects, or car and session not loaded.");
-        return 0;
-    }
-    if(simdata->car[0] == '\0')
-    {
-        slogw("sim is not compatible with wheel and tyre effects, or car not loaded.");
-        return 0;
+        useconfig = 0;
     }
 
     slogt("wheel vibration calculation with wheel config set to %i configchecked %i configfile %s car %s sim %i", useconfig, *configcheck, configfile, simdata->car, simdata->simexe);
