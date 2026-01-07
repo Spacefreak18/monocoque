@@ -17,7 +17,9 @@ Cross Platform device manager for driving and flight simulators, for use with co
 - Tachometer support is currently  limited to the Revburner model. Supports existing revburner xml configuration files.
 - Includes utility to configure revburner tachometer
 - Can send data to any serial device. So far only tested with arduino. and ESP32. Includes sample arduino sketch for sim lights, simwind, and simhaptic effects for motors.
+- Support for custom arduino (or any serial) device, with a [custom lua format](https://spacefreak18.github.io/simapi/serial_custom) for sending data
 - Convincing shaker effects for noise tranducers for wheel slip, wheel lock, and abs, as well as engine rpm and gear shifts.
+- Support for many [wheels and pedals](https://spacefreak18.github.io/simapi/thirdpartydevices) including Clubsport Elite V3, [Logitech G29](https://spacefreak18.github.io/simapi/logitechg29), and Moza R5.
 
 ## Quick Install
 
