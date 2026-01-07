@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "usb/wheels/logitechg29.h"
 #include "usb/wheels/cammusc5.h"
 #include "usb/wheels/cammusc12.h"
 #include "usb/wheels/gtneo.h"
@@ -20,6 +21,9 @@ int wheeldev_update(USBDevice* usbdevice, SimData* simdata)
         case WHEELDEV_UNKNOWN :
         case WHEELDEV_CAMMUSC5 :
             cammusc5_update(usbdevice, simdata->maxrpm, simdata->rpms, simdata->gear, simdata->velocity);
+            break;
+        case WHEELDEV_LOGITECHG29 :
+            logitechg29_update(usbdevice, simdata->maxrpm, simdata->rpms, simdata->gear, simdata->velocity);
             break;
         case WHEELDEV_CAMMUSC12 :
             if(usbdevice->u.wheeldevice.useLua == true)
@@ -57,6 +61,10 @@ int wheeldev_free(USBDevice* usbdevice)
             cammusc5_update(usbdevice, 0, 0, 0, 0);
             cammusc5_free(usbdevice);
             break;
+        case WHEELDEV_LOGITECHG29 :
+            logitechg29_update(usbdevice, 0, 0, 0, 0);
+            logitechg29_free(usbdevice);
+            break;
         case WHEELDEV_CAMMUSC12 :
             cammusc12_free(usbdevice);
             if(wheeldevice->useLua == true)
@@ -81,6 +89,11 @@ int wheeldev_init(USBDevice* usbdevice, DeviceSettings* ds)
             wheeldevice->type = WHEELDEV_CAMMUSC5;
             slogi("Attempting to initialize cammus C5");
             error = cammusc5_init(usbdevice);
+            break;
+        case SIMDEVSUBTYPE_LOGITECH_G29:
+            wheeldevice->type = WHEELDEV_LOGITECHG29;
+            slogi("Attempting to initialize Logitech G29");
+            error = logitechg29_init(usbdevice);
             break;
         case SIMDEVSUBTYPE_CAMMUSC12:
             wheeldevice->type = WHEELDEV_CAMMUSC12;

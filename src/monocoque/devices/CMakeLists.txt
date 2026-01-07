@@ -25,6 +25,8 @@ set(devices_source_files
   usb/cslelitev3.c
   usb/simagicp1000.h
   usb/simagicp1000.c
+  usb/wheels/logitechg29.h
+  usb/wheels/logitechg29.c
   usb/wheels/cammusc5.h
   usb/wheels/cammusc5.c
   usb/wheels/cammusc12.h

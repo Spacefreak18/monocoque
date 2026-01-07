@@ -103,6 +103,11 @@ int strtodevsubsubtype(const char* device_subsubtype, DeviceSettings* ds)
         ds->dev_subsubtype = SIMDEVSUBTYPE_MOZAR5;
         devfound = true;
     }
+    if (strcicmp(device_subsubtype, "LogitechG29") == 0)
+    {
+        ds->dev_subsubtype = SIMDEVSUBTYPE_LOGITECH_G29;
+        devfound = true;
+    }
     if (strcicmp(device_subsubtype, "MozaR8") == 0)
     {
         ds->dev_subsubtype = SIMDEVSUBTYPE_MOZAR5;

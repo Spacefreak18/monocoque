@@ -12,7 +12,8 @@ typedef enum
     WHEELDEV_CAMMUSC5      = 1,
     WHEELDEV_CAMMUSC12     = 2,
     WHEELDEV_MOZAR5        = 3,
-    WHEELDEV_SIMAGICGTNEO  = 4
+    WHEELDEV_SIMAGICGTNEO  = 4,
+    WHEELDEV_LOGITECHG29   = 5
 }
 WheelType;
 
