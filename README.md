@@ -53,7 +53,7 @@ for installation instructions***
 
 ### Dependencies
 - libserialport - arduino serial devices
-- hidapi - usb hid devices
+- hidapi - usb hid devices (hidraw)
 - portaudio - sound devices (haptic bass shakers)
 - libpulse - sound devices (haptic bass shakers)
 - libuv base event loop
