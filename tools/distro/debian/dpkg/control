@@ -1,0 +1,8 @@
+Package: monocoque
+Version: 1
+Section: misc
+Priority: optional
+Architecture: amd64
+Maintainer: Paul Jones <paul@spacefreak18.xyz>
+Description: Racing Simulator Device Manager
+Depends: libpulse0,libconfig11,libargtable2-0,liblua5.4-0,libuv1t64,libserialport0,libxml2,libxdg-basedir1,libhidapi-hidraw0
