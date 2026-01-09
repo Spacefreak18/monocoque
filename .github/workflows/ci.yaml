@@ -46,5 +46,5 @@ jobs:
 
     - name: Release the Package
       uses: softprops/action-gh-release@v1
-        with:
-            files: monoocoque.deb
+      with:
+        files: monoocoque.deb
