@@ -16,8 +16,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    
-
+    - name: Install xmllint
+      run: sudo apt install -y libuv1-dev libargtable2-dev libserialport-dev libconfig-dev libhidapi-dev liblua5.4-dev libxdg-basedir-dev libxml2-dev
     - name: Set build dir
       id: strings
       shell: bash
