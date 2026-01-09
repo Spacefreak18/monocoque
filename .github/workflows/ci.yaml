@@ -16,6 +16,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Checkout submodules
+      run: git submodule update --init --recursive
     - name: Install xmllint
       run: sudo apt install -y libuv1-dev libargtable2-dev libserialport-dev libconfig-dev libhidapi-dev liblua5.4-dev libxdg-basedir-dev libxml2-dev
     - name: Set build dir
@@ -41,7 +43,9 @@ jobs:
       run: |
         mkdir PKG_SOURCE
         mkdir PKG_SOURCE/DEBIAN
+        mkdir PKG_SOURCE/usr/bin/
         cp ./tools/distro/debian/dpkg/control ./PKG_SOURCE/DEBIAN/control
+        cp ./build/monocoque ./PKG_SOURCE/usr/bin/monocoque
         dpkg-deb --build PKG_SOURCE monocoque.deb
 
     - name: Release the Package
