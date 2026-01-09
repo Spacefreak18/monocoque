@@ -44,8 +44,8 @@ jobs:
     - name: Copy script files around to stop .github from being added to the package then build the package
       run: |
         mkdir PKG_SOURCE
-        mkdir PKG_SOURCE/DEBIAN
-        mkdir PKG_SOURCE/usr/bin/
+        mkdir -p PKG_SOURCE/DEBIAN
+        mkdir -p PKG_SOURCE/usr/bin/
         cp ./tools/distro/debian/dpkg/control ./PKG_SOURCE/DEBIAN/control
         cp ./build/monocoque ./PKG_SOURCE/usr/bin/monocoque
         dpkg-deb --build PKG_SOURCE monocoque.deb
