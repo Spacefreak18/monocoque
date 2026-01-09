@@ -1,0 +1,49 @@
+name: Make Packages
+
+on:
+  push:
+    branches: [ "master" ]
+    tags: [ "*" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build-monocoque:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v4
+    
+
+    - name: Set build dir
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+        github_sha_hash=${{ github.sha }}
+        echo "github-sha-short=${github_sha_hash:0:7}" >> $GITHUB_OUTPUT
+
+    - name: Configure CMake
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_CXX_COMPILER=g++
+        -DCMAKE_C_COMPILER=gcc
+        -DCMAKE_BUILD_TYPE=Release
+        -S ${{ github.workspace }}
+
+    - name: Build
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release
+    - name: Copy script files around to stop .github from being added to the package then build the package
+        run: |
+          mkdir PKG_SOURCE
+          mkdir PKG_SOURCE/DEBIAN
+          cp ./tools/distro/debian/dpkg/control ./PKG_SOURCE/DEBIAN/control
+          dpkg-deb --build PKG_SOURCE monocoque.deb
+
+    - name: Release the Package
+      uses: softprops/action-gh-release@v1
+        with:
+          files: monoocoque.deb
