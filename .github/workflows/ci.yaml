@@ -52,9 +52,9 @@ jobs:
         mkdir -p PKG_SOURCE/usr/bin/
         cp ./tools/distro/debian/dpkg/control ./PKG_SOURCE/DEBIAN/control
         cp ./build/monocoque ./PKG_SOURCE/usr/bin/monocoque
-        dpkg-deb --build PKG_SOURCE monocoque-${{ runner.name }}.deb
+        dpkg-deb --build PKG_SOURCE monocoque-${{ steps.system-info.outputs.name }}-${{ steps.system-info.outputs.release }}.deb
 
     - name: Release the Package
       uses: softprops/action-gh-release@v1
       with:
-        files: monocoque-${{ runner.name }}.deb
+        files: monocoque-${{ steps.system-info.outputs.name }}-${{ steps.system-info.outputs.release }}.deb
