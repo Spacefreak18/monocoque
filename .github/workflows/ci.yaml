@@ -8,10 +8,10 @@ on:
     branches: [ "master" ]
 
 jobs:
-  example_matrix:
+  build-monocoque:
     strategy:
       matrix:
-        os: [ubuntu-22.04, debian-latest]
+        os: [ubuntu-latest, debian-latest]
     runs-on: ${{ matrix.os }}
 
 
