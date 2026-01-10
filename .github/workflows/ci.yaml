@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-monocoque:
-    runs-on: ubuntu-latest
+    runs-on: debianforkyrunner1
 
     permissions:
       contents: write
