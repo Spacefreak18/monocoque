@@ -59,4 +59,4 @@ jobs:
     - name: Release the Package
       uses: softprops/action-gh-release@v1
       with:
-        files: monocoque-${{ matirx.os }}.deb
+        files: monocoque-${{ matrix.os }}.deb
