@@ -12,9 +12,12 @@ strategy:
     os: [ubuntu-latest, debian-latest]
 
 jobs:
-
-  build-monocoque:
+  example_matrix:
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, debian-latest]
     runs-on: ${{ matrix.os }}
+
 
     permissions:
       contents: write
