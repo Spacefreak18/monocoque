@@ -7,11 +7,12 @@ on:
   pull_request:
     branches: [ "master" ]
 
+strategy:
+  matrix:
+    os: [ubuntu-latest, debian-latest]
+
 jobs:
-  example_matrix:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, debian-latest]
+
   build-monocoque:
     runs-on: ${{ matrix.os }}
 
