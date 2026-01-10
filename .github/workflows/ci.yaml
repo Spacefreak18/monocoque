@@ -19,6 +19,8 @@ jobs:
       contents: write
 
     steps:
+    - uses: kenchan0130/actions-system-info@master
+      id: system-info
     - uses: actions/checkout@v4
     - name: Checkout submodules
       run: git submodule update --init --recursive
