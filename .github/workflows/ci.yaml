@@ -67,6 +67,8 @@ jobs:
       contents: write
     steps:
 
+    - name: create rpmbuild dirs
+      run: mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
     - name: get spec file
       run: curl -o ~/fedora.spec https://raw.githubusercontent.com/Spacefreak18/monocoque/refs/heads/master/tools/distro/fedora/rpm/fedora.spec
     - name: run spec file
