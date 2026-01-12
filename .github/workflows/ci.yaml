@@ -2,7 +2,6 @@ name: Make Packages
 
 on:
   push:
-    branches: [ "master" ]
     tags: [ "*" ]
 
 jobs:
@@ -78,5 +77,5 @@ jobs:
     - name: Release the Package
       uses: softprops/action-gh-release@v1
       with:
-        files: monocoque-${{ matrix.os }}.rpm
+        files: ~/monocoque-${{ matrix.os }}.rpm
 
