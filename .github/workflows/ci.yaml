@@ -17,7 +17,7 @@ jobs:
       contents: write
 
     steps:
-    - uses: actions/checkout
+    - uses: actions/checkout@v1
     - name: Checkout submodules
       run: git submodule update --init --recursive
     - name: Update apt
@@ -66,7 +66,6 @@ jobs:
     permissions:
       contents: write
     steps:
-    - uses: actions/checkout
 
     - name: get spec file
       run: curl -o ~/fedora.spec https://raw.githubusercontent.com/Spacefreak18/monocoque/refs/heads/master/tools/distro/fedora/rpm/fedora.spec
