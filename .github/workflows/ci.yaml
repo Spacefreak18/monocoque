@@ -73,9 +73,9 @@ jobs:
     - name: run spec file
       run: rpmbuild -ba ~/fedora.spec
     - name: rename file
-      run: cp ~/rpmbuild/RPMS/x86_64/monocoque-0.0.5-1.x86_64.rpm ~/monocoque-${{ matrix.os }}.rpm
+      run: cp ~/rpmbuild/RPMS/x86_64/monocoque-0.0.5-1.x86_64.rpm $GITHUB_WORKSPACE/monocoque-${{ matrix.os }}.rpm
     - name: Release the Package
       uses: softprops/action-gh-release@v1
       with:
-        files: ~/monocoque-${{ matrix.os }}.rpm
+        files: monocoque-${{ matrix.os }}.rpm
 
