@@ -13,6 +13,7 @@
 #include "loopdata.h"
 #include "../helper/confighelper.h"
 #include "../devices/simdevice.h"
+#include "../devices/hapticeffect.h"
 #include "../simulatorapi/simapi/simapi/simdata.h"
 #include "../simulatorapi/simapi/simapi/simmapper.h"
 #include "../slog/slog.h"
@@ -298,6 +299,30 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
         //        devices[x].update(&devices[x], simdata);
         //    }
         //}
+
+        if(f->ms->useconfig == 1 && f->ms->tyre_diameter_config != NULL)
+        {
+            if(simdata->car != NULL || simdata->car[0] != 0)
+            {
+                // check for saved tyre diameter in config file
+                // if not saved version exists get tyre diameter and save it
+                // use config check variable to track if the config check has been performed
+                // avoid many opens of the same file
+                int error = 0;
+                if(hasTyreDiameter(simdata)==false && f->ms->configcheck == 0)
+                {
+                    slogi("attempting load of tyre diameter config");
+                    error = loadtyreconfig(simdata, f->ms->tyre_diameter_config, true);
+                    f->ms->configcheck = 1;
+                }
+
+                if(hasTyreDiameter(simdata)==false)
+                {
+                    slogt("could not find tyre diameter in config file, attempting to calculate new");
+                    getTyreDiameter(simdata);
+                }
+            }
+        }
     }
 }
 
@@ -322,6 +347,18 @@ void releaseloop(loop_data* f, SimData* simdata, SimMap* simmap)
             uv_timer_stop(&datamaptimer);
             uv_timer_stop(&showstatstimer);
             slogi("releasing devices, please wait");
+            
+            //attempt tyre diameter saving
+            if(hasTyreDiameter(simdata) == true)
+            {
+                int a = loadtyreconfig(simdata, f->ms->tyre_diameter_config, false);
+                if(a < 0)
+                {
+                    slogi("saving new tyre diameter config");
+                    savetyreconfig(simdata, f->ms->tyre_diameter_config);
+                }
+            }
+
             f->uion = false;
             SimDevice* devices = f->simdevices;
             int numdevices = f->numdevices;
