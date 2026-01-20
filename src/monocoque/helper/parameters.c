@@ -67,10 +67,10 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
     struct arg_file* arg_log         = arg_filen("l", "log", "<log_file>", 0, 1, NULL);
     struct arg_str* arg_confdir      = arg_str1(NULL, NULL, "configdir", "<config_dir>");
     struct arg_int* arg_fps          = arg_int0("f", "fps", "fps", "main data refresh rate");
-    struct arg_lit* help             = arg_litn(NULL,"help", 0, 1, "print this help and exit");
+    struct arg_lit* help1            = arg_litn(NULL,"help", 0, 1, "print this help and exit");
     struct arg_lit* vers             = arg_litn(NULL,"version", 0, 1, "print version information and exit");
     struct arg_end* end1             = arg_end(20);
-    void* argtable1[]                = {cmd1,arg_log,arg_conf,arg_fps,arg_udp,arg_audio1,arg_verbosity1,help,vers,end1};
+    void* argtable1[]                = {cmd1,arg_log,arg_conf,arg_fps,arg_udp,arg_audio1,arg_verbosity1,help1,vers,end1};
     int nerrors1;
 
     struct arg_rex* cmd2a            = arg_rex1(NULL, NULL, "config", NULL, REG_ICASE, NULL);
@@ -121,6 +121,14 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
 
     if (nerrors1==0)
     {
+       if (help1->count > 0)
+       {
+           arg_print_errors(stdout,end1,progname);
+           printf("Usage: %s ", progname);
+           arg_print_syntax(stdout,argtable1,"\n");
+           exitcode = E_SUCCESS_AND_EXIT;
+           goto cleanup;
+       }
         p->program_action = A_PLAY;
         p->verbosity_count = arg_verbosity1->count;
 
@@ -154,64 +162,75 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
         }
         exitcode = E_SUCCESS_AND_DO;
     }
-    else
-        if (nerrors2==0)
+    else if (nerrors2==0)
+    {
+        if (help2->count > 0)
         {
-            p->program_action = A_CONFIG_TACH;
-            p->max_revs = arg_max_revs->ival[0];
-            p->granularity = 1;
-            if (arg_granularity->ival[0] > 0 && arg_granularity->ival[0] < 5 && arg_granularity->ival[0] != 3)
-            {
-                p->granularity=arg_granularity->ival[0];
-            }
-            p->save_file = *arg_save->filename;
-            p->verbosity_count = arg_verbosity2->count;
-            exitcode = E_SUCCESS_AND_DO;
-        }
-        else if (nerrors3==0)
-        {
-            p->program_action = A_TEST;
-            p->verbosity_count = arg_verbosity3->count;
-            if (arg_audio2->count > 0)
-            {
-                p->disable_audio = true;
-            }
-            exitcode = E_SUCCESS_AND_DO;
-        }
-        else
-        {
-            if (cmd1->count > 0)
-            {
-                arg_print_errors(stdout,end1,progname);
-                printf("Usage: %s ", progname);
-                arg_print_syntax(stdout,argtable1,"\n");
-            }
-            else
-                if (cmd2a->count > 0)
-                {
-                    arg_print_errors(stdout,end2,progname);
-                    printf("Usage: %s ", progname);
-                    arg_print_syntax(stdout,argtable2,"\n");
-                }
-                else
-                {
-                    if (help->count==0 && vers->count==0)
-                    {
-                        printf("%s: missing <play|config|test> command.\n",progname);
-                        printf("Usage 1: %s ", progname);
-                        arg_print_syntax(stdout,argtable1,"\n");
-                        printf("Usage 2: %s ", progname);
-                        arg_print_syntax(stdout,argtable2,"\n");
-                        printf("Usage 3: %s ", progname);
-                        arg_print_syntax(stdout,argtable3,"\n");
-                    }
-                }
+            arg_print_errors(stdout,end2,progname);
+            printf("Usage: %s ", progname);
+            arg_print_syntax(stdout,argtable2,"\n");
             exitcode = E_SUCCESS_AND_EXIT;
             goto cleanup;
         }
+        p->program_action = A_CONFIG_TACH;
+        p->max_revs = arg_max_revs->ival[0];
+        p->granularity = 1;
+        if (arg_granularity->ival[0] > 0 && arg_granularity->ival[0] < 5 && arg_granularity->ival[0] != 3)
+        {
+            p->granularity=arg_granularity->ival[0];
+        }
+        p->save_file = *arg_save->filename;
+        p->verbosity_count = arg_verbosity2->count;
+        exitcode = E_SUCCESS_AND_DO;
+    }
+    else if (nerrors3==0)
+    {
+        if (help3->count > 0)
+        {
+            arg_print_errors(stdout,end3,progname);
+            printf("Usage: %s ", progname);
+            arg_print_syntax(stdout,argtable3,"\n");
+            exitcode = E_SUCCESS_AND_EXIT;
+            goto cleanup;
+        }
+        p->program_action = A_TEST;
+        p->verbosity_count = arg_verbosity3->count;
+        if (arg_audio2->count > 0)
+        {
+            p->disable_audio = true;
+        }
+        exitcode = E_SUCCESS_AND_DO;
+    }
+    else
+    {
+        // hit this if you typed wrong parameters
+        if (cmd1->count > 0)
+        {
+            arg_print_errors(stdout,end1,progname);
+            printf("Usage: %s ", progname);
+            arg_print_syntax(stdout,argtable1,"\n");
+            exitcode = E_SUCCESS_AND_EXIT;
+            goto cleanup;
+        }
+        if (cmd2a->count > 0)
+        {
+            arg_print_errors(stdout,end2,progname);
+            printf("Usage: %s ", progname);
+            arg_print_syntax(stdout,argtable2,"\n");
+            exitcode = E_SUCCESS_AND_EXIT;
+            goto cleanup;
+        }
+        if (cmd3->count > 0)
+        {
+            arg_print_errors(stdout,end3,progname);
+            printf("Usage: %s ", progname);
+            arg_print_syntax(stdout,argtable3,"\n");
+            exitcode = E_SUCCESS_AND_EXIT;
+            goto cleanup;
+        }
+    }
 
-    // interpret some special cases before we go through trouble of reading the config file
-    if (help->count > 0)
+    if (help0->count > 0 || (cmd3->count == 0 && cmd1->count == 0 && cmd2a->count == 0))
     {
         printf("Usage: %s\n", progname);
         printf("Usage 1: %s ", progname);
