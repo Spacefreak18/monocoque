@@ -173,7 +173,8 @@ int main(int argc, char** argv)
     config_setting_t* config_devices = NULL;
     if (!config_read_file(&cfg, ms->config_str))
     {
-        fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
+        sloge("Issue with monocoque config file: %s:%d - %s", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
+        fprintf(stderr, "Issue with monocoque config file: %s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
         config_destroy(&cfg);
         slog_destroy();
         goto cleanup_final;
