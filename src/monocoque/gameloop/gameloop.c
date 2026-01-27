@@ -39,6 +39,15 @@ void showstatscallback(uv_timer_t* handle);
 void datacheckcallback(uv_timer_t* handle);
 void startdatalogger(MonocoqueSettings* ms, loop_data* l);
 
+static void close_walk_cb(uv_handle_t* handle, void* arg)
+{
+    if (!uv_is_closing(handle))
+    {
+        uv_close(handle, NULL);
+    }
+}
+#define ASSERT(expr) expr
+
 int showstats(SimData* simdata)
 {
     printf("\r");
@@ -339,7 +348,7 @@ void showstatscallback(uv_timer_t* handle)
 
 void releaseloop(loop_data* f, SimData* simdata, SimMap* simmap)
 {
-
+        slogi("release loop");
         if(f->releasing == false)
         {
             f->releasing = true;
@@ -408,6 +417,7 @@ void releaseloop(loop_data* f, SimData* simdata, SimMap* simmap)
 
             if(appstate > 0)
             {
+                slogi("restarting data check timer");
                 uv_timer_start(&datachecktimer, datacheckcallback, 3000, 1000);
             }
             f->releasing = false;
@@ -493,7 +503,6 @@ void udpstart(MonocoqueSettings* sms, loop_data* f, SimData* simdata, SimMap* si
 {
     if (appstate == 2)
     {
-        fprintf(stderr, "udpstart\n");
         simdatamap(simdata, simmap, NULL, f->sim, true, NULL);
         if (doui == true)
         {
@@ -540,6 +549,7 @@ void datacheckcallback(uv_timer_t* handle)
                 udpstart(f->ms, f, simdata, simmap);
                 uv_udp_recv_start(&recv_socket, on_alloc, on_udp_recv);
                 slogt("udp receive loop started");
+                uv_timer_stop(handle);
             }
             else
             {
@@ -547,7 +557,7 @@ void datacheckcallback(uv_timer_t* handle)
                 slogd("starting telemetry mapping at %i fps (%i ms ticks)", f->ms->fps, interval);
                 uv_timer_start(&datamaptimer, shmdatamapcallback, 2000, interval);
             }
-            //uv_timer_stop(handle);
+            //uv_timer_start(&datachecktimer, datacheckcallback, 0, 3000);
         }
         if(appstate == 2)
         {
@@ -562,7 +572,7 @@ void datacheckcallback(uv_timer_t* handle)
 
     if (appstate == 0)
     {
-        slogi("stopping checking for data");
+        slogi("stopped checking for data");
         uv_timer_stop(handle);
     }
 }
@@ -587,8 +597,15 @@ void cb(uv_poll_t* handle, int status, int events)
     if (appstate == 0)
     {
         slogi("Monocoque is exiting...");
+        uv_udp_recv_stop(&recv_socket);
         uv_timer_stop(&datachecktimer);
+        uv_timer_stop(&datamaptimer);
+        uv_timer_stop(&showstatstimer);
         uv_poll_stop(handle);
+        uv_walk(uv_default_loop(), close_walk_cb, NULL);
+        uv_loop_close(uv_default_loop());
+        uv_library_shutdown();
+        slogi("All threads stopped...");
     }
 }
 
