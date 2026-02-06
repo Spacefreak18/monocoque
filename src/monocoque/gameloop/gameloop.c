@@ -352,9 +352,17 @@ void releaseloop(loop_data* f, SimData* simdata, SimMap* simmap)
         if(f->releasing == false)
         {
             f->releasing = true;
-            uv_udp_recv_stop(&recv_socket);
             uv_timer_stop(&datamaptimer);
             uv_timer_stop(&showstatstimer);
+            if (uv_is_active((uv_handle_t*)&recv_socket))
+            {
+                uv_udp_recv_stop(&recv_socket);
+            }
+            // Close the socket handle so it can be reinitialized with a different port
+            //if (!uv_is_closing((uv_handle_t*)&recv_socket))
+            //{
+            //    uv_close((uv_handle_t*)&recv_socket, NULL);
+            //}
             slogi("releasing devices, please wait");
             
             //attempt tyre diameter saving
@@ -417,8 +425,8 @@ void releaseloop(loop_data* f, SimData* simdata, SimMap* simmap)
 
             if(appstate > 0)
             {
-                slogi("restarting data check timer");
-                uv_timer_start(&datachecktimer, datacheckcallback, 3000, 1000);
+                slogi("restarting checking for data...");
+                uv_timer_start(&datachecktimer, datacheckcallback, 0, 1000);
             }
             f->releasing = false;
             if(appstate > 1)
@@ -598,14 +606,11 @@ void cb(uv_poll_t* handle, int status, int events)
     {
         slogi("Monocoque is exiting...");
         uv_udp_recv_stop(&recv_socket);
-        uv_timer_stop(&datachecktimer);
         uv_timer_stop(&datamaptimer);
         uv_timer_stop(&showstatstimer);
+        // at this point these below should be the only active threads
+        uv_timer_stop(&datachecktimer);
         uv_poll_stop(handle);
-        uv_walk(uv_default_loop(), close_walk_cb, NULL);
-        uv_loop_close(uv_default_loop());
-        uv_library_shutdown();
-        slogi("All threads stopped...");
     }
 }
 
@@ -638,36 +643,43 @@ int monocoque_mainloop(MonocoqueSettings* ms)
     baton->releasing = false;
     baton->sim = 0;
     baton->req.data = (void*) baton;
-    uv_handle_set_data((uv_handle_t*) &datachecktimer, (void*) baton);
-    uv_handle_set_data((uv_handle_t*) &datamaptimer, (void*) baton);
-    uv_handle_set_data((uv_handle_t*) &showstatstimer, (void*) baton);
-    uv_handle_set_data((uv_handle_t*) &recv_socket, (void*) baton);
-    uv_handle_set_data((uv_handle_t*) poll, (void*) baton);
-    appstate = 1;
-    slogd("setting initial app state");
-    uv_timer_init(uv_default_loop(), &datachecktimer);
-    uv_timer_init(uv_default_loop(), &showstatstimer);
-    fprintf(stdout, "Searching for sim data... Press q to quit...\n");
-    uv_timer_start(&datachecktimer, datacheckcallback, 1000, 1000);
 
     set_simapi_log_info(simapilib_loginfo);
     set_simapi_log_debug(simapilib_logdebug);
     set_simapi_log_trace(simapilib_logtrace);
 
-
     if (0 != uv_poll_init(uv_default_loop(), poll, 0))
     {
         return 1;
     };
+    uv_timer_init(uv_default_loop(), &datachecktimer);
+    uv_timer_init(uv_default_loop(), &showstatstimer);
+    uv_timer_init(uv_default_loop(), &datamaptimer);
+    slogd("setting initial app state");
+    appstate = 1;
+
+    uv_handle_set_data((uv_handle_t*) &datachecktimer, (void*) baton);
+    uv_handle_set_data((uv_handle_t*) &datamaptimer, (void*) baton);
+    uv_handle_set_data((uv_handle_t*) &showstatstimer, (void*) baton);
+    uv_handle_set_data((uv_handle_t*) &recv_socket, (void*) baton);
+    uv_handle_set_data((uv_handle_t*) poll, (void*) baton);
+
     if (0 != uv_poll_start(poll, UV_READABLE, cb))
     {
         return 2;
     };
+    uv_timer_start(&datachecktimer, datacheckcallback, 1000, 1000);
 
-
-    uv_timer_init(uv_default_loop(), &datamaptimer);
-
+    fprintf(stdout, "Searching for sim data... Press q to quit...\n");
     uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+
+    uv_stop(uv_default_loop());
+    //uv_walk(uv_default_loop(), close_walk_cb, NULL);
+    uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+    uv_loop_close(uv_default_loop());
+    uv_library_shutdown();
+    slogi("All threads stopped...");
+
     fprintf(stdout, "\n");
     fflush(stdout);
     tcsetattr(0, TCSANOW, &canonicalmode);
