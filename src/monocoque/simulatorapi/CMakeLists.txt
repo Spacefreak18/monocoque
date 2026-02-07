@@ -10,6 +10,8 @@ set(simulatorapi_source_files
   simapi/include/scs2data.h
   simapi/include/outgauge.h
   simapi/include/f12018.h
+  simapi/include/rbrdata.h
+  simapi/include/wreckfest2data.h
   simapi/simmap/basicmap.h
   simapi/simmap/mapacdata.c
   simapi/simmap/mapacdata.h
@@ -19,7 +21,9 @@ set(simulatorapi_source_files
   simapi/simapi/pcars2.h
   simapi/simapi/scs2.h
   simapi/simapi/outgauge.h
+  simapi/simapi/wreckfest2.h
   simapi/simapi/f1.h
+  simapi/simapi/rbr.h
   simapi/simapi/mapping/acmapper.c
   simapi/simapi/mapping/rf2mapper.c
   simapi/simapi/mapping/pcars2mapper.c
@@ -27,6 +31,8 @@ set(simulatorapi_source_files
   simapi/simapi/mapping/scs2mapper.c
   simapi/simapi/mapping/outgaugemapper.c
   simapi/simapi/mapping/f12018mapper.c
+  simapi/simapi/mapping/rbrmapper.c
+  simapi/simapi/mapping/wreckfest2mapper.c
   simapi/simapi/getpid.c
   simapi/simapi/getpid.h
 )
