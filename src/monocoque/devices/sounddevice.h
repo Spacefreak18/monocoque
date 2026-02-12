@@ -26,7 +26,7 @@ typedef struct
     uint32_t amplitude;
     uint32_t amplitudeMax;
     double duration;
-    uint32_t curr_frequency;
+    double curr_frequency;
     uint32_t curr_amplitude;
     double curr_duration;
     double phase;
