@@ -158,7 +158,7 @@ int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* main
     // recommended settings, i.e. server uses sensible values
     pa_buffer_attr buffer_attr;
     buffer_attr.maxlength = (uint32_t) 32767;
-    buffer_attr.tlength = (uint32_t) -1;
+    buffer_attr.tlength = (uint32_t) 2048;
     buffer_attr.prebuf = (uint32_t) -1;
     buffer_attr.minreq = (uint32_t) -1;
 
