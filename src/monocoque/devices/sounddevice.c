@@ -26,7 +26,7 @@ int gear_sound_set(SoundDevice* sounddevice, SimData* simdata)
     }
     sounddevice->sounddata.last_gear = simdata->gear;
 
-    slogt("set gear frequency to %i", sounddevice->sounddata.curr_frequency);
+    slogt("set gear frequency to %f", sounddevice->sounddata.curr_frequency);
 }
 
 
@@ -37,9 +37,9 @@ double modulate(SoundDevice* sounddevice, double raw_effect, SoundEffectModulati
     {
         case SOUND_EFFECT_MODULATION_FREQUENCY:
             modulated_effect = ((sounddevice->sounddata.frequencyMax - sounddevice->sounddata.frequency) * raw_effect) + sounddevice->sounddata.frequency;
-            sounddevice->sounddata.curr_frequency = trunc(modulated_effect);
+            sounddevice->sounddata.curr_frequency = modulated_effect;
             sounddevice->sounddata.curr_amplitude = sounddevice->sounddata.amplitude;
-            slogt("set curr frequency to %i from raw effect %f and base frequency %i", sounddevice->sounddata.curr_frequency, raw_effect, sounddevice->sounddata.frequency);
+            slogt("set curr frequency to %f from raw effect %f and base frequency %i", sounddevice->sounddata.curr_frequency, raw_effect, sounddevice->sounddata.frequency);
             break;
         case SOUND_EFFECT_MODULATION_AMPLIFY:
             modulated_effect = ((sounddevice->sounddata.amplitudeMax - sounddevice->sounddata.amplitude) * raw_effect) + sounddevice->sounddata.amplitude;
@@ -80,7 +80,7 @@ int sounddev_tyreslip_update(SimDevice* this, SimData* simdata)
     }
     else
     {
-        sounddevice->sounddata.curr_frequency = 0;
+        sounddevice->sounddata.curr_frequency = 0.0;
         sounddevice->sounddata.curr_amplitude = 0;
         sounddevice->sounddata.curr_duration = 0;
     }
@@ -100,7 +100,7 @@ int sounddev_tyrelock_update(SimDevice* this, SimData* simdata)
     }
     else
     {
-        sounddevice->sounddata.curr_frequency = 0;
+        sounddevice->sounddata.curr_frequency = 0.0;
         sounddevice->sounddata.curr_amplitude = 0;
         sounddevice->sounddata.curr_duration = 0;
     }
@@ -118,7 +118,7 @@ int sounddev_absbrakes_update(SimDevice* this, SimData* simdata)
     }
     else
     {
-        sounddevice->sounddata.curr_frequency = 0;
+        sounddevice->sounddata.curr_frequency = 0.0;
         sounddevice->sounddata.curr_amplitude = 0;
         sounddevice->sounddata.curr_duration = 0;
     }
@@ -138,7 +138,7 @@ int sounddev_suspension_update(SimDevice* this, SimData* simdata)
     }
     else
     {
-        sounddevice->sounddata.curr_frequency = 0;
+        sounddevice->sounddata.curr_frequency = 0.0;
         sounddevice->sounddata.curr_amplitude = 0;
         sounddevice->sounddata.curr_duration = 0;
     }
@@ -189,7 +189,7 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, MonocoqueTyreId
     sounddevice->sounddata.phase = 0;
 
     sounddevice->sounddata.curr_amplitude = 0;
-    sounddevice->sounddata.curr_frequency = 0;
+    sounddevice->sounddata.curr_frequency = 0.0;
 
 
     const char* streamname= "Engine";

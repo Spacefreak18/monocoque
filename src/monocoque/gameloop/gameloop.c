@@ -726,7 +726,35 @@ int tester(SimDevice* devices, int numdevices)
     simdata->Yvelocity = 100;
     simdata->Zvelocity = 0;
 
-    sleep(3);
+    sleep(1);
+
+    fprintf(stdout, "Revving rpm from 1000 to 8000 and back\n");
+
+    for (int r = 0; r < 8000; r += 3)
+    {
+        simdata->rpms = 1000 + r;
+        for (int x = 0; x < numdevices; x++)
+        {
+            if (devices[x].initialized == true)
+            {
+                devices[x].update(&devices[x], simdata);
+            }
+        }
+        usleep(1000);
+    }
+
+    for (int r = 0; r < 8000; r += 3)
+    {
+        simdata->rpms = 9000 - r;
+        for (int x = 0; x < numdevices; x++)
+        {
+            if (devices[x].initialized == true)
+            {
+                devices[x].update(&devices[x], simdata);
+            }
+        }
+        usleep(1000);
+    }
 
     fprintf(stdout, "Setting rpms to 1000\n");
     simdata->rpms = 1000;

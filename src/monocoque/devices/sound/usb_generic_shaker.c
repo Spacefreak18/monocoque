@@ -80,7 +80,7 @@ int patestCallbackGearShift(const void*                     inputBuffer,
         data->curr_duration += 1.0 / SAMPLE_RATE;
         if (data->curr_duration >= data->duration) {
             data->curr_duration = 0.0;
-            data->curr_frequency = 0;
+            data->curr_frequency = 0.0;
         }
 
         *out++ = sample;
