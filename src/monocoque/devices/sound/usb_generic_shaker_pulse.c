@@ -62,7 +62,10 @@ void engine_sound_stream(pa_stream *s, size_t length, void *userdata) {
 
         buffer[i] = (int16_t)sample;
 
-        t += freq / SAMPLE_RATE;
+        double r = (double) rand() / RAND_MAX * 2.0 - 1.0;
+        double f = freq + r * data->noise;
+
+        t += f / SAMPLE_RATE;
         if (t >= 1.0) {
             t -= floor(t);
         }

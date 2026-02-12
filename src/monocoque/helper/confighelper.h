@@ -185,6 +185,7 @@ typedef struct
     double duration;
     char* dev;
     SoundEffectModulationType modulation;
+    int noise;
 }
 SoundDeviceSettings;
 
