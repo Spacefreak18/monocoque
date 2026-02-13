@@ -16,6 +16,15 @@
 #define M_PI  (3.14159265)
 #endif
 
+static double apply_noise(double base_freq, double noise_amount) {
+    if (noise_amount > 0.0) {
+        double r = (double) rand() / RAND_MAX * 2.0 - 1.0;
+        return base_freq + r * noise_amount;
+    } else {
+        return base_freq;
+    }
+}
+
 void gear_sound_stream(pa_stream *s, size_t length, void *userdata) {
 
     SoundData* data = (SoundData*)userdata;
@@ -24,21 +33,44 @@ void gear_sound_stream(pa_stream *s, size_t length, void *userdata) {
 
 
     for (size_t i = 0; i < num_samples; i++) {
-        static double t = 0.0;
-        double sample = 0;
-        if (data->frequency>0)
-        {
-            sample = ((double)data->curr_amplitude/100) * 32767.0 * sin(2.0 * M_PI * data->curr_frequency * data->curr_duration);
-        }
 
+        double sample = 0;
+
+        if (data->curr_frequency>0.0)
+        {
+            double t = data->phase;
+            double a = (double)data->curr_amplitude/100;
+
+            // fade-out 5ms to prevent discontinuity
+            static double fade_out_duration = 0.005;
+
+            double remaining = data->duration - data->curr_duration;
+            if (remaining < fade_out_duration) {
+                a *= remaining / fade_out_duration;
+            }
+
+            sample = a * 32767.0 * sin(2.0 * M_PI * t);
+
+            double f = apply_noise(data->curr_frequency, data->noise);
+
+            t += f / SAMPLE_RATE;
+            if (t >= 1.0) {
+                t -= floor(t);
+            }
+
+            data->phase = t;
+
+            data->curr_duration += 1.0 / SAMPLE_RATE;
+            if (data->curr_duration >= data->duration) {
+                data->curr_duration = 0.0;
+                data->curr_frequency = 0.0;
+                data->phase = 0.0;
+            }
+
+        }
 
         buffer[i] = (int16_t)sample;
 
-        data->curr_duration += 1.0 / SAMPLE_RATE;
-        if (data->curr_duration >= data->duration) {
-            data->curr_duration = 0.0;
-            data->curr_frequency = 0.0;
-        }
     }
     pa_stream_write(s, buffer, length, NULL, 0LL, PA_SEEK_RELATIVE);
 }
@@ -46,7 +78,6 @@ void gear_sound_stream(pa_stream *s, size_t length, void *userdata) {
 void engine_sound_stream(pa_stream *s, size_t length, void *userdata) {
 
     SoundData* data = (SoundData*)userdata;
-    double freq = data->curr_frequency;
 
     size_t num_samples = length / sizeof(int16_t);
 
@@ -62,8 +93,7 @@ void engine_sound_stream(pa_stream *s, size_t length, void *userdata) {
 
         buffer[i] = (int16_t)sample;
 
-        double r = (double) rand() / RAND_MAX * 2.0 - 1.0;
-        double f = freq + r * data->noise;
+        double f = apply_noise(data->curr_frequency, data->noise);
 
         t += f / SAMPLE_RATE;
         if (t >= 1.0) {
