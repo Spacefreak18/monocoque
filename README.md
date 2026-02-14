@@ -21,6 +21,10 @@ Cross Platform device manager for driving and flight simulators, for use with co
 - Convincing shaker effects for noise tranducers for wheel slip, wheel lock, and abs, as well as engine rpm and gear shifts.
 - Support for many [wheels and pedals](https://spacefreak18.github.io/simapi/thirdpartydevices) including Clubsport Elite V3, [Logitech G29](https://spacefreak18.github.io/simapi/logitechg29), and Moza R5.
 
+## Adding More Devices
+- If a device isn't already supported, feel free to assist in the reverse engineering process by submitting a pcap or even better working code in a pull request!
+https://santeri.pikarinen.com/pages/usb_hid_reverse_engineering/
+
 ## Quick Install
 
 **One-Line Installation:**
