@@ -177,6 +177,7 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, MonocoqueTyreId
     slogi("pan is: %i", sds.pan);
     slogi("channels is: %i", sds.channels);
     slogi("duration is: %f", sds.duration);
+    slogi("noise is: %i", sds.noise);
 
 
     sounddevice->modulationType = sds.modulation;
@@ -184,6 +185,7 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, MonocoqueTyreId
     sounddevice->sounddata.frequencyMax = sds.frequencyMax;
     sounddevice->sounddata.amplitude = sds.amplitude;
     sounddevice->sounddata.amplitudeMax = sds.amplitudeMax;
+    sounddevice->sounddata.noise = (double)sds.noise;
     sounddevice->sounddata.curr_duration = 0;
 
     sounddevice->sounddata.phase = 0;

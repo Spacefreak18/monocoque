@@ -30,6 +30,7 @@ typedef struct
     uint32_t curr_amplitude;
     double curr_duration;
     double phase;
+    double noise;
 }
 SoundData;
 
