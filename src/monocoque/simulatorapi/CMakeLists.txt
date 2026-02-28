@@ -11,6 +11,7 @@ set(simulatorapi_source_files
   simapi/include/outgauge.h
   simapi/include/f12018.h
   simapi/include/rbrdata.h
+  simapi/include/r3e.h
   simapi/include/wreckfest2data.h
   simapi/include/forza.h
   simapi/simmap/basicmap.h
@@ -26,8 +27,10 @@ set(simulatorapi_source_files
   simapi/simapi/f1.h
   simapi/simapi/rbr.h
   simapi/simapi/forzadef.h
+  simapi/simapi/r3edef.h
   simapi/simapi/mapping/acmapper.c
   simapi/simapi/mapping/rf2mapper.c
+  simapi/simapi/mapping/r3emapper.c
   simapi/simapi/mapping/pcars2mapper.c
   simapi/simapi/mapping/dirt2mapper.c
   simapi/simapi/mapping/scs2mapper.c
