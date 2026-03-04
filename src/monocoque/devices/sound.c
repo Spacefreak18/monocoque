@@ -28,13 +28,8 @@ int setupsound()
     pa_threaded_mainloop_lock(mainloop);
 
     // Start the mainloop
-<<<<<<< Updated upstream
-    assert(pa_threaded_mainloop_start(mainloop) == 0);
-    assert(pa_context_connect(context, NULL, 0, NULL) == 0);
-=======
     pa_threaded_mainloop_start(mainloop);
-    pa_context_connect(context, NULL, PA_CONTEXT_NOAUTOSPAWN, NULL);
->>>>>>> Stashed changes
+    pa_context_connect(context, NULL, 0, NULL);
 
     // Wait for the context to be ready
     for(;;) {
