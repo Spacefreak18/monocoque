@@ -207,14 +207,14 @@ int usb_generic_shaker_init(SoundDevice* sounddevice, pa_threaded_mainloop* main
     // for now i'm only supporting playing on one specified channel which is the concept you should build your setups around
     cv.values[pan] = channel_volume;
 
-    assert(pa_stream_connect_playback(stream, devname, &buffer_attr, stream_flags, &cv, NULL) == 0);
+    pa_stream_connect_playback(stream, devname, &buffer_attr, stream_flags, &cv, NULL);
     //pa_stream_connect_playback(stream, devname, &buffer_attr, stream_flags, &cv, NULL);
 
     // Wait for the stream to be ready
     for(;;)
     {
         pa_stream_state_t stream_state = pa_stream_get_state(stream);
-        assert(PA_STREAM_IS_GOOD(stream_state));
+        PA_STREAM_IS_GOOD(stream_state);
         //PA_STREAM_IS_GOOD(stream_state);
         if (stream_state == PA_STREAM_READY) break;
         pa_threaded_mainloop_wait(mainloop);
