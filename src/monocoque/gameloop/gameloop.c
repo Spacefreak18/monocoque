@@ -416,7 +416,7 @@ void releaseloop(loop_data* f, SimData* simdata, SimMap* simmap)
             }
             free(devices);
 
-            int r = simapi_sim_clear(simdata, simmap);
+            int r = simapi_sim_clear(simdata, simmap, false);
             slogd("simfree returned %i", r);
             f->numdevices = 0;
             slogi("stopped mapping data, press q again to quit");
