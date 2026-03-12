@@ -416,7 +416,7 @@ void releaseloop(loop_data* f, SimData* simdata, SimMap* simmap)
             }
             free(devices);
 
-            int r = simfree(simdata, simmap, f->map);
+            int r = simapi_sim_clear(simdata, simmap);
             slogd("simfree returned %i", r);
             f->numdevices = 0;
             slogi("stopped mapping data, press q again to quit");
@@ -446,7 +446,7 @@ void shmdatamapcallback(uv_timer_t* handle)
     //appstate = 2;
     if (appstate == 2)
     {
-        simdatamap(simdata, simmap, NULL, f->map, false, NULL);
+        simapi_datamap(simdata, simmap, f->map, false, NULL);
         looprun(ms, f, simdata);
     }
 
@@ -483,7 +483,7 @@ static void on_udp_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf,
 
     if (appstate == 2)
     {
-        simdatamap(simdata, simmap, NULL, f->map, true, a);
+        simapi_datamap(simdata, simmap, f->map, true, a);
         looprun(ms, f, simdata);
     }
 
@@ -511,7 +511,7 @@ void udpstart(MonocoqueSettings* sms, loop_data* f, SimData* simdata, SimMap* si
 {
     if (appstate == 2)
     {
-        simdatamap(simdata, simmap, NULL, f->sim, true, NULL);
+        simapi_datamap(simdata, simmap, f->sim, true, NULL);
         if (doui == true)
         {
             looprun(sms, f, simdata);
@@ -528,7 +528,7 @@ void datacheckcallback(uv_timer_t* handle)
 
     if ( appstate == 1 )
     {
-        SimInfo si = getSim(simdata, simmap, f->ms->force_udp_mode, startudp, false);
+        SimInfo si = simapi_get_sim(simdata, simmap, f->ms->force_udp_mode, startudp, false);
         //TODO: move all this to a siminfo struct in loop_data
         f->simstate = si.isSimOn;
         f->sim = si.simulatorapi;
@@ -569,7 +569,7 @@ void datacheckcallback(uv_timer_t* handle)
         }
         if(appstate == 2)
         {
-            SimInfo si = getSim(simdata, simmap, f->ms->force_udp_mode, NULL, false);
+            SimInfo si = simapi_get_sim(simdata, simmap, f->ms->force_udp_mode, NULL, false);
             if(si.isSimOn == false)
             {
                 appstate = 1;
@@ -620,7 +620,7 @@ int monocoque_mainloop(MonocoqueSettings* ms)
 {
 
     SimData* simdata = malloc(sizeof(SimData));
-    SimMap* simmap = createSimMap();
+    SimMap* simmap = simapi_simmap_create();
 
     struct termios newsettings, canonicalmode;
     tcgetattr(0, &canonicalmode);
@@ -644,9 +644,9 @@ int monocoque_mainloop(MonocoqueSettings* ms)
     baton->sim = 0;
     baton->req.data = (void*) baton;
 
-    set_simapi_log_info(simapilib_loginfo);
-    set_simapi_log_debug(simapilib_logdebug);
-    set_simapi_log_trace(simapilib_logtrace);
+    simapi_set_log_info(simapilib_loginfo);
+    simapi_set_log_debug(simapilib_logdebug);
+    simapi_set_log_trace(simapilib_logtrace);
 
     if (0 != uv_poll_init(uv_default_loop(), poll, 0))
     {
@@ -686,7 +686,6 @@ int monocoque_mainloop(MonocoqueSettings* ms)
 
     free(baton);
     free(simdata);
-    freesimmap(simmap, false);
 
     return 0;
 }
