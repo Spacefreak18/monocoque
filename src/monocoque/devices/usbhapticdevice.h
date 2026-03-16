@@ -31,7 +31,7 @@ USBGenericHapticDevice;
 
 
 int usbhapticdev_update(USBGenericHapticDevice* hapticdevice, SimData* simdata, int tyre, int useconfig, int* configcheck, char* configfile);
-int usbhapticdev_init(USBGenericHapticDevice* hapticdevice, DeviceSettings* ds);
+int usbhapticdev_init(USBGenericHapticDevice* hapticdevice, DeviceSettings* ds, SimInfo* siminfo);
 int usbhapticdev_free(USBGenericHapticDevice* hapticdevice);
 
 #endif

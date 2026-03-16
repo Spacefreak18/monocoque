@@ -67,8 +67,14 @@ int usbhapticdev_free(USBGenericHapticDevice* usbhapticdevice)
     return 0;
 }
 
-int usbhapticdev_init(USBGenericHapticDevice* usbhapticdevice, DeviceSettings* ds)
+int usbhapticdev_init(USBGenericHapticDevice* usbhapticdevice, DeviceSettings* ds, SimInfo* siminfo)
 {
+    if(siminfo->SimSupportsHapticEffects == false)
+    {
+        slogi("This sim does not support haptic effects");
+        return MONOCOQUE_ERROR_UNSUPPORTED_SIM_FEATURE;
+    }
+
     int error = 0;
     usbhapticdevice->state = 0;
     usbhapticdevice->value0 = ds->usbdevsettings.value0;

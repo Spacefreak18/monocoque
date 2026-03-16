@@ -225,7 +225,6 @@ void devicetimercallback(uv_timer_t* handle)
     SimData* simdata = f->simdata;
     SimDevice* device = f->simdevice;
     device->update(device, simdata);
-
 }
 
 void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
@@ -233,18 +232,18 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
 
     if (doui == true)
     {
-        slogi("looking for ui config %s pass 1", ms->config_str);
-        int confignum = getconfigtouse2(ms->config_str, simdata->car, f->sim);
+        slogi("looking for ui config %s pass 1 simapi %i", ms->config_str, f->siminfo.simulatorapi);
+        int confignum = getconfigtouse2(ms->config_str, simdata->car, f->siminfo.simulatorapi);
         slogi("first pass finished");
         if(confignum == -1)
         {
             slogi("looking for ui config %s pass 2", ms->config_str);
-            confignum = getconfigtouse1(ms->config_str, simdata->car, f->sim);
+            confignum = getconfigtouse1(ms->config_str, simdata->car, f->siminfo.simulatorapi);
         }
         if(confignum == -1)
         {
             slogi("looking for ui config %s pass 3", ms->config_str);
-            confignum = getconfigtouse(ms->config_str, simdata->car, f->sim);
+            confignum = getconfigtouse(ms->config_str, simdata->car, f->siminfo.simulatorapi);
         }
 
         int configureddevices;
@@ -259,7 +258,8 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
         }
 
         f->simdevices = malloc(f->numdevices * sizeof(SimDevice));
-        int initdevices = devinit(f->simdevices, configureddevices, ds, ms);
+        int initdevices = devinit(f->simdevices, &f->siminfo, configureddevices, ds, ms);
+        slogi("initialized %i devices", initdevices);
 
         for( int i = 0; i < configureddevices; i++)
         {
@@ -364,7 +364,7 @@ void releaseloop(loop_data* f, SimData* simdata, SimMap* simmap)
             //    uv_close((uv_handle_t*)&recv_socket, NULL);
             //}
             slogi("releasing devices, please wait");
-            
+
             //attempt tyre diameter saving
             if(hasTyreDiameter(simdata) == true)
             {
@@ -446,11 +446,11 @@ void shmdatamapcallback(uv_timer_t* handle)
     //appstate = 2;
     if (appstate == 2)
     {
-        simapi_datamap(simdata, simmap, f->map, false, NULL);
+        simapi_datamap(simdata, simmap, f->siminfo.mapapi, false, NULL);
         looprun(ms, f, simdata);
     }
 
-    if (f->simstate == false || simdata->simstatus <= 1 || appstate <= 1)
+    if (f->siminfo.isSimOn == false || simdata->simstatus <= 1 || appstate <= 1)
     {
         releaseloop(f, simdata, simmap);
     }
@@ -483,11 +483,11 @@ static void on_udp_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf,
 
     if (appstate == 2)
     {
-        simapi_datamap(simdata, simmap, f->map, true, a);
+        simapi_datamap(simdata, simmap, f->siminfo.mapapi, true, a);
         looprun(ms, f, simdata);
     }
 
-    if (f->simstate == false || simdata->simstatus <= 1 || appstate <= 1)
+    if (f->siminfo.isSimOn == false || simdata->simstatus <= 1 || appstate <= 1)
     {
         releaseloop(f, simdata, simmap);
     }
@@ -511,7 +511,7 @@ void udpstart(MonocoqueSettings* sms, loop_data* f, SimData* simdata, SimMap* si
 {
     if (appstate == 2)
     {
-        simapi_datamap(simdata, simmap, f->sim, true, NULL);
+        simapi_datamap(simdata, simmap, f->siminfo.simulatorapi, true, NULL);
         if (doui == true)
         {
             looprun(sms, f, simdata);
@@ -528,19 +528,14 @@ void datacheckcallback(uv_timer_t* handle)
 
     if ( appstate == 1 )
     {
-        SimInfo si = simapi_get_sim(simdata, simmap, f->ms->force_udp_mode, startudp, false);
-        //TODO: move all this to a siminfo struct in loop_data
-        f->simstate = si.isSimOn;
-        f->sim = si.simulatorapi;
-        f->map = si.mapapi;
-        f->use_udp = si.SimUsesUDP;
+        f->siminfo = simapi_get_sim(simdata, simmap, f->ms->force_udp_mode, startudp, false);
 
         if(f->ms->force_udp_mode == true)
         {
             f->use_udp = true;
         }
     }
-    if (f->simstate == true && simdata->simstatus >= 2)
+    if (f->siminfo.isSimOn == true && simdata->simstatus >= 2)
     {
         if ( appstate == 1 )
         {
@@ -569,8 +564,8 @@ void datacheckcallback(uv_timer_t* handle)
         }
         if(appstate == 2)
         {
-            SimInfo si = simapi_get_sim(simdata, simmap, f->ms->force_udp_mode, NULL, false);
-            if(si.isSimOn == false)
+            f->siminfo = simapi_get_sim(simdata, simmap, f->ms->force_udp_mode, NULL, false);
+            if(f->siminfo.isSimOn == false)
             {
                 appstate = 1;
                 releaseloop(f, simdata, simmap);
@@ -638,10 +633,9 @@ int monocoque_mainloop(MonocoqueSettings* ms)
     baton->simmap = simmap;
     baton->simdata = simdata;
     baton->ms = ms;
-    baton->simstate = false;
     baton->uion = false;
     baton->releasing = false;
-    baton->sim = 0;
+    baton->use_udp = false;
     baton->req.data = (void*) baton;
 
     simapi_set_log_info(simapilib_loginfo);
@@ -728,7 +722,7 @@ int tester(SimDevice* devices, int numdevices)
     sleep(1);
 
     fprintf(stdout, "Revving rpm from 1000 to 8000 and back\n");
-
+    // TODO: look into this, my serial leds make this hang
     for (int r = 0; r < 8000; r += 3)
     {
         simdata->rpms = 1000 + r;

@@ -231,88 +231,112 @@ static const vtable tyrelock_sound_simdevice_vtable = { &sounddev_tyrelock_updat
 static const vtable absbrakes_sound_simdevice_vtable = { &sounddev_absbrakes_update, &sounddev_free };
 static const vtable suspension_sound_simdevice_vtable = { &sounddev_suspension_update, &sounddev_free };
 
-SoundDevice* new_sound_device(DeviceSettings* ds, MonocoqueSettings* ms) {
+SoundDevice* new_sound_device(DeviceSettings* ds, MonocoqueSettings* ms, SimInfo* siminfo) {
 
     SoundDevice* this = (SoundDevice*) malloc(sizeof(SoundDevice));
 
     this->m.update = &update;
     this->m.free = &simdevfree;
     this->m.derived = this;
+    int error = 0;
 
-    slogt("Attempting to configure sound device with subtype: %i", ds->effect_type);
-    switch (ds->effect_type) {
-        case (EFFECT_ENGINERPM):
-            this->m.hapticeffect.effecttype = EFFECT_ENGINERPM;
-            this->m.vtable = &engine_sound_simdevice_vtable;
-            slogi("Initializing sound device for engine vibrations.");
-            break;
-        case (EFFECT_GEARSHIFT):
-            this->m.hapticeffect.effecttype = EFFECT_GEARSHIFT;
-            this->m.vtable = &gear_sound_simdevice_vtable;
-            slogi("Initializing sound device for gear shift vibrations.");
-            break;
+    switch (ds->effect_type)
+    {
         case (EFFECT_TYRESLIP):
-            this->m.hapticeffect.effecttype = EFFECT_TYRESLIP;
-            this->m.hapticeffect.threshold = ds->threshold;
-
-            this->m.hapticeffect.threshold = ds->threshold;
-            slogt("Haptic effect: %i %i", this->m.hapticeffect.effecttype, ds->effect_type);
-            this->m.hapticeffect.tyre = ds->tyre;
-            this->m.hapticeffect.useconfig = ms->useconfig;
-            this->m.hapticeffect.configcheck = &ms->configcheck;
-            this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
-
-            this->m.vtable = &tyreslip_sound_simdevice_vtable;
-            slogi("Initializing sound device for tyre slip vibrations.");
-            break;
         case (EFFECT_TYRELOCK):
-            this->m.hapticeffect.effecttype = EFFECT_TYRELOCK;
-            this->m.hapticeffect.threshold = ds->threshold;
-
-            this->m.hapticeffect.threshold = ds->threshold;
-            slogt("Haptic effect: %i %i", this->m.hapticeffect.effecttype, ds->effect_type);
-            this->m.hapticeffect.tyre = ds->tyre;
-            this->m.hapticeffect.useconfig = ms->useconfig;
-            this->m.hapticeffect.configcheck = &ms->configcheck;
-            this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
-
-            this->m.vtable = &tyrelock_sound_simdevice_vtable;
-            slogi("Initializing sound device for tyre slip vibrations.");
-            break;
         case (EFFECT_ABSBRAKES):
-            this->m.hapticeffect.effecttype = EFFECT_ABSBRAKES;
-            this->m.hapticeffect.threshold = ds->threshold;
-
-            this->m.hapticeffect.threshold = ds->threshold;
-            slogt("Haptic effect: %i %i", this->m.hapticeffect.effecttype, ds->effect_type);
-            this->m.hapticeffect.tyre = ds->tyre;
-            this->m.hapticeffect.useconfig = ms->useconfig;
-            this->m.hapticeffect.configcheck = &ms->configcheck;
-            this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
-
-            this->m.vtable = &absbrakes_sound_simdevice_vtable;
-            slogi("Initializing sound device for abs vibrations.");
-            break;
-
         case (EFFECT_SUSPENSION):
-            this->m.hapticeffect.effecttype = EFFECT_SUSPENSION;
-            this->m.hapticeffect.threshold = ds->threshold;
-
-            this->m.hapticeffect.threshold = ds->threshold;
-            slogt("Haptic effect: %i %i on tyre %i", this->m.hapticeffect.effecttype, ds->effect_type, ds->tyre);
-            this->m.hapticeffect.tyre = ds->tyre;
-            this->m.hapticeffect.useconfig = ms->useconfig;
-            this->m.hapticeffect.configcheck = &ms->configcheck;
-            this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
-
-            this->m.vtable = &suspension_sound_simdevice_vtable;
-            slogi("Initializing sound device for suspension vibrations.");
-            break;
+            if(siminfo->SimSupportsHapticEffects == false)
+            {
+                slogw("Skipping sound effect setup because sim does not support haptic effects");
+                error = MONOCOQUE_ERROR_UNSUPPORTED_SIM_FEATURE;
+            }
+        defaut:
+            error = 0;
     }
 
-    slogt("Attempting to use sound device %s", ds->sounddevsettings.dev);
 
-    int error = sounddev_init(this, ds->sounddevsettings.dev, ds->tyre, ds->sounddevsettings);
+    if(error == 0)
+    {
+        slogt("Attempting to configure sound device with subtype: %i", ds->effect_type);
+        switch (ds->effect_type)
+        {
+            case (EFFECT_ENGINERPM):
+                this->m.hapticeffect.effecttype = EFFECT_ENGINERPM;
+                this->m.vtable = &engine_sound_simdevice_vtable;
+                slogi("Initializing sound device for engine vibrations.");
+                break;
+            case (EFFECT_GEARSHIFT):
+                this->m.hapticeffect.effecttype = EFFECT_GEARSHIFT;
+                this->m.vtable = &gear_sound_simdevice_vtable;
+                slogi("Initializing sound device for gear shift vibrations.");
+                break;
+            case (EFFECT_TYRESLIP):
+                this->m.hapticeffect.effecttype = EFFECT_TYRESLIP;
+                this->m.hapticeffect.threshold = ds->threshold;
+
+                this->m.hapticeffect.threshold = ds->threshold;
+                slogt("Haptic effect: %i %i", this->m.hapticeffect.effecttype, ds->effect_type);
+                this->m.hapticeffect.tyre = ds->tyre;
+                this->m.hapticeffect.useconfig = ms->useconfig;
+                this->m.hapticeffect.configcheck = &ms->configcheck;
+                this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
+
+                this->m.vtable = &tyreslip_sound_simdevice_vtable;
+                slogi("Initializing sound device for tyre slip vibrations.");
+                break;
+            case (EFFECT_TYRELOCK):
+                this->m.hapticeffect.effecttype = EFFECT_TYRELOCK;
+                this->m.hapticeffect.threshold = ds->threshold;
+
+                this->m.hapticeffect.threshold = ds->threshold;
+                slogt("Haptic effect: %i %i", this->m.hapticeffect.effecttype, ds->effect_type);
+                this->m.hapticeffect.tyre = ds->tyre;
+                this->m.hapticeffect.useconfig = ms->useconfig;
+                this->m.hapticeffect.configcheck = &ms->configcheck;
+                this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
+
+                this->m.vtable = &tyrelock_sound_simdevice_vtable;
+                slogi("Initializing sound device for tyre slip vibrations.");
+                break;
+            case (EFFECT_ABSBRAKES):
+                this->m.hapticeffect.effecttype = EFFECT_ABSBRAKES;
+                this->m.hapticeffect.threshold = ds->threshold;
+
+                this->m.hapticeffect.threshold = ds->threshold;
+                slogt("Haptic effect: %i %i", this->m.hapticeffect.effecttype, ds->effect_type);
+                this->m.hapticeffect.tyre = ds->tyre;
+                this->m.hapticeffect.useconfig = ms->useconfig;
+                this->m.hapticeffect.configcheck = &ms->configcheck;
+                this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
+
+                this->m.vtable = &absbrakes_sound_simdevice_vtable;
+                slogi("Initializing sound device for abs vibrations.");
+                break;
+
+            case (EFFECT_SUSPENSION):
+                this->m.hapticeffect.effecttype = EFFECT_SUSPENSION;
+                this->m.hapticeffect.threshold = ds->threshold;
+
+                this->m.hapticeffect.threshold = ds->threshold;
+                slogt("Haptic effect: %i %i on tyre %i", this->m.hapticeffect.effecttype, ds->effect_type, ds->tyre);
+                this->m.hapticeffect.tyre = ds->tyre;
+                this->m.hapticeffect.useconfig = ms->useconfig;
+                this->m.hapticeffect.configcheck = &ms->configcheck;
+                this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
+
+                this->m.vtable = &suspension_sound_simdevice_vtable;
+                slogi("Initializing sound device for suspension vibrations.");
+                break;
+        }
+    }
+
+    if(error == 0)
+    {
+        slogt("Attempting to use sound device %s", ds->sounddevsettings.dev);
+        error = sounddev_init(this, ds->sounddevsettings.dev, ds->tyre, ds->sounddevsettings);
+    }
+
     if (error != 0)
     {
         free(this);

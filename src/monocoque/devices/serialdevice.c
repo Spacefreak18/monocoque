@@ -219,7 +219,7 @@ int serial_wheel_free(SimDevice* this)
     return 0;
 }
 
-int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds)
+int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds, SimInfo* siminfo)
 {
     slogi("initializing serial device on port %s to %i...", ds->serialdevsettings.portdev, ds->serialdevsettings.baud);
     int error = 0;
@@ -276,7 +276,7 @@ static const vtable arduino_simwind_vtable = { &arduino_simwind_update, &seriald
 static const vtable arduino_simhaptic_vtable = { &arduino_simhaptic_update, &serialdev_free };
 static const vtable serialwheel_vtable = { &serial_wheel_update, &serial_wheel_free };
 
-SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
+SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms, SimInfo* siminfo) {
 
     SerialDevice* this = (SerialDevice*) malloc(sizeof(SerialDevice));
 
@@ -285,6 +285,7 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
     this->m.derived = this;
     this->m.vtable = &serial_simdevice_vtable;
     this->type = SERIALDEV_ARDUINO;
+    int error = 0;
 
     slogt("Attempting to configure arduino device with subtype: %i", ds->dev_subtype);
     switch (ds->dev_subtype) {
@@ -325,6 +326,10 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
             slogi("Initializing custom arduino device.");
             break;
         case (SIMDEVTYPE_SERIALHAPTIC):
+            if(siminfo->SimSupportsHapticEffects == false)
+            {
+                error = MONOCOQUE_ERROR_UNSUPPORTED_SIM_FEATURE;
+            }
             this->devicetype = ARDUINODEV__HAPTIC;
             this->m.vtable = &arduino_simhaptic_vtable;
             this->u.simhapticdata.motor1 = 0;
@@ -359,7 +364,7 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
             }
     }
 
-    if(this->devicetype == ARDUINODEV__HAPTIC)
+    if(this->devicetype == ARDUINODEV__HAPTIC && error == 0)
     {
         this->m.hapticeffect.threshold = ds->threshold;
         this->m.hapticeffect.effecttype = ds->effect_type;
@@ -370,10 +375,15 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms) {
         this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
     }
 
-    int error = serialdev_init(this, ds);
-
-    if (error < 0)
+    if(error == 0)
     {
+        slogi("Starting serial device initialization");
+        error = serialdev_init(this, ds, siminfo);
+    }
+
+    if (error != 0)
+    {
+        slogw("Did not initialize usb device due to error code %i", error);
         free(this);
         return NULL;
     }

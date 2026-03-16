@@ -24,9 +24,9 @@ int devupdate(SimDevice* this, SimData* simdata)
     return 0;
 }
 
-int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds, MonocoqueSettings* ms)
+int devinit(SimDevice* simdevices, SimInfo* siminfo, int numdevices, DeviceSettings* ds, MonocoqueSettings* ms)
 {
-    slogi("initializing simdevices...");
+    slogi("initializing simdevices for simapi %i...", siminfo->simulatorapi);
     int devices = 0;
 
     for (int j = 0; j < numdevices; j++)
@@ -34,7 +34,7 @@ int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds, Monocoque
         simdevices[j].initialized = false;
 
         if (ds[j].dev_type == SIMDEV_USB) {
-            USBDevice* sim = new_usb_device(&ds[j], ms);
+            USBDevice* sim = new_usb_device(&ds[j], ms, siminfo);
             if (sim != NULL)
             {
                 simdevices[j] = sim->m;
@@ -56,7 +56,7 @@ int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds, Monocoque
             }
             else
             {
-                SoundDevice* sim = new_sound_device(&ds[j], ms);
+                SoundDevice* sim = new_sound_device(&ds[j], ms, siminfo);
                 if (sim != NULL)
                 {
 
@@ -75,7 +75,7 @@ int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds, Monocoque
 
         if (ds[j].dev_type == SIMDEV_SERIAL) {
 
-            SerialDevice* sim = new_serial_device(&ds[j], ms);
+            SerialDevice* sim = new_serial_device(&ds[j], ms, siminfo);
             if (sim != NULL)
             {
                 simdevices[j] = sim->m;

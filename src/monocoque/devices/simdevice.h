@@ -82,7 +82,7 @@ int arduino_simwind_update(SimDevice* this, SimData* simdata);
 int arduino_simhaptic_update(SimDevice* this, SimData* simdata);
 int serialdev_free(SimDevice* this);
 
-SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms);
+SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms, SimInfo* siminfo);
 
 /********* USB HID Devices *****/
 typedef enum
@@ -112,7 +112,7 @@ USBDevice;
 int usbdev_update(SimDevice* this, SimData* simdata);
 int usbdev_free(SimDevice* this);
 
-USBDevice* new_usb_device(DeviceSettings* ds, MonocoqueSettings* ms);
+USBDevice* new_usb_device(DeviceSettings* ds, MonocoqueSettings* ms, SimInfo* siminfo);
 
 
 /********* Sound Devices *****/
@@ -137,7 +137,7 @@ int sounddev_gearshift_update(SimDevice* this, SimData* simdata);
 int sounddev_tyreslip_update(SimDevice* this, SimData* simdata);
 int sounddev_free(SimDevice* this);
 
-SoundDevice* new_sound_device(DeviceSettings* ds, MonocoqueSettings* ms);
+SoundDevice* new_sound_device(DeviceSettings* ds, MonocoqueSettings* ms, SimInfo* siminfo);
 
 /***** Generic Methods *********/
 
@@ -145,7 +145,7 @@ int update(SimDevice* simdevice, SimData* simdata);
 
 int devupdate(SimDevice* simdevice, SimData* simdata);
 
-int devinit(SimDevice* simdevices, int numdevices, DeviceSettings* ds, MonocoqueSettings* ms);
+int devinit(SimDevice* simdevices, SimInfo* siminfo, int numdevices, DeviceSettings* ds, MonocoqueSettings* ms);
 
 int devfree(SimDevice* simdevices, int numdevices);
 

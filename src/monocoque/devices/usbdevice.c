@@ -54,7 +54,7 @@ int usbdev_free(SimDevice* this)
     return 0;
 }
 
-int usbdev_init(USBDevice* usbdevice, DeviceSettings* ds)
+int usbdev_init(USBDevice* usbdevice, DeviceSettings* ds, SimInfo* siminfo)
 {
     slogi("initializing usb device...");
     int error = 0;
@@ -70,7 +70,7 @@ int usbdev_init(USBDevice* usbdevice, DeviceSettings* ds)
             error = wheeldev_init(usbdevice, ds);
             break;
         case USBDEV_GENERICHAPTIC :
-            error = usbhapticdev_init(&usbdevice->u.hapticdevice, ds);
+            error = usbhapticdev_init(&usbdevice->u.hapticdevice, ds, siminfo);
             break;
     }
 
@@ -79,7 +79,7 @@ int usbdev_init(USBDevice* usbdevice, DeviceSettings* ds)
 
 static const vtable usb_simdevice_vtable = { &usbdev_update, &usbdev_free };
 
-USBDevice* new_usb_device(DeviceSettings* ds, MonocoqueSettings* ms) {
+USBDevice* new_usb_device(DeviceSettings* ds, MonocoqueSettings* ms, SimInfo* siminfo) {
 
     USBDevice* this = (USBDevice*) malloc(sizeof(USBDevice));
 
@@ -112,10 +112,11 @@ USBDevice* new_usb_device(DeviceSettings* ds, MonocoqueSettings* ms) {
         this->type = USBDEV_GENERICHAPTIC;
     }
 
-    int error = usbdev_init(this, ds);
+    int error = usbdev_init(this, ds, siminfo);
 
     if (error != 0)
     {
+        slogw("Did not initialize usb device due to error code %i", error);
         free(this);
         return NULL;
     }

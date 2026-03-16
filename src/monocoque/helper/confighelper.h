@@ -109,12 +109,13 @@ MonocoqueGear;
 
 typedef enum
 {
-    MONOCOQUE_ERROR_NONE          = 0,
-    MONOCOQUE_ERROR_UNKNOWN       = 1,
-    MONOCOQUE_ERROR_INVALID_SIM   = 2,
-    MONOCOQUE_ERROR_INVALID_DEV   = 3,
-    MONOCOQUE_ERROR_NODATA        = 4,
-    MONOCOQUE_ERROR_UNKNOWN_DEV   = 5
+    MONOCOQUE_ERROR_NONE                     = 0,
+    MONOCOQUE_ERROR_UNKNOWN                  = 1,
+    MONOCOQUE_ERROR_INVALID_SIM              = 2,
+    MONOCOQUE_ERROR_INVALID_DEV              = 3,
+    MONOCOQUE_ERROR_NODATA                   = 4,
+    MONOCOQUE_ERROR_UNKNOWN_DEV              = 5,
+    MONOCOQUE_ERROR_UNSUPPORTED_SIM_FEATURE  = 6,
 }
 MonocoqueError;
 

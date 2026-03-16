@@ -13,18 +13,17 @@ typedef struct device_loop_data
     uv_work_t req;
     SimData* simdata;
     SimDevice* simdevice;
+    SimInfo siminfo;
 } device_loop_data;
 
 typedef struct loop_data
 {
     uv_work_t req;
-    SimulatorAPI sim;
-    SimulatorAPI map;
     bool use_udp;
-    bool simstate;
     bool uion;
     bool releasing;
     int numdevices;
+    SimInfo siminfo;
     MonocoqueSettings* ms;
     SimData* simdata;
     SimMap* simmap;

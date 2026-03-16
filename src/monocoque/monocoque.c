@@ -193,6 +193,8 @@ int main(int argc, char** argv)
         SimDevice* tachdev = malloc(sizeof(SimDevice));
         tachdev->initialized = false;
         SimData* sdata = malloc(sizeof(SimData));
+        SimInfo* siminfo = malloc(sizeof(SimInfo));
+        simapi_set_faux_siminfo(siminfo);
         DeviceSettings* ds = malloc(sizeof(DeviceSettings));
 
         error = devsetup("USB", "Tachometer", "None", ms, ds, NULL);
@@ -205,7 +207,7 @@ int main(int argc, char** argv)
         {
             int devices = 0;
 
-            devices = devinit(tachdev, 1, ds, ms);
+            devices = devinit(tachdev, siminfo, 1, ds, ms);
             if(devices < 1)
             {
                 error = MONOCOQUE_ERROR_INVALID_DEV;
@@ -288,7 +290,9 @@ int main(int argc, char** argv)
 
             int numdevices = uiloadconfig(ms->config_str, confignum, configureddevices, ms, ds);
             SimDevice* simdevices = malloc(numdevices * sizeof(SimDevice));
-            int initdevices = devinit(simdevices, configureddevices, ds, ms);
+            SimInfo* siminfo = malloc(sizeof(SimInfo));
+            simapi_set_faux_siminfo(siminfo);
+            int initdevices = devinit(simdevices, siminfo, configureddevices, ds, ms);
             for( int i = 0; i < configureddevices; i++)
             {
                 settingsfree(ds[i]);
