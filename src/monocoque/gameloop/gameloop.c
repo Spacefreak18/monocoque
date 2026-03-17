@@ -546,7 +546,7 @@ void datacheckcallback(uv_timer_t* handle)
             simdata->tyrediameter[2] = -1;
             simdata->tyrediameter[3] = -1;
 
-            if(f->use_udp == true)
+            if(f->use_udp == true || f->siminfo.SimUsesUDP == true)
             {
                 slogt("starting udp receive loop");
                 udpstart(f->ms, f, simdata, simmap);
