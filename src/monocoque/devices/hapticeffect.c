@@ -204,51 +204,68 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
     wheelslip[2] = 0;
     wheelslip[3] = 0;
 
-    slogt("wheel vibration calculation with wheel config set to %i configchecked %i configfile %s car %s sim %i", useconfig, *configcheck, configfile, simdata->car, simdata->simexe);
-
-    switch (effecttype)
+    int sim_slip_ratio =0;
+    for (int i = 0; i < 4; i++)
     {
-        case (EFFECT_TYRESLIP):
-        case (EFFECT_TYRELOCK):
-        case (EFFECT_ABSBRAKES):
+        sim_slip_ratio = abs(simdata->tyreslipratio[i]);
+    }
+
+    if(sim_slip_ratio == 0)
+    {
+        slogt("wheel vibration calculation with wheel config set to %i configchecked %i configfile %s car %s sim %i", useconfig, *configcheck, configfile, simdata->car, simdata->simexe);
+
+        switch (effecttype)
+        {
+            case (EFFECT_TYRESLIP):
+            case (EFFECT_TYRELOCK):
+            case (EFFECT_ABSBRAKES):
 
 
-            if(hasTyreDiameter(simdata)==true)
-            {
-                double Speedms = kmhtoms * simdata->velocity;
-                slogt("attempting wheel slip calculation");
-                if (Speedms > minspeedinms)
+                if(hasTyreDiameter(simdata)==true)
                 {
-                    for(int i = 0; i < 4; i++)
+                    double Speedms = kmhtoms * simdata->velocity;
+                    slogt("attempting wheel slip calculation");
+                    if (Speedms > minspeedinms)
                     {
-                        wheelslip[i] = (Speedms - simdata->tyrediameter[i] * simdata->tyreRPS[i] / 2) / Speedms;
+                        for(int i = 0; i < 4; i++)
+                        {
+                            wheelslip[i] = (Speedms - simdata->tyrediameter[i] * simdata->tyreRPS[i] / 2) / Speedms;
+                        }
                     }
-                }
-                else
-                {
-                    for(int i = 0; i < 4; i++)
+                    else
                     {
-                        wheelslip[i] = 0;
+                        for(int i = 0; i < 4; i++)
+                        {
+                            wheelslip[i] = 0;
+                        }
                     }
+                    slogt("wheelslip values are %f %f %f %f", wheelslip[0], wheelslip[1], wheelslip[2], wheelslip[3]);
+                    slogt("velocities (x,y,z) are %f %f %f", simdata->Xvelocity, simdata->Yvelocity, simdata->Zvelocity);
                 }
-                slogt("wheelslip values are %f %f %f %f", wheelslip[0], wheelslip[1], wheelslip[2], wheelslip[3]);
-                slogt("velocities (x,y,z) are %f %f %f", simdata->Xvelocity, simdata->Yvelocity, simdata->Zvelocity);
-            }
-            break;
-        case EFFECT_SUSPENSION:
-            break;
-        default:
-            slogd("Unknown effect type");
+                break;
+            case EFFECT_SUSPENSION:
+                break;
+            default:
+                slogd("Unknown effect type");
+        }
+        if(simdata->Yvelocity <= 0)
+        {
+            return 0;
+        }
+        if(simdata->Zvelocity > 1 || simdata->Zvelocity < -1)
+        {
+            return 0;
+        }
+    }
+    else
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            wheelslip[i] = simdata->tyreslipratio[i];
+        }
+        slogt("wheelslip values from sim are %f %f %f %f", wheelslip[0], wheelslip[1], wheelslip[2], wheelslip[3]);
     }
 
-    if(simdata->Yvelocity <= 0)
-    {
-        return 0;
-    }
-    if(simdata->Zvelocity > 1 || simdata->Zvelocity < -1)
-    {
-        return 0;
-    }
 
     switch (effecttype)
     {
