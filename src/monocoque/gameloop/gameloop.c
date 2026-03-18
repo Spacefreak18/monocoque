@@ -520,7 +520,7 @@ static void on_udp_recv(uv_udp_t* handle, ssize_t nread, const uv_buf_t* rcvbuf,
 
 int startudp(int port)
 {
-    uv_udp_init(uv_default_loop(), &recv_socket);
+
     struct sockaddr_in recv_addr;
     uv_ip4_addr("0.0.0.0", port, &recv_addr);
     int err = uv_udp_bind(&recv_socket, (const struct sockaddr *) &recv_addr, UV_UDP_REUSEADDR);
@@ -574,7 +574,6 @@ void datacheckcallback(uv_timer_t* handle)
                 udpstart(f->ms, f, simdata, simmap);
                 uv_udp_recv_start(&recv_socket, on_alloc, on_udp_recv);
                 slogt("udp receive loop started");
-                uv_timer_stop(handle);
             }
             else
             {
@@ -582,7 +581,6 @@ void datacheckcallback(uv_timer_t* handle)
                 slogd("starting telemetry mapping at %i fps (%i ms ticks)", f->ms->fps, interval);
                 uv_timer_start(&datamaptimer, shmdatamapcallback, 2000, interval);
             }
-            //uv_timer_start(&datachecktimer, datacheckcallback, 0, 3000);
         }
         if(appstate == 2)
         {
@@ -668,6 +666,8 @@ int monocoque_mainloop(MonocoqueSettings* ms)
     {
         return 1;
     };
+    
+    uv_udp_init(uv_default_loop(), &recv_socket);
     uv_timer_init(uv_default_loop(), &datachecktimer);
     uv_timer_init(uv_default_loop(), &showstatstimer);
     uv_timer_init(uv_default_loop(), &datamaptimer);
@@ -703,6 +703,7 @@ int monocoque_mainloop(MonocoqueSettings* ms)
 
     free(baton);
     free(simdata);
+    free(simmap);
 
     return 0;
 }
