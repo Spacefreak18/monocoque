@@ -29,6 +29,7 @@ uv_idle_t idler;
 uv_timer_t datachecktimer;
 uv_timer_t showstatstimer;
 uv_timer_t datamaptimer;
+uv_timer_t tyrediametertimer;
 uv_udp_t recv_socket;
 
 bool doui = false;
@@ -37,6 +38,7 @@ int appstate = 0;
 void shmdatamapcallback(uv_timer_t* handle);
 void showstatscallback(uv_timer_t* handle);
 void datacheckcallback(uv_timer_t* handle);
+void tyrediametercheckcallback(uv_timer_t* handle);
 void startdatalogger(MonocoqueSettings* ms, loop_data* l);
 
 static void close_walk_cb(uv_handle_t* handle, void* arg)
@@ -227,9 +229,44 @@ void devicetimercallback(uv_timer_t* handle)
     device->update(device, simdata);
 }
 
+
+void tyrediametercheckcallback(uv_timer_t* handle)
+{
+    void* b = uv_handle_get_data((uv_handle_t*) handle);
+    device_loop_data* f = (device_loop_data*) b;
+    SimData* simdata = f->simdata;
+
+    if(simdata->car != NULL || simdata->car[0] != 0)
+    {
+        // check for saved tyre diameter in config file
+        // if not saved version exists get tyre diameter and save it
+        // use config check variable to track if the config check has been performed
+        // avoid many opens of the same file
+        int error = 0;
+        if(hasTyreDiameter(simdata)==false && f->ms->configcheck == 0)
+        {
+            slogi("attempting load of tyre diameter config");
+            error = loadtyreconfig(simdata, f->ms->tyre_diameter_config, true);
+            f->ms->configcheck = 1;
+        }
+
+        if(hasTyreDiameter(simdata)==false)
+        {
+            slogt("could not find tyre diameter in config file, attempting to calculate new");
+            getTyreDiameter(simdata);
+            // if this successfully calculates data the diameters will be saved to the file after the
+            // sim stops actively mapping data
+        }
+    }
+    if(hasTyreDiameter(simdata)==true)
+    {
+        uv_timer_stop(handle);
+    }
+
+}
+
 void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
 {
-
     if (doui == true)
     {
         slogi("looking for ui config %s pass 1 simapi %i", ms->config_str, f->siminfo.simulatorapi);
@@ -271,6 +308,7 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
         SimDevice* devices = f->simdevices;
         f->device_timers = (uv_timer_t*) (malloc(uv_handle_size(UV_TIMER) * numdevices));
         f->device_batons = (device_loop_data*) (malloc(sizeof(device_loop_data) * numdevices));
+        f->started_tyre_calc_thread = false;
 
         for (int x = 0; x < numdevices; x++)
         {
@@ -285,53 +323,32 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
                 int interval = 1000/devices[x].fps;
                 uv_timer_start(dt, devicetimercallback, 0, interval);
                 slogi("starting device type %i at id at %i fps: %i (%i ms ticks)", devices[x].type, x, devices[x].fps, interval);
-            }
-            else
-            {
-                slogw("skipped id %i", x);
+               
+                SimInfo siminfo = f->siminfo;
+                if(f->started_tyre_calc_thread == false)
+                {
+                        if(devices[x].hapticeffect.effecttype == EFFECT_TYRELOCK || devices[x].hapticeffect.effecttype == EFFECT_TYRESLIP || devices[x].hapticeffect.effecttype == EFFECT_ABSBRAKES)
+                        {
+                            if(siminfo.SimCalculatesTyreDiameter == false && siminfo.SimSupportsHapticEffects == true && siminfo.SimCalculatesSlipRatio == false && f->ms->useconfig == 1 && f->ms->tyre_diameter_config != NULL)
+                            {
+                                slogi("Starting thread to calculate tyre diameters and save to config file");
+                                f->started_tyre_calc_thread = true;
+
+                                f->tyrebaton = (device_loop_data*) malloc(sizeof(device_loop_data));
+                                f->tyrebaton->simdata = simdata;
+                                f->tyrebaton->ms = f->ms;
+
+                                uv_handle_set_data((uv_handle_t*) &tyrediametertimer, (void*) f->tyrebaton);
+                                uv_timer_start(&tyrediametertimer, tyrediametercheckcallback, 0, 1000);
+                            }
+                        }
+                }
             }
         }
 
 
         uv_timer_start(&showstatstimer, showstatscallback, 0, 100);
         doui = false;
-    }
-    else
-    {
-        //showstats(simdata);
-        //SimDevice* devices = f->simdevices;
-        //int numdevices = f->numdevices;
-        //for (int x = 0; x < numdevices; x++)
-        //{
-        //    if (devices[x].initialized == true && devices[x].type == 2)
-        //    {
-        //        devices[x].update(&devices[x], simdata);
-        //    }
-        //}
-
-        if(f->ms->useconfig == 1 && f->ms->tyre_diameter_config != NULL)
-        {
-            if(simdata->car != NULL || simdata->car[0] != 0)
-            {
-                // check for saved tyre diameter in config file
-                // if not saved version exists get tyre diameter and save it
-                // use config check variable to track if the config check has been performed
-                // avoid many opens of the same file
-                int error = 0;
-                if(hasTyreDiameter(simdata)==false && f->ms->configcheck == 0)
-                {
-                    slogi("attempting load of tyre diameter config");
-                    error = loadtyreconfig(simdata, f->ms->tyre_diameter_config, true);
-                    f->ms->configcheck = 1;
-                }
-
-                if(hasTyreDiameter(simdata)==false)
-                {
-                    slogt("could not find tyre diameter in config file, attempting to calculate new");
-                    getTyreDiameter(simdata);
-                }
-            }
-        }
     }
 }
 
@@ -366,14 +383,19 @@ void releaseloop(loop_data* f, SimData* simdata, SimMap* simmap)
             slogi("releasing devices, please wait");
 
             //attempt tyre diameter saving
-            if(hasTyreDiameter(simdata) == true)
+            uv_timer_stop(&tyrediametertimer);
+            if(f->started_tyre_calc_thread == true)
             {
-                int a = loadtyreconfig(simdata, f->ms->tyre_diameter_config, false);
-                if(a < 0)
+                if(hasTyreDiameter(simdata) == true)
                 {
-                    slogi("saving new tyre diameter config");
-                    savetyreconfig(simdata, f->ms->tyre_diameter_config);
+                    int a = loadtyreconfig(simdata, f->ms->tyre_diameter_config, false);
+                    if(a < 0)
+                    {
+                        slogi("saving new tyre diameter config");
+                        savetyreconfig(simdata, f->ms->tyre_diameter_config);
+                    }
                 }
+                free(f->tyrebaton);
             }
 
             f->uion = false;
@@ -649,6 +671,7 @@ int monocoque_mainloop(MonocoqueSettings* ms)
     uv_timer_init(uv_default_loop(), &datachecktimer);
     uv_timer_init(uv_default_loop(), &showstatstimer);
     uv_timer_init(uv_default_loop(), &datamaptimer);
+    uv_timer_init(uv_default_loop(), &tyrediametertimer);
     slogd("setting initial app state");
     appstate = 1;
 
