@@ -238,6 +238,7 @@ void tyrediametercheckcallback(uv_timer_t* handle)
 
     if(simdata->car != NULL || simdata->car[0] != 0)
     {
+        slogi("car is %s", simdata->car);
         // check for saved tyre diameter in config file
         // if not saved version exists get tyre diameter and save it
         // use config check variable to track if the config check has been performed
@@ -260,6 +261,12 @@ void tyrediametercheckcallback(uv_timer_t* handle)
     }
     if(hasTyreDiameter(simdata)==true)
     {
+        int a = loadtyreconfig(simdata, f->ms->tyre_diameter_config, false);
+        if(a < 0)
+        {
+            slogi("saving new tyre diameter config for car %s");
+            savetyreconfig(simdata, f->ms->tyre_diameter_config);
+        }
         uv_timer_stop(handle);
     }
 
@@ -386,15 +393,6 @@ void releaseloop(loop_data* f, SimData* simdata, SimMap* simmap)
             uv_timer_stop(&tyrediametertimer);
             if(f->started_tyre_calc_thread == true)
             {
-                if(hasTyreDiameter(simdata) == true)
-                {
-                    int a = loadtyreconfig(simdata, f->ms->tyre_diameter_config, false);
-                    if(a < 0)
-                    {
-                        slogi("saving new tyre diameter config");
-                        savetyreconfig(simdata, f->ms->tyre_diameter_config);
-                    }
-                }
                 free(f->tyrebaton);
             }
 
