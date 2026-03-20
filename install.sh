@@ -223,7 +223,7 @@ build_simapi() {
     
     mkdir -p build
     cd build
-    cmake ..
+    cmake -DINSTALL_SYSTEMD_SERVICE=off ..
     make -j$(nproc)
     
     log_info "Installing simapi library..."
@@ -537,7 +537,7 @@ main() {
     clone_repositories
     
     log_info "Building components (this may take a few minutes)..."
-    build_simapi
+    #build_simapi
     build_simd
     build_monocoque
     build_simshmbridge
