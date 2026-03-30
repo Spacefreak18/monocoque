@@ -118,8 +118,9 @@ int arduino_simwind_update(SimDevice* this, SimData* simdata)
     serialdevice->u.simwinddata.velocity = ceil(simdata->velocity*KPHTOMPH);
 
     slogt("Updating arduino device speed to %i", serialdevice->u.simwinddata.velocity);
-    // this can be added to the config, all config dependent can be added to init
-    serialdevice->u.simwinddata.fanpower = (int)0.6 * 255;
+
+    serialdevice->u.simwinddata.fanpower = (int)(serialdevice->fanpower * 255);
+    slogt("Sending fanpower: %i (from config: %f)", serialdevice->u.simwinddata.fanpower, serialdevice->fanpower);
     size_t size = sizeof(SimWindData);
 
     arduino_update(serialdevice, &serialdevice->u.simwinddata, size);
@@ -318,7 +319,8 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms, SimIn
         case (SIMDEVTYPE_SIMWIND):
             this->devicetype = ARDUINODEV__SIMWIND;
             this->m.vtable = &arduino_simwind_vtable;
-            slogi("Initializing arduino devices for sim wind.");
+            this->fanpower = ds->serialdevsettings.fanpower;
+            slogi("Initializing arduino devices for sim wind with fanpower: %f", this->fanpower);
             break;
         case (SIMDEVTYPE_ARDUINOCUSTOM):
             this->devicetype = ARDUINODEV__CUSTOM;
@@ -342,6 +344,7 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms, SimIn
             this->u.simhapticdata.effect4 = 0;
             this->state = 0;
             this->ampfactor = ds->serialdevsettings.ampfactor;
+            this->fanpower = ds->serialdevsettings.fanpower;
             slogi("Initializing arduino device for haptic effects.");
             break;
         case (SIMDEVTYPE_SERIALWHEEL):

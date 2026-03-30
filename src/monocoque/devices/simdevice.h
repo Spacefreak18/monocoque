@@ -66,6 +66,7 @@ typedef struct
     int endled;
     int baudrate;
     double ampfactor;
+    double fanpower;
     double state;
     union
     {
