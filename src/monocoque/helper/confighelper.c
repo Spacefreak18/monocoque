@@ -861,7 +861,11 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
             found = config_setting_lookup_float(device_settings, "ampfactor", &ampfactor);
             ds->serialdevsettings.ampfactor = ampfactor;
 
-            slogt("set port baud rate to %i, ampfactor %f", baud, ampfactor);
+            double fanpower = 0.6;
+            config_setting_lookup_float(device_settings, "fanpower", &fanpower);
+            ds->serialdevsettings.fanpower = fanpower;
+
+            slogt("set port baud rate to %i, ampfactor %f, fanpower %f", baud, ampfactor, fanpower);
 
         }
 

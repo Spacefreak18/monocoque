@@ -168,6 +168,7 @@ typedef struct
     int startled;
     int endled;
     float ampfactor;
+    float fanpower;
     int baud;
 }
 SerialDeviceSettings;
