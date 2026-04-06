@@ -145,6 +145,25 @@ int sounddev_suspension_update(SimDevice* this, SimData* simdata)
 
 }
 
+int sounddev_suspensionvelocity_update(SimDevice* this, SimData* simdata)
+{
+    SoundDevice* sounddevice = (void *) this->derived;
+
+    double effect = slipeffect(simdata, this->hapticeffect.effecttype, this->hapticeffect.tyre, this->hapticeffect.threshold, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
+    slogt("Updating sound device output from suspension velocity effect %f", effect);
+
+    if (effect > 0)
+    {
+        effect = modulate(sounddevice, effect, sounddevice->modulationType);
+    }
+    else
+    {
+        sounddevice->sounddata.curr_frequency = 0.0;
+        sounddevice->sounddata.curr_amplitude = 0;
+        sounddevice->sounddata.curr_duration = 0;
+    }
+}
+
 int sounddev_gearshift_update(SimDevice* this, SimData* simdata)
 {
     SoundDevice* sounddevice = (void *) this->derived;
@@ -213,6 +232,9 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, MonocoqueTyreId
         case (EFFECT_SUSPENSION):
             streamname = "Suspension";
             break;
+        case (EFFECT_SUSPENSIONVELOCITY):
+            streamname = "SuspensionVelocity";
+            break;
         case (EFFECT_ENGINERPM):
         default:
             streamname = "Engine";
@@ -230,6 +252,7 @@ static const vtable tyreslip_sound_simdevice_vtable = { &sounddev_tyreslip_updat
 static const vtable tyrelock_sound_simdevice_vtable = { &sounddev_tyrelock_update, &sounddev_free };
 static const vtable absbrakes_sound_simdevice_vtable = { &sounddev_absbrakes_update, &sounddev_free };
 static const vtable suspension_sound_simdevice_vtable = { &sounddev_suspension_update, &sounddev_free };
+static const vtable suspensionvelocity_sound_simdevice_vtable = { &sounddev_suspensionvelocity_update, &sounddev_free };
 
 SoundDevice* new_sound_device(DeviceSettings* ds, MonocoqueSettings* ms, SimInfo* siminfo) {
 
@@ -246,6 +269,7 @@ SoundDevice* new_sound_device(DeviceSettings* ds, MonocoqueSettings* ms, SimInfo
         case (EFFECT_TYRELOCK):
         case (EFFECT_ABSBRAKES):
         case (EFFECT_SUSPENSION):
+        case (EFFECT_SUSPENSIONVELOCITY):
             if(siminfo->SimSupportsHapticEffects == false)
             {
                 slogw("Skipping sound effect setup because sim does not support haptic effects");
@@ -314,6 +338,16 @@ SoundDevice* new_sound_device(DeviceSettings* ds, MonocoqueSettings* ms, SimInfo
                 slogi("Initializing sound device for abs vibrations.");
                 break;
 
+            case (EFFECT_SUSPENSIONVELOCITY):
+                this->m.hapticeffect.effecttype = EFFECT_SUSPENSIONVELOCITY;
+                this->m.hapticeffect.threshold = ds->threshold;
+                this->m.hapticeffect.tyre = ds->tyre;
+                this->m.hapticeffect.useconfig = ms->useconfig;
+                this->m.hapticeffect.configcheck = &ms->configcheck;
+                this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
+                this->m.vtable = &suspensionvelocity_sound_simdevice_vtable;
+                slogi("Initializing sound device for suspension velocity vibrations.");
+                break;
             case (EFFECT_SUSPENSION):
                 this->m.hapticeffect.effecttype = EFFECT_SUSPENSION;
                 this->m.hapticeffect.threshold = ds->threshold;

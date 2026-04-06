@@ -415,6 +415,42 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
                 }
             }
             break;
+
+        case (EFFECT_SUSPENSIONVELOCITY):
+
+            if (tyre == FRONTLEFT || tyre == FRONTS || tyre == ALLFOUR)
+            {
+                if(simdata->suspvelocity[0] > threshold)
+                {
+                    play += simdata->suspvelocity[0] - threshold;
+                    slogt("suspension velocity is %f", play);
+                }
+            }
+            if (tyre == FRONTRIGHT || tyre == FRONTS || tyre == ALLFOUR)
+            {
+                if(simdata->suspvelocity[1] > threshold)
+                {
+                    play += simdata->suspvelocity[1] - threshold;
+                    slogt("suspension velocity is %f", play);
+                }
+            }
+            if (tyre == REARLEFT || tyre == REARS || tyre == ALLFOUR)
+            {
+                if(simdata->suspvelocity[2] > threshold)
+                {
+                    play += simdata->suspvelocity[2] - threshold;
+                    slogt("suspension velocity is %f", play);
+                }
+            }
+            if (tyre == REARRIGHT || tyre == REARS || tyre == ALLFOUR)
+            {
+                if(simdata->suspvelocity[3] > threshold)
+                {
+                    play += simdata->suspvelocity[3] - threshold;
+                    slogt("suspension velocity is %f", play);
+                }
+            }
+            break;
     }
 
     return play;

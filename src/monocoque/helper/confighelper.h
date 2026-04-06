@@ -63,12 +63,13 @@ SimulatorUpdate;
 
 typedef enum
 {
-    EFFECT_ENGINERPM   = 0,
-    EFFECT_GEARSHIFT   = 1,
-    EFFECT_ABSBRAKES   = 2,
-    EFFECT_TYRESLIP    = 3,
-    EFFECT_TYRELOCK    = 4,
-    EFFECT_SUSPENSION  = 5
+    EFFECT_ENGINERPM          = 0,
+    EFFECT_GEARSHIFT          = 1,
+    EFFECT_ABSBRAKES          = 2,
+    EFFECT_TYRESLIP           = 3,
+    EFFECT_TYRELOCK           = 4,
+    EFFECT_SUSPENSION         = 5,
+    EFFECT_SUSPENSIONVELOCITY = 6
 }
 VibrationEffectType;
 
