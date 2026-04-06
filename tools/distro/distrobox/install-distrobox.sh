@@ -40,7 +40,7 @@ log_error() {
 print_header() {
     echo ""
     echo "╔══════════════════════════════════════════════════════════════════╗"
-    echo "║          Monocoque Distrobox Installer v${SCRIPT_VERSION}                ║"
+    echo "║          Monocoque Distrobox Installer v${SCRIPT_VERSION}        ║"
     echo "╚══════════════════════════════════════════════════════════════════╝"
     echo ""
 }
@@ -227,7 +227,7 @@ fi
 # Done
 echo ""
 echo "╔══════════════════════════════════════════════════════════════════╗"
-echo "║                  Installation Complete!                         ║"
+echo "║                  Installation Complete!                          ║"
 echo "╚══════════════════════════════════════════════════════════════════╝"
 echo ""
 log_success "Monocoque (distrobox) installed!"

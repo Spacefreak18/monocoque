@@ -32,7 +32,7 @@ log_warn() {
 print_header() {
     echo ""
     echo "╔══════════════════════════════════════════════════════════════════╗"
-    echo "║                Monocoque Distrobox Uninstaller                  ║"
+    echo "║                Monocoque Distrobox Uninstaller                   ║"
     echo "╚══════════════════════════════════════════════════════════════════╝"
     echo ""
 }
