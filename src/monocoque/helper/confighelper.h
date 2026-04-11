@@ -45,7 +45,8 @@ typedef enum
     SIMDEVSUBTYPE_SIMAGICP1000PEDALS      = 5,
     SIMDEVSUBTYPE_SIMAGICGTNEO            = 6,
     SIMDEVSUBTYPE_MOZA_NEW                = 7,
-    SIMDEVSUBTYPE_LOGITECH_G29            = 8
+    SIMDEVSUBTYPE_LOGITECH_G29            = 8,
+    SIMDEVSUBTYPE_MOZA_KS_PRO_WHEEL       = 9
 }
 DeviceSubSubType;
 
