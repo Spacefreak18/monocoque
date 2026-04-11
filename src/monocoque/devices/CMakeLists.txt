@@ -42,6 +42,8 @@ set(devices_source_files
   serial/moza.c
   serial/moza_new.h
   serial/moza_new.c
+  serial/moza_ks_pro_wheel.h
+  serial/moza_ks_pro_wheel.c
 )
 
 include_directories("." "usb" "sound" "serial")

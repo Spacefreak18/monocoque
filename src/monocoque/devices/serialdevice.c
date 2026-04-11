@@ -11,6 +11,7 @@
 #include "serial/arduino.h"
 #include "serial/moza.h"
 #include "serial/moza_new.h"
+#include "serial/moza_ks_pro_wheel.h"
 #include "../helper/parameters.h"
 #include "../simulatorapi/simapi/simapi/simdata.h"
 #include "../slog/slog.h"
@@ -24,6 +25,10 @@ int serial_wheel_update(SimDevice* this, SimData* simdata)
     switch (serialdevice->devicetype) {
       case SIMDEVSUBTYPE_MOZA_NEW:
         moza_new_update(serialdevice, simdata);
+        break;
+
+      case SERIALDEV__MOZA_KS_PRO_WHEEL:
+        moza_ks_pro_wheel_update(serialdevice, simdata);
         break;
 
       case SIMDEVSUBTYPE_MOZAR5:
@@ -240,6 +245,9 @@ int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds, SimInfo* simi
         case SERIALDEV__MOZA_NEW:
             error = moza_new_init(serialdevice, ds->serialdevsettings.portdev);
             break;
+        case SERIALDEV__MOZA_KS_PRO_WHEEL:
+            error = moza_ks_pro_wheel_init(serialdevice, ds->serialdevsettings.portdev);
+            break;
         case ARDUINODEV__SIMLED__CUSTOM:
             serialdevice->m.device_specific_config_file = strdup(ds->specific_config_file);
             error = arduino_custom_init(serialdevice, ds->serialdevsettings.portdev, serialdevice->m.device_specific_config_file, true);
@@ -355,6 +363,11 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms, SimIn
                 case SIMDEVSUBTYPE_MOZA_NEW:
                   slogi("Initializing new firmware Moza serial wheel device.");
                   this->devicetype = SERIALDEV__MOZA_NEW;
+                  this->m.vtable = &serialwheel_vtable;
+                  break;
+                case SIMDEVSUBTYPE_MOZA_KS_PRO_WHEEL:
+                  slogi("Initializing new firmware Moza serial wheel device.");
+                  this->devicetype = SERIALDEV__MOZA_KS_PRO_WHEEL;
                   this->m.vtable = &serialwheel_vtable;
                   break;
                 case SIMDEVSUBTYPE_MOZAR5:

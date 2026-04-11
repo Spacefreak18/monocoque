@@ -118,6 +118,11 @@ int strtodevsubsubtype(const char* device_subsubtype, DeviceSettings* ds)
         ds->dev_subsubtype = SIMDEVSUBTYPE_MOZAR5;
         devfound = true;
     }
+    if (strcicmp(device_subsubtype, "MozaKSProWheel") == 0)
+    {
+        ds->dev_subsubtype = SIMDEVSUBTYPE_MOZA_KS_PRO_WHEEL;
+        devfound = true;
+    }
     if (strcicmp(device_subsubtype, "CSLELITEV3PEDALS") == 0)
     {
         ds->dev_subsubtype = SIMDEVSUBTYPE_CSLELITEV3PEDALS;
