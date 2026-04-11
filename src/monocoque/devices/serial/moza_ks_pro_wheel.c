@@ -14,9 +14,9 @@
 #define MOZA_MAGIC_VALUE 0x0d
 #define MOZA_RPM_MASK_TEMPLATE {0x7e, 0x06, 0x3f, 0x17, 0x1a, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
 #define MOZA_RPM_MASK_PAYLOAD_SIZE 11
-#define MOZA_RPM_COLOR_PAYLOAD_1 {0x7e, 0x16, 0x3f, 0x17, 0x19, 0, 0, 0, 0xff, 0, 1, 0, 0xff, 0, 2, 0, 0xff, 0, 3, 0xff, 0x7f, 0, 4, 0xff, 0x7f, 0, 0}
-#define MOZA_RPM_COLOR_PAYLOAD_2 {0x7e, 0x16, 0x3f, 0x17, 0x19, 0, 5, 0xff, 0x7f, 0, 6, 0xff, 0x7f, 0, 7, 0xff, 0, 0, 8, 0xff, 0, 0, 9, 0xff, 0, 0, 0}
-#define MOZA_RPM_COLOR_PAYLOAD_3 {0x7e, 0x16, 0x3f, 0x17, 0x19, 0, 10, 0, 0, 0xff, 11, 0, 0, 0xff, 12, 0, 0, 0xff, 13, 0, 0, 0xff, 14, 0, 0, 0xff, 0}
+#define MOZA_RPM_COLOR_PAYLOAD_1 {0x7e, 0x16, 0x3f, 0x17, 0x19, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0xff, 0, 0, 4, 0xff, 0, 0, 0}
+#define MOZA_RPM_COLOR_PAYLOAD_2 {0x7e, 0x16, 0x3f, 0x17, 0x19, 0, 5, 0xff, 0, 0, 6, 0xff, 0, 0, 7, 0xff, 0, 0, 8, 0xff, 0, 0, 9, 0xff, 0, 0, 0}
+#define MOZA_RPM_COLOR_PAYLOAD_3 {0x7e, 0x16, 0x3f, 0x17, 0x19, 0, 10, 0xff, 0x7f, 0, 11, 0xff, 0x7f, 0, 12, 0xff, 0x7f, 0, 13, 0, 0, 0xff, 14, 0, 0, 0xff, 0}
 #define MOZA_BTN_COLOR_PAYLOAD_1 {0x7e, 0x16, 0x3f, 0x17, 0x19, 1, 0, 0xff, 0, 0, 1, 0xff, 0, 0, 2, 0xff, 0, 0, 3, 0xff, 0, 0, 4, 0xff, 0, 0, 0}
 #define MOZA_BTN_COLOR_PAYLOAD_2 {0x7e, 0x16, 0x3f, 0x17, 0x19, 1, 5, 0xff, 0, 0, 6, 0xff, 0, 0, 7, 0xff, 0, 0, 8, 0xff, 0, 0, 9, 0xff, 0, 0, 0}
 #define MOZA_COLOR_PAYLOAD_SIZE 27
@@ -30,50 +30,43 @@ int moza_ks_pro_wheel_update(SerialDevice* serialdevice, SimData* simData)
     int perct = round(perctflt);
     if (perct >= 98 && (simData->mtick >> 7) & 1 == 1) perct = 0;
 
+
     if (perct >= 75)
-        bytes[6] |= BIT(0);
-
-    if (perct >= 79)
-        bytes[6] |= BIT(1);
-
-    if (perct >= 82)
-        bytes[6] |= BIT(2);
-
-    if (perct >= 85)
         bytes[6] |= BIT(3);
 
-    if (perct >= 87)
+    if (perct >= 77)
         bytes[6] |= BIT(4);
 
-    if (perct >= 88)
+    if (perct >= 79)
         bytes[6] |= BIT(5);
 
-    if (perct >= 89)
+    if (perct >= 81)
         bytes[6] |= BIT(6);
 
-    if (perct >= 90)
+    if (perct >= 83)
         bytes[6] |= BIT(7);
 
-    if (perct >= 92)
+    if (perct >= 85)
         bytes[7] |= BIT(0);
 
-    if (perct >= 94)
+    if (perct >= 87)
         bytes[7] |= BIT(1);
 
-    if (perct >= 95)
+    if (perct >= 89)
         bytes[7] |= BIT(2);
 
-    if (perct >= 96)
+    if (perct >= 91)
         bytes[7] |= BIT(3);
 
-    if (perct >= 97)
+    if (perct >= 93)
         bytes[7] |= BIT(4);
 
-    if (perct >= 98)
+    if (perct >= 95)
         bytes[7] |= BIT(5);
 
-    if (perct >= 99)
+    if (perct >= 97)
         bytes[7] |= BIT(6);
+
 
     bytes[10] = moza_checksum(bytes, size);
 
