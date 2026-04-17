@@ -84,6 +84,8 @@ int moza_update(SerialDevice* serialdevice, unsigned short rpm, unsigned short m
 
 int moza_init(SerialDevice* serialdevice, const char* portdev)
 {
-    serialdevice->id = monocoque_serial_open(serialdevice, portdev);
-    return serialdevice->id;
+    int id = monocoque_serial_open(serialdevice, portdev);
+    if (id < 0) return id;
+    serialdevice->id = id;
+    return 0;
 }

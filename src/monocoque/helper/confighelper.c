@@ -715,7 +715,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         }
     }
 
-    if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC || ds->dev_subtype == SIMDEVTYPE_USBWHEEL)
+    if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC || ds->dev_subtype == SIMDEVTYPE_USBWHEEL || ds->dev_subtype == SIMDEVTYPE_SERIALWHEEL)
     {
         // logic for different devices
         int b = 0;
