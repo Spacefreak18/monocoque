@@ -27,10 +27,13 @@ int check(enum sp_return result)
             error_message = sp_last_error_message();
             sloge("error: serial write failed: %s", error_message);
             sp_free_error_message(error_message);
+            return result;
         case SP_ERR_SUPP:
             printf("Error: Not supported.\n");
+            return result;
         case SP_ERR_MEM:
             printf("Error: Couldn't allocate memory.\n");
+            return result;
         case SP_OK:
         default:
             return result;
@@ -114,23 +117,30 @@ int monocoque_input_wait(uint8_t serialdevicenum)
     return sp_input_waiting(monocoque_serial_dev.port);
 }
 
-int monocoque_serial_write(uint8_t serialdevicenum, void* data, size_t size, int timeout)
+// Helper function to get and validate device
+static monocoque_serial_device* monocoque_get_serial_device(uint8_t serialdevicenum)
 {
+    monocoque_serial_device* dev = &monocoque_serial_devices[serialdevicenum];
     slogt("serial device id %i", serialdevicenum);
-    monocoque_serial_device monocoque_serial_dev = monocoque_serial_devices[serialdevicenum];
-
-    slogt("port name: %s, busy %i, open %i, openfail %i", monocoque_serial_dev.portname, monocoque_serial_dev.busy, monocoque_serial_dev.open, monocoque_serial_dev.busy);
-
-    if(monocoque_serial_dev.port == NULL)
+    slogt("port name: %s, busy %i, open %i, openfail %i", dev->portname, dev->busy, dev->open, dev->openfail);
+    
+    if(dev->port == NULL)
     {
         sloge("port is null");
     }
+    
+    return dev;
+}
+
+int monocoque_serial_write(uint8_t serialdevicenum, void* data, size_t size, int timeout)
+{
+    monocoque_serial_device* dev = monocoque_get_serial_device(serialdevicenum);
 
     int result = -1;
-    if(monocoque_serial_dev.busy == false && monocoque_serial_dev.open == true)
+    if(dev->busy == false && dev->open == true)
     {
-        monocoque_serial_dev.busy = true;
-        result = sp_blocking_write(monocoque_serial_dev.port, data, size, timeout);
+        dev->busy = true;
+        result = sp_blocking_write(dev->port, data, size, timeout);
     }
     else
     {
@@ -138,67 +148,51 @@ int monocoque_serial_write(uint8_t serialdevicenum, void* data, size_t size, int
         result = -1;
     }
     slogt("write result is %i", result);
-    monocoque_serial_dev.busy = false;
+    dev->busy = false;
     return result;
 }
 
 int monocoque_serial_write_block(uint8_t serialdevicenum, void* data, size_t size, int timeout)
 {
-    slogt("serial device id %i", serialdevicenum);
-    monocoque_serial_device monocoque_serial_dev = monocoque_serial_devices[serialdevicenum];
-
-    slogt("port name: %s, busy %i, open %i, openfail %i", monocoque_serial_dev.portname, monocoque_serial_dev.busy, monocoque_serial_dev.open, monocoque_serial_dev.busy);
-
-    if(monocoque_serial_dev.port == NULL)
-    {
-        sloge("port is null");
-    }
+    monocoque_serial_device* dev = monocoque_get_serial_device(serialdevicenum);
 
     int result = -1;
-    if(monocoque_serial_dev.open == true)
+    if(dev->open == true)
     {
-        while(monocoque_serial_dev.busy == true)
+        while(dev->busy == true)
         {
             slogt("hopefully this doesn't happen long");
             continue;
         }
 
-        monocoque_serial_dev.busy = true;
-        result = sp_blocking_write(monocoque_serial_dev.port, data, size, timeout);
+        dev->busy = true;
+        result = sp_blocking_write(dev->port, data, size, timeout);
         slogi("actually performed write");
     }
 
-    monocoque_serial_dev.busy = false;
+    dev->busy = false;
     return result;
 }
 
 int monocoque_serial_read_block(uint8_t serialdevicenum, void* data, size_t size, int timeout)
 {
-    slogt("serial device id %i", serialdevicenum);
-    monocoque_serial_device monocoque_serial_dev = monocoque_serial_devices[serialdevicenum];
-
-    slogt("port name: %s, busy %i, open %i, openfail %i", monocoque_serial_dev.portname, monocoque_serial_dev.busy, monocoque_serial_dev.open, monocoque_serial_dev.busy);
-
-    if(monocoque_serial_dev.port == NULL)
-    {
-        sloge("port is null");
-    }
+    monocoque_serial_device* dev = monocoque_get_serial_device(serialdevicenum);
 
     int result = -1;
-    if(monocoque_serial_dev.open == true)
+    if(dev->open == true)
     {
-        while(monocoque_serial_dev.busy == true)
+        while(dev->busy == true)
         {
             slogt("hopefully this doesn't happen long");
             continue;
         }
 
-        monocoque_serial_dev.busy = true;
-        result = sp_blocking_read(monocoque_serial_dev.port, data, size, timeout);
+        dev->busy = true;
+        result = sp_blocking_read(dev->port, data, size, timeout);
         slogi("actually performed read");
     }
 
-    monocoque_serial_dev.busy = false;
+    dev->busy = false;
     return result;
 }
 
