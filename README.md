@@ -41,6 +41,20 @@ chmod +x install.sh
 ./install.sh
 ```
 
+### Installation on Immutable Distros (Bazzite, Silverblue, etc.)
+
+On immutable distributions where native package managers are unavailable,
+monocoque can be installed inside a distrobox container:
+
+```bash
+bash tools/distro/distrobox/install-distrobox.sh
+```
+
+This creates an Arch Linux container, installs all packages via AUR, and sets up
+wrapper scripts (`start-simd`, `start-monocoque`, `test-monocoque`) in `~/.local/bin/`.
+
+To uninstall: `bash tools/distro/distrobox/uninstall-distrobox.sh`
+
 **TUI Manager:**
 After installation, use the interactive manager:
 ```bash
