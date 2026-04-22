@@ -44,7 +44,7 @@ add_executable(monocoque src/monocoque/monocoque.c)
 #endif()
 message("Using pulseaudio backend...")
 add_compile_definitions(USE_PULSEAUDIO=true)
-target_link_libraries(monocoque m hidapi-hidraw pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir ${LUA_LIBRARY})
+target_link_libraries(monocoque m hidapi-hidraw pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir ${LUA_LIBRARY} proc2)
 
 target_include_directories(monocoque PUBLIC config ${LIBXML_INCLUDE_DIR})
 
