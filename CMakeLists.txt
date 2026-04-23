@@ -20,7 +20,7 @@ set(CMAKE_EXE_LINKER_FLAGS "-Wl,--no-as-needed -ldl")
 set(LIBUSB_INCLUDE_DIR /usr/include/libusb-1.0)
 set(LIBXML_INCLUDE_DIR /usr/include/libxml2)
 
-FIND_PACKAGE(Lua 5.3 REQUIRED)
+FIND_PACKAGE(Lua 5.4 EXACT REQUIRED)
 set(INCLUDE_DIRS ${LUA_INCLUDE_DIR})
 include_directories(${LUA_INCLUDE_DIR})
 
