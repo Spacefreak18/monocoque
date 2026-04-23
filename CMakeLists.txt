@@ -24,6 +24,9 @@ FIND_PACKAGE(Lua 5.4 EXACT REQUIRED)
 set(INCLUDE_DIRS ${LUA_INCLUDE_DIR})
 include_directories(${LUA_INCLUDE_DIR})
 
+
+
+
 #FIND_PATH(LIBUSB_INCLUDE_DIR libusb.h
 #	HINTS $ENV{LIBUSB_ROOT}
 #	PATHS ${PC_LIBUSB_INCLUDEDIR} ${PC_LIBUSB_INCLUDE_DIRS}
@@ -39,9 +42,26 @@ set(BUILD_SHARED_LIBS TRUE) # HIDAPI as static library on all platforms
 
 add_executable(monocoque src/monocoque/monocoque.c)
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBPROCPS libprocps)
+pkg_check_modules(LIBPROC2 libproc2)
+
+if (LIBPROCPS_FOUND)
+    add_compile_definitions(USE_OLD_PID_VAL=false)
+elseif (LIBPROC2_FOUND)
+    if (LIBPROC2_VERSION VERSION_GREATER_EQUAL "4.0.5")
+        add_compile_definitions(USE_OLD_PID_VAL=false)
+    endif()
+
+    add_compile_definitions(USE_OLD_PID_VAL=true)
+else()
+    message(FATAL_ERROR "Either libprocps or libproc2 is required")
+endif()
+
 #if(USE_PULSEAUDIO)
 #else()
 #endif()
+
 message("Using pulseaudio backend...")
 add_compile_definitions(USE_PULSEAUDIO=true)
 target_link_libraries(monocoque m hidapi-hidraw pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir ${LUA_LIBRARY} proc2)
