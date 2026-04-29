@@ -49,6 +49,11 @@ int strtoeffecttype(const char* effect, DeviceSettings* ds)
         ds->is_valid = true;
         ds->effect_type = EFFECT_SUSPENSION;
     }
+    if (strcicmp(effect, "SuspensionVelocity") == 0)
+    {
+        ds->is_valid = true;
+        ds->effect_type = EFFECT_SUSPENSIONVELOCITY;
+    }
     if (strcicmp(effect, "ABS") == 0)
     {
         ds->is_valid = true;
@@ -739,7 +744,7 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         const char* effect;
         config_setting_lookup_string(device_settings, "effect", &effect);
         strtoeffecttype(effect, ds);
-        if (ds->effect_type == EFFECT_TYRESLIP || ds->effect_type == EFFECT_TYRELOCK || ds->effect_type == EFFECT_ABSBRAKES || ds->effect_type == EFFECT_SUSPENSION )
+        if (ds->effect_type == EFFECT_TYRESLIP || ds->effect_type == EFFECT_TYRELOCK || ds->effect_type == EFFECT_ABSBRAKES || ds->effect_type == EFFECT_SUSPENSION || ds->effect_type == EFFECT_SUSPENSIONVELOCITY )
         {
             gettyre(device_settings, ds);
             ds->threshold = 0;
