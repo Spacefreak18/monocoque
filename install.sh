@@ -95,7 +95,7 @@ install_dependencies() {
     
     case $DISTRO in
         arch|manjaro)
-            local deps="yder libuv argtable libserialport libconfig hidapi lua libxdg-basedir mingw-w64-gcc"
+            local deps="yder libuv argtable libserialport libconfig hidapi lua54 libpulse pkgconfig libxdg-basedir mingw-w64-gcc"
             
             # Check if yay is available for AUR
             if command -v yay &> /dev/null; then
