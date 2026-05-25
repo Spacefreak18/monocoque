@@ -64,6 +64,39 @@ int simdata_to_lua(lua_State *L, SimData* simdata) {
     }
     lua_setfield(L, -2, "pd");
 
+    lua_pushnumber(L, simdata->gas);
+    lua_setfield(L, -2, "gas");
+
+    lua_pushnumber(L, simdata->fuel);
+    lua_setfield(L, -2, "fuel");
+
+    lua_pushnumber(L, simdata->turboboost);
+    lua_setfield(L, -2, "turboboost");
+
+    lua_newtable(L);
+    for(int i = 0; i < 4; i++)
+    {
+        lua_pushnumber(L, simdata->tyreRPS[i]);
+        lua_rawseti(L, -2, i+1);
+    }
+    lua_setfield(L, -2, "tyreRPS");
+
+    lua_newtable(L);
+    for(int i = 0; i < 4; i++)
+    {
+        lua_pushnumber(L, simdata->tyrediameter[i]);
+        lua_rawseti(L, -2, i+1);
+    }
+    lua_setfield(L, -2, "tyrediameter");
+
+    lua_newtable(L);
+    for(int i = 0; i < 4; i++)
+    {
+        lua_pushnumber(L, simdata->tyretemp[i]);
+        lua_rawseti(L, -2, i+1);
+    }
+    lua_setfield(L, -2, "tyretemp");
+
     return 0; // Return the table to Lua
 }
 
