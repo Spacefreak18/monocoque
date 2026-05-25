@@ -1,9 +1,9 @@
 #ifndef _ARDUINOLEDLUA_H
 #define _ARDUINOLEDLUA_H
 
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
+//#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
 
 #include "../../simulatorapi/simapi/simapi/simdata.h"
 

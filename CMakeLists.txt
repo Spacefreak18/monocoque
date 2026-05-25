@@ -1,7 +1,4 @@
-
-# minimum CMake version required for C++20 support, among other things
 cmake_minimum_required(VERSION 3.18)
-
 # detect if Monocoque is being used as a sub-project of another CMake project
 if(NOT DEFINED PROJECT_NAME)
     set(MONOCOQUE_SUBPROJECT OFF)
@@ -20,12 +17,17 @@ set(CMAKE_EXE_LINKER_FLAGS "-Wl,--no-as-needed -ldl")
 set(LIBUSB_INCLUDE_DIR /usr/include/libusb-1.0)
 set(LIBXML_INCLUDE_DIR /usr/include/libxml2)
 
-FIND_PACKAGE(Lua 5.4 EXACT REQUIRED)
-set(INCLUDE_DIRS ${LUA_INCLUDE_DIR})
-include_directories(${LUA_INCLUDE_DIR})
-
-
-
+FIND_PACKAGE(Lua)
+if(Lua_FOUND AND NOT TARGET Lua::Lua)
+  add_library(Lua::Lua INTERFACE IMPORTED)
+  set_target_properties(
+    Lua::Lua
+    PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES "${LUA_INCLUDE_DIR}"
+      INTERFACE_LINK_LIBRARIES "${LUA_LIBRARIES}"
+  )
+    message("Lua ${Lua_VERSION} found")
+endif()
 
 #FIND_PATH(LIBUSB_INCLUDE_DIR libusb.h
 #	HINTS $ENV{LIBUSB_ROOT}
@@ -64,9 +66,9 @@ endif()
 
 message("Using pulseaudio backend...")
 add_compile_definitions(USE_PULSEAUDIO=true)
-target_link_libraries(monocoque m hidapi-hidraw pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir ${LUA_LIBRARY} proc2)
+target_link_libraries(monocoque m hidapi-hidraw pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir Lua::Lua proc2)
 
-target_include_directories(monocoque PUBLIC config ${LIBXML_INCLUDE_DIR})
+target_include_directories(monocoque PUBLIC config ${LIBXML_INCLUDE_DIR} ${LUA_INCLUDE_DIR})
 
 add_subdirectory(src/monocoque/gameloop)
 add_subdirectory(src/monocoque/simulatorapi)
