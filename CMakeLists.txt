@@ -17,7 +17,7 @@ set(CMAKE_EXE_LINKER_FLAGS "-Wl,--no-as-needed -ldl")
 set(LIBUSB_INCLUDE_DIR /usr/include/libusb-1.0)
 set(LIBXML_INCLUDE_DIR /usr/include/libxml2)
 
-FIND_PACKAGE(Lua)
+FIND_PACKAGE(Lua REQUIRED 5.4 EXACT)
 if(Lua_FOUND AND NOT TARGET Lua::Lua)
   add_library(Lua::Lua INTERFACE IMPORTED)
   set_target_properties(
