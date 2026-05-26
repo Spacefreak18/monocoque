@@ -2,8 +2,8 @@
 #define _ARDUINOLEDLUA_H
 
 //#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
+#include "lauxlib.h"
+#include "lualib.h"
 
 #ifdef USE_LUA_55
 /* open all libraries */
