@@ -75,7 +75,7 @@ message("Using pulseaudio backend...")
 add_compile_definitions(USE_PULSEAUDIO=true)
 target_link_libraries(monocoque m hidapi-hidraw pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir lua proc2)
 
-target_include_directories(monocoque PUBLIC config ${LIBXML_INCLUDE_DIR} ${LUA_INCLUDE_DIR})
+target_include_directories(monocoque PUBLIC config ${LIBXML_INCLUDE_DIR})
 
 add_subdirectory(src/monocoque/gameloop)
 add_subdirectory(src/monocoque/simulatorapi)

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <hidapi/hidapi.h>
 
-#include "lua.h"
+#include <lua.h>
 
 #include "usbdevice.h"
 #include "sounddevice.h"
