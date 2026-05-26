@@ -2,8 +2,13 @@
 #define _ARDUINOLEDLUA_H
 
 //#include <lua.h>
-#include <lua5.4/lauxlib.h>
-#include <lua5.4/lualib.h>
+#include <lauxlib.h>
+#include <lualib.h>
+
+#ifdef USE_LUA_55
+/* open all libraries */
+#define luaL_openlibs(L)	luaL_openselectedlibs(L, ~0, 0)
+#endif
 
 #include "../../simulatorapi/simapi/simapi/simdata.h"
 

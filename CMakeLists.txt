@@ -17,16 +17,23 @@ set(CMAKE_EXE_LINKER_FLAGS "-Wl,--no-as-needed -ldl")
 set(LIBUSB_INCLUDE_DIR /usr/include/libusb-1.0)
 set(LIBXML_INCLUDE_DIR /usr/include/libxml2)
 
-FIND_PACKAGE(Lua REQUIRED 5.4)
-if(Lua_FOUND AND NOT TARGET Lua::Lua)
-  add_library(Lua::Lua INTERFACE IMPORTED)
-  set_target_properties(
-    Lua::Lua
-    PROPERTIES
-      INTERFACE_INCLUDE_DIRECTORIES "${LUA_INCLUDE_DIR}"
-      INTERFACE_LINK_LIBRARIES "${LUA_LIBRARIES}"
-  )
-    message("Lua ${Lua_VERSION} found")
+FIND_PACKAGE(Lua)
+#FIND_PACKAGE(Lua 5.4 REQUIRED EXACT)
+#if(Lua_FOUND AND NOT TARGET Lua::Lua)
+#  add_library(Lua::Lua INTERFACE IMPORTED)
+#  set_target_properties(
+#    Lua::Lua
+#    PROPERTIES
+#      INTERFACE_INCLUDE_DIRECTORIES "${LUA_INCLUDE_DIR}"
+#      INTERFACE_LINK_LIBRARIES "${LUA_LIBRARIES}"
+#  )
+#
+#endif()
+message("Lua ${Lua_VERSION} found")
+if (Lua_VERSION VERSION_GREATER_EQUAL "5.5.0")
+    add_compile_definitions(USE_LUA_55)
+else()
+    remove_definitions(USE_LUA_55)
 endif()
 
 #FIND_PATH(LIBUSB_INCLUDE_DIR libusb.h
@@ -66,7 +73,7 @@ endif()
 
 message("Using pulseaudio backend...")
 add_compile_definitions(USE_PULSEAUDIO=true)
-target_link_libraries(monocoque m hidapi-hidraw pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir lua5.4 proc2)
+target_link_libraries(monocoque m hidapi-hidraw pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir lua proc2)
 
 target_include_directories(monocoque PUBLIC config ${LIBXML_INCLUDE_DIR} ${LUA_INCLUDE_DIR})
 
