@@ -19,16 +19,16 @@ set(LIBXML_INCLUDE_DIR /usr/include/libxml2)
 
 FIND_PACKAGE(Lua)
 #FIND_PACKAGE(Lua 5.4 REQUIRED EXACT)
-#if(Lua_FOUND AND NOT TARGET Lua::Lua)
-#  add_library(Lua::Lua INTERFACE IMPORTED)
-#  set_target_properties(
-#    Lua::Lua
-#    PROPERTIES
-#      INTERFACE_INCLUDE_DIRECTORIES "${LUA_INCLUDE_DIR}"
-#      INTERFACE_LINK_LIBRARIES "${LUA_LIBRARIES}"
-#  )
-#
-#endif()
+if(Lua_FOUND AND NOT TARGET Lua::Lua)
+  add_library(Lua::Lua INTERFACE IMPORTED)
+  set_target_properties(
+    Lua::Lua
+    PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES "${LUA_INCLUDE_DIR}"
+      INTERFACE_LINK_LIBRARIES "${LUA_LIBRARIES}"
+  )
+
+endif()
 message("Lua ${Lua_VERSION} found")
 if (Lua_VERSION VERSION_GREATER_EQUAL "5.5.0")
     add_compile_definitions(USE_LUA_55)
