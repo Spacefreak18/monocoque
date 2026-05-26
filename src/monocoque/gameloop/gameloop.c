@@ -292,7 +292,7 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
 
         int configureddevices;
         configcheck(ms->config_str, confignum, &configureddevices);
-        DeviceSettings* ds = malloc(configureddevices * sizeof(DeviceSettings));
+        DeviceSettings* ds = calloc(configureddevices, sizeof(DeviceSettings));
         slogd("loading confignum %i, with %i devices.", confignum, configureddevices);
         f->numdevices = uiloadconfig(ms->config_str, confignum, configureddevices, ms, ds);
 
@@ -301,7 +301,7 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
             ms->configcheck = 0;
         }
 
-        f->simdevices = malloc(f->numdevices * sizeof(SimDevice));
+        f->simdevices = calloc(f->numdevices, sizeof(SimDevice));
         int initdevices = devinit(f->simdevices, &f->siminfo, configureddevices, ds, ms);
         slogi("initialized %i devices", initdevices);
 
@@ -313,8 +313,8 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
 
         int numdevices = f->numdevices;
         SimDevice* devices = f->simdevices;
-        f->device_timers = (uv_timer_t*) (malloc(uv_handle_size(UV_TIMER) * numdevices));
-        f->device_batons = (device_loop_data*) (malloc(sizeof(device_loop_data) * numdevices));
+        f->device_timers = (uv_timer_t*) calloc(numdevices, uv_handle_size(UV_TIMER));
+        f->device_batons = (device_loop_data*) calloc(numdevices, sizeof(device_loop_data));
         f->started_tyre_calc_thread = false;
 
         for (int x = 0; x < numdevices; x++)
@@ -405,6 +405,11 @@ void releaseloop(loop_data* f, SimData* simdata, SimMap* simmap)
             simdata->rpms = 0;
             simdata->velocity = 0;
 
+            // Copy to a local snapshot to prevent TOCTOU race with shared memory:
+            // an untrusted local process could overwrite the shared memory buffer
+            // between the zeroing above and the device update calls below.
+            SimData safe_simdata = *simdata;
+
             for (int x = 0; x < numdevices; x++)
             {
                 if (devices[x].initialized == true)
@@ -423,7 +428,7 @@ void releaseloop(loop_data* f, SimData* simdata, SimMap* simmap)
             {
                 if (devices[x].initialized == true)
                 {
-                    devices[x].update(&devices[x], simdata);
+                    devices[x].update(&devices[x], &safe_simdata);
                 }
             }
             sleep(1);
@@ -603,7 +608,10 @@ void cb(uv_poll_t* handle, int status, int events)
     void* b = uv_handle_get_data((uv_handle_t*) handle);
     loop_data* f = (loop_data*) b;
     char ch;
-    scanf("%c", &ch);
+    if (fread(&ch, 1, 1, stdin) < 1)
+    {
+        return;
+    }
     if (ch == 'q')
     {
         if(f->releasing == false && doui == false)
