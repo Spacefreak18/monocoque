@@ -72,9 +72,9 @@ if [ -d "$INSTALL_DIR" ]; then
 fi
 
 # Remove distrobox container
-if distrobox list 2>/dev/null | grep -q "$CONTAINER"; then
+if distrobox list --root 2>/dev/null | grep -q "$CONTAINER"; then
     log_info "Removing distrobox container '$CONTAINER'..."
-    distrobox rm --force "$CONTAINER"
+    distrobox rm --root --force "$CONTAINER"
     log_success "Container '$CONTAINER' removed"
 else
     log_info "Container '$CONTAINER' not found, skipping"
