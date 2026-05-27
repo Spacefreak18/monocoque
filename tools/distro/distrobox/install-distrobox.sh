@@ -122,6 +122,8 @@ if ! distrobox list 2>/dev/null | grep -q "$CONTAINER"; then
     distrobox create \
         --image docker.io/library/archlinux:latest \
         --name "$CONTAINER" \
+        --root \
+        --additional-flags "--privileged --security-opt seccomp=unconfined" \
         --pre-init-hooks "sed -i 's/^SigLevel.*/SigLevel = Never/' /etc/pacman.conf && pacman -Sy --noconfirm archlinux-keyring && pacman-key --init && pacman-key --populate archlinux && sed -i 's/^SigLevel.*/SigLevel = Required DatabaseOptional/' /etc/pacman.conf"
     log_success "Container '$CONTAINER' created"
 else
@@ -130,7 +132,7 @@ fi
 
 # Install packages inside the container
 log_info "Installing packages inside container (this may take a few minutes)..."
-distrobox enter "$CONTAINER" -- bash -c '
+distrobox enter --root "$CONTAINER" -- bash -c '
     set -euo pipefail
 
     # Install build dependencies
@@ -181,19 +183,19 @@ mkdir -p "$BIN_DIR"
 
 cat > "$BIN_DIR/start-simd" << 'EOF'
 #!/usr/bin/env bash
-exec distrobox enter simracing -- simd "$@"
+exec distrobox enter --root simracing -- simd "$@"
 EOF
 chmod +x "$BIN_DIR/start-simd"
 
 cat > "$BIN_DIR/start-monocoque" << 'EOF'
 #!/usr/bin/env bash
-exec distrobox enter simracing -- monocoque play "$@"
+exec distrobox enter --root simracing -- monocoque play "$@"
 EOF
 chmod +x "$BIN_DIR/start-monocoque"
 
 cat > "$BIN_DIR/test-monocoque" << 'EOF'
 #!/usr/bin/env bash
-exec distrobox enter simracing -- monocoque test -vv "$@"
+exec distrobox enter --root simracing -- monocoque test -vv "$@"
 EOF
 chmod +x "$BIN_DIR/test-monocoque"
 
