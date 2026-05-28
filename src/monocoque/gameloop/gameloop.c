@@ -737,6 +737,10 @@ int tester(SimDevice* devices, int numdevices)
     simdata->tyrediameter[1] = -1;
     simdata->tyrediameter[2] = -1;
     simdata->tyrediameter[3] = -1;
+    simdata->tyreslipratio[0] = 0;
+    simdata->tyreslipratio[1] = 0;
+    simdata->tyreslipratio[2] = 0;
+    simdata->tyreslipratio[3] = 0;
     simdata->Xvelocity = 0;
     simdata->Yvelocity = 100;
     simdata->Zvelocity = 0;

@@ -140,6 +140,10 @@ int arduino_simhaptic_update(SimDevice* this, SimData* simdata)
     int result = 1;
 
     slogt("arduino haptic device updating");
+    serialdevice->u.simhapticdata.motor1 = 0;
+    serialdevice->u.simhapticdata.motor2 = 0;
+    serialdevice->u.simhapticdata.motor3 = 0;
+    serialdevice->u.simhapticdata.motor4 = 0;
 
     double play = slipeffect(simdata, this->hapticeffect.effecttype, this->hapticeffect.tyre, this->hapticeffect.threshold, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
 
@@ -149,23 +153,25 @@ int arduino_simhaptic_update(SimDevice* this, SimData* simdata)
     {
         play = 1.0;
     }
-    int effectspeed = ceil(255 * play);
+    uint8_t effectspeed = ceil(255 * play);
 
-    int motor = serialdevice->motorsposition;
+    uint8_t motor = serialdevice->motorsposition;
 
     if (play != serialdevice->state)
     {
+        // motor 1
         if (motor == 0 || motor == 4 || motor == 7 || motor == 8 || motor == 10 || motor == 11 || motor == 13 || motor == 14)
         {
             serialdevice->u.simhapticdata.effect1 = effectspeed;
             serialdevice->u.simhapticdata.motor1 = 1;
-            slogt("Updating arduino haptic device with effect type %i speed motor speed %i on motor %i from original effect %f with ampfactor %f", this->hapticeffect.effecttype, serialdevice->u.simhapticdata.effect3, serialdevice->motorsposition, rplay, serialdevice->ampfactor);
+            slogt("Updating arduino haptic device with effect type %i speed motor speed %i on motor %i from original effect %f with ampfactor %f", this->hapticeffect.effecttype, serialdevice->u.simhapticdata.effect1, 1, rplay, serialdevice->ampfactor);
         }
+        // motor 3
         if (motor == 2 || motor == 6 || motor == 8 || motor == 9 || motor == 10 || motor == 11 || motor == 12 || motor == 14)
         {
             serialdevice->u.simhapticdata.effect3 = effectspeed;
             serialdevice->u.simhapticdata.motor3 = 1;
-            slogt("Updating arduino haptic device with effect type %i speed motor speed %i on motor %i from original effect %f with ampfactor %f", this->hapticeffect.effecttype, serialdevice->u.simhapticdata.effect3, serialdevice->motorsposition, rplay, serialdevice->ampfactor);
+            slogt("Updating arduino haptic device with effect type %i speed motor speed %i on motor %i from original effect %f with ampfactor %f", this->hapticeffect.effecttype, serialdevice->u.simhapticdata.effect3, 3, rplay, serialdevice->ampfactor);
         }
         serialdevice->state = play;
     }
@@ -255,6 +261,10 @@ int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds, SimInfo* simi
             {
                 free(serialdevice->m.device_specific_config_file);
             }
+            if(error > 0)
+            {
+                error = 0;
+            }
             break;
         case ARDUINODEV__CUSTOM:
             serialdevice->m.device_specific_config_file = strdup(ds->specific_config_file);
@@ -263,12 +273,24 @@ int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds, SimInfo* simi
             {
                 free(serialdevice->m.device_specific_config_file);
             }
+            if(error > 0)
+            {
+                error = 0;
+            }
             break;
         case ARDUINODEV__SIMLED:
             error = arduino_custom_init(serialdevice, ds->serialdevsettings.portdev, NULL, false);
+            if(error > 0)
+            {
+                error = 0;
+            }
             break;
         default:
             error = arduino_init(serialdevice, ds->serialdevsettings.portdev);
+            if(error > 0)
+            {
+                error = 0;
+            }
             break;
     }
 
@@ -399,7 +421,7 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms, SimIn
 
     if (error != 0)
     {
-        slogw("Did not initialize usb device due to error code %i", error);
+        slogw("Did not initialize serial device due to error code %i", error);
         free(this);
         return NULL;
     }
