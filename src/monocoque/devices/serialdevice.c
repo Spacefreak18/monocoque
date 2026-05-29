@@ -261,10 +261,6 @@ int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds, SimInfo* simi
             {
                 free(serialdevice->m.device_specific_config_file);
             }
-            if(error > 0)
-            {
-                error = 0;
-            }
             break;
         case ARDUINODEV__CUSTOM:
             serialdevice->m.device_specific_config_file = strdup(ds->specific_config_file);
@@ -273,24 +269,12 @@ int serialdev_init(SerialDevice* serialdevice, DeviceSettings* ds, SimInfo* simi
             {
                 free(serialdevice->m.device_specific_config_file);
             }
-            if(error > 0)
-            {
-                error = 0;
-            }
             break;
         case ARDUINODEV__SIMLED:
             error = arduino_custom_init(serialdevice, ds->serialdevsettings.portdev, NULL, false);
-            if(error > 0)
-            {
-                error = 0;
-            }
             break;
         default:
             error = arduino_init(serialdevice, ds->serialdevsettings.portdev);
-            if(error > 0)
-            {
-                error = 0;
-            }
             break;
     }
 
