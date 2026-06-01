@@ -128,6 +128,11 @@ int strtodevsubsubtype(const char* device_subsubtype, DeviceSettings* ds)
         ds->dev_subsubtype = SIMDEVSUBTYPE_CSLELITEV3PEDALS;
         devfound = true;
     }
+    if (strcicmp(device_subsubtype, "SIMNETPEDALS") == 0)
+    {
+        ds->dev_subsubtype = SIMDEVSUBTYPE_SIMNETPEDALS;
+        devfound = true;
+    }
     if (strcicmp(device_subsubtype, "SIMAGICP1000PEDALS") == 0)
     {
         ds->dev_subsubtype = SIMDEVSUBTYPE_SIMAGICP1000PEDALS;
@@ -731,6 +736,15 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         {
             b = strtodevsubsubtype(temp, ds);
         }
+        ds->usbdevsettings.frequency = 0;
+        ds->usbdevsettings.amplitude = 0;
+        ds->usbdevsettings.motorsposition = 0;
+        config_setting_lookup_int(device_settings, "frequency", &ds->usbdevsettings.frequency);
+        config_setting_lookup_int(device_settings, "amplitude", &ds->usbdevsettings.amplitude);
+
+        int motorposition = 1;
+        config_setting_lookup_int(device_settings, "motors", &motorposition);
+        ds->usbdevsettings.motorsposition = motorposition;
     }
 
     if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC || ds->dev_type == SIMDEV_SOUND || ds->dev_subtype == SIMDEVTYPE_SERIALHAPTIC)

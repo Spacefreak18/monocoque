@@ -46,7 +46,8 @@ typedef enum
     SIMDEVSUBTYPE_SIMAGICGTNEO            = 6,
     SIMDEVSUBTYPE_MOZA_NEW                = 7,
     SIMDEVSUBTYPE_LOGITECH_G29            = 8,
-    SIMDEVSUBTYPE_MOZA_KS_PRO_WHEEL       = 9
+    SIMDEVSUBTYPE_MOZA_KS_PRO_WHEEL       = 9,
+    SIMDEVSUBTYPE_SIMNETPEDALS            = 10
 }
 DeviceSubSubType;
 
@@ -196,6 +197,9 @@ typedef struct
 {
     int value0;
     int value1;
+    uint32_t frequency;
+    uint32_t amplitude;
+    MotorPosition motorsposition;
     char* dev;
 }
 USBDeviceSettings;

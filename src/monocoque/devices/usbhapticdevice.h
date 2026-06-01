@@ -10,7 +10,8 @@ typedef enum
 {
     USBHAPTIC_UNKNOWN                  = 0,
     USBHAPTIC_CSLELITEV3PEDALS         = 1,
-    USBHAPTIC_SIMAGICP1000PEDALS       = 2
+    USBHAPTIC_SIMAGICP1000PEDALS       = 2,
+    USBHAPTIC_SIMNETPEDALS       = 3
 }
 HapticType;
 
@@ -22,6 +23,9 @@ typedef struct
     double threshold;
     int value0;
     int value1;
+    uint32_t frequency;
+    uint32_t amplitude;
+    uint32_t motorposition;
     VibrationEffectType effecttype;
     FILE* filehandle;
     hid_device* handle;

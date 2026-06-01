@@ -7,6 +7,7 @@
 #include "hapticeffect.h"
 #include "usb/cslelitev3.h"
 #include "usb/simagicp1000.h"
+#include "usb/simnetpedals.h"
 
 #include "../../helper/confighelper.h"
 #include "../../simulatorapi/simapi/simapi/simdata.h"
@@ -32,6 +33,9 @@ int usbhapticdev_update(USBGenericHapticDevice* usbhapticdevice, SimData* simdat
                 case USBHAPTIC_SIMAGICP1000PEDALS:
                     simagicp1000_update(usbhapticdevice, usbhapticdevice->effecttype, rplay);
                     break;
+                case USBHAPTIC_SIMNETPEDALS:
+                    simnetpedals_update(usbhapticdevice, usbhapticdevice->effecttype, rplay);
+                    break;
             }
         }
         else
@@ -43,6 +47,9 @@ int usbhapticdev_update(USBGenericHapticDevice* usbhapticdevice, SimData* simdat
                     break;
                 case USBHAPTIC_SIMAGICP1000PEDALS:
                     simagicp1000_update(usbhapticdevice, usbhapticdevice->effecttype, rplay);
+                    break;
+                case USBHAPTIC_SIMNETPEDALS:
+                    simnetpedals_update(usbhapticdevice, usbhapticdevice->effecttype, rplay);
                     break;
             }
         }
@@ -61,6 +68,9 @@ int usbhapticdev_free(USBGenericHapticDevice* usbhapticdevice)
             break;
         case USBHAPTIC_SIMAGICP1000PEDALS:
             simagicp1000_free(usbhapticdevice);
+            break;
+        case USBHAPTIC_SIMNETPEDALS:
+            simnetpedals_free(usbhapticdevice);
             break;
     }
 
@@ -106,6 +116,13 @@ int usbhapticdev_init(USBGenericHapticDevice* usbhapticdevice, DeviceSettings* d
         case (SIMDEVSUBTYPE_CSLELITEV3PEDALS):
             usbhapticdevice->type = USBHAPTIC_CSLELITEV3PEDALS;
             error = cslelitev3_init(usbhapticdevice);
+            break;
+        case (SIMDEVSUBTYPE_SIMNETPEDALS):
+            usbhapticdevice->type = USBHAPTIC_SIMNETPEDALS;
+            usbhapticdevice->motorposition = ds->usbdevsettings.motorsposition;
+            usbhapticdevice->frequency = ds->usbdevsettings.frequency;
+            usbhapticdevice->amplitude = ds->usbdevsettings.amplitude;
+            error = simnetpedals_init(usbhapticdevice);
             break;
         default:
             slogw("Possibly unknown device");
