@@ -8,7 +8,7 @@
 #include "../../helper/confighelper.h"
 #include "../slog/slog.h"
 
-#define SIMNETPEDALS_BUFSIZE 9
+#define SIMNETPEDALS_BUFSIZE 64
 
 //Byte[0] : 0x01 (fixed) = Report ID
 //Byte[1] : 0x00 (fixed)
@@ -39,8 +39,11 @@ int simnetpedals_update(USBGenericHapticDevice* usbhapticdevice, int effecttype,
     {
         motormultiple = 2;
     }
-    bytes[3 + (motormultiple * 2)] = usbhapticdevice->frequency;
-    bytes[4 + (motormultiple * 2)] = usbhapticdevice->amplitude;
+    if(play > 0)
+    {
+        bytes[3 + (motormultiple * 2)] = usbhapticdevice->frequency;
+        bytes[4 + (motormultiple * 2)] = usbhapticdevice->amplitude;
+    }
 
     
     if (usbhapticdevice->handle)
