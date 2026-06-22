@@ -79,3 +79,22 @@ jobs:
       with:
         files: monocoque-${{ matrix.os }}.rpm
 
+  arch-build:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v3
+      #- name: Set proper repository url in PKGBUILD
+      #  run: sed -i "s|%URL%|${{ github.server_url }}/${{ github.repository }}|" .github/workflows/PKGBUILD
+      - name: Build Arch Linux package
+        uses: ./
+        with:
+          BUILD_SCRIPT: extra-x86_64-build
+          PKGBUILD: $GITHUB_WORKSPACE/tools/distro/arch/git/PKGBUILD
+          OUTDIR: $HOME/arch-packages
+      - name: Release the Package
+        uses: softprops/action-gh-release@v1
+        with:
+          files: $HOME/arch-packages/monocoque*.zst
