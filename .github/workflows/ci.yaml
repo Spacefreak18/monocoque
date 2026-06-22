@@ -87,7 +87,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set proper repository url in PKGBUILD
-        run: sed -i "s|%URL%|${{ github.server_url }}/${{ github.repository }}|" $GITHUB_WORKSPACE/tools/arch/git/PKGBUILD
+        run: sed -i "s|%URL%|${{ github.server_url }}/${{ github.repository }}|" $GITHUB_WORKSPACE/tools/distro/arch/git/PKGBUILD
       - name: Build Arch Linux package
         uses: ./
         with:
