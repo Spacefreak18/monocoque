@@ -6,6 +6,7 @@
 #include <math.h>
 
 #include "usbhapticdevice.h"
+#include "simdevice.h"
 #include "../../helper/confighelper.h"
 #include "../../simulatorapi/simapi/simapi/simdata.h"
 #include "../../simulatorapi/simapi/simapi/simmapper.h"
@@ -194,6 +195,60 @@ void getTyreDiameter(SimData* simdata)
     }
 }
 
+int initializeHapticEffect(HapticEffect* h, HapticEffectSettings* hs, MonocoqueSettings* ms)
+{
+
+    switch (hs->effect_type)
+    {
+        case (EFFECT_ENGINERPM):
+            h->effecttype = EFFECT_ENGINERPM;
+            slogi("Initializing haptic effect for engine vibrations.");
+            break;
+        case (EFFECT_GEARSHIFT):
+            h->effecttype = EFFECT_GEARSHIFT;
+            slogi("Initializing haptic effect for gear shift vibrations.");
+            break;
+        case (EFFECT_TYRESLIP):
+            h->effecttype = EFFECT_TYRESLIP;
+            slogi("Initializing haptic effect for tyre slip vibrations.");
+            break;
+        case (EFFECT_TYRELOCK):
+            h->effecttype = EFFECT_TYRELOCK;
+            slogi("Initializing haptic effect for tyre lock vibrations.");
+            break;
+        case (EFFECT_ABSBRAKES):
+            h->effecttype = EFFECT_ABSBRAKES;
+            slogi("Initializing haptic effect for abs vibrations.");
+            break;
+    
+        case (EFFECT_SUSPENSION):
+            h->effecttype = EFFECT_SUSPENSION;
+            slogi("Initializing haptic effect for suspension vibrations.");
+            break;
+    }
+
+    h->tyre = hs->tyre;
+    slogt("Haptic effect: %i %i, tyre %i %i", h->effecttype, hs->effect_type, h->tyre, hs->tyre);
+
+    h->threshold = hs->threshold;
+    h->modulationType = hs->modulation;
+    h->basefrequency = hs->frequency;
+    h->frequencyMax = hs->frequencyMax;
+    h->baseamplitude = hs->amplitude;
+    h->amplitudeMax = hs->amplitudeMax;
+    h->motorposition = hs->motorposition;
+    h->duration = hs->duration;
+
+    slogt("haptic duration: %f", h->duration);
+    slogt("haptic base frequency: %i", h->basefrequency);
+    slogt("haptic base amplitude: %i", h->baseamplitude);
+    slogt("haptic motorposition: %i", h->motorposition);
+
+    h->useconfig = ms->useconfig;
+    h->configcheck = &ms->configcheck;
+    h->tyrediameterconfig = ms->tyre_diameter_config;
+}
+
 
 double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int useconfig, int* configcheck, char* configfile)
 {
@@ -212,7 +267,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
 
     if(sim_slip_ratio == 0)
     {
-        slogt("wheel vibration calculation with wheel config set to %i configchecked %i configfile %s car %s sim %i", useconfig, *configcheck, configfile, simdata->car, simdata->simexe);
+        //slogt("wheel vibration calculation with wheel config set to %i configchecked %i configfile %s car %s sim %i", useconfig, *configcheck, configfile, simdata->car, simdata->simexe);
 
         switch (effecttype)
         {
@@ -246,7 +301,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
             case EFFECT_SUSPENSION:
                 break;
             default:
-                slogd("Unknown effect type");
+                slogd("Unknown effect type %i", effecttype);
         }
         if(simdata->Yvelocity <= 0)
         {

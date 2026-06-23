@@ -1,8 +1,11 @@
 #ifndef _SIMAGICP1000_H
 #define _SIMAGICP1000_H
 
-int simagicp1000_update(USBGenericHapticDevice* usbhapticdevice, int effecttype, int play);
-int simagicp1000_init(USBGenericHapticDevice* usbhapticdevice);
-int simagicp1000_free(USBGenericHapticDevice* usbhapticdevice);
+#include "../wheeldevice.h"
+#include "../simdevice.h"
+
+int simagicp1000_update(USBDevice* usbdevice, int effecttype, int play);
+int simagicp1000_init(USBDevice* usbdevice);
+int simagicp1000_free(USBDevice* usbdevice);
 
 #endif

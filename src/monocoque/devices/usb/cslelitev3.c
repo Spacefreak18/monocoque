@@ -3,7 +3,7 @@
 #include <string.h>
 #include <glob.h>
 
-#include "usbhapticdevice.h"
+#include "cslelitev3.h"
 
 #include "../../helper/confighelper.h"
 #include "../slog/slog.h"
@@ -11,7 +11,7 @@
 const char* SYSFSRUMBLEPATH = "/sys/module/hid_fanatec/drivers/hid:f*/0003:0EB7:183B.*/rumble";
 
 
-int cslelitev3_update(USBGenericHapticDevice* usbhapticdevice, int effecttype, int play)
+int cslelitev3_update(USBDevice* usbdevice, int effecttype, int play)
 {
 
     int res = 0;
@@ -34,25 +34,25 @@ int cslelitev3_update(USBGenericHapticDevice* usbhapticdevice, int effecttype, i
     }
 
 
-    fprintf(usbhapticdevice->filehandle, "%i\n", value);
-    fflush(usbhapticdevice->filehandle);
+    fprintf(usbdevice->filehandle, "%i\n", value);
+    fflush(usbdevice->filehandle);
 
     return res;
 }
 
-int cslelitev3_free(USBGenericHapticDevice* usbhapticdevice)
+int cslelitev3_free(USBDevice* usbdevice)
 {
     int res = 0;
 
-    free(usbhapticdevice->dev);
+    free(usbdevice->dev);
 
-    fflush(usbhapticdevice->filehandle);
-    fclose(usbhapticdevice->filehandle);
+    fflush(usbdevice->filehandle);
+    fclose(usbdevice->filehandle);
 
     return res;
 }
 
-int cslelitev3_init(USBGenericHapticDevice* usbhapticdevice)
+int cslelitev3_init(USBDevice* usbdevice)
 {
     slogi("initializing CSL Elite V3 Pedals...");
 
@@ -75,7 +75,7 @@ int cslelitev3_init(USBGenericHapticDevice* usbhapticdevice)
         {
             if (i == 0)
             {
-                usbhapticdevice->dev = strdup(globlist.gl_pathv[i]);
+                usbdevice->dev = strdup(globlist.gl_pathv[i]);
             }
             i++;
         }
@@ -91,9 +91,9 @@ int cslelitev3_init(USBGenericHapticDevice* usbhapticdevice)
         return res;
     }
 
-    usbhapticdevice->filehandle = fopen(usbhapticdevice->dev, "w");
+    usbdevice->filehandle = fopen(usbdevice->dev, "w");
 
-    if (!usbhapticdevice->filehandle)
+    if (!usbdevice->filehandle)
     {
         sloge("Could not open pedal device...");
         return res;

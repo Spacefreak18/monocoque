@@ -15,13 +15,15 @@
 #include "../helper/parameters.h"
 #include "../slog/slog.h"
 
-int gear_sound_set(SoundDevice* sounddevice, SimData* simdata)
+int gear_sound_set(SimDevice* this, SimData* simdata)
 {
+    SoundDevice* sounddevice = (void *) this->derived;
+
     if (sounddevice->sounddata.last_gear != simdata->gear && simdata->gear > 1)
     {
         //sounddevice->sounddata.gear_sound_data = 3.14;
-        sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency;
-        sounddevice->sounddata.curr_amplitude = sounddevice->sounddata.amplitude;
+        sounddevice->sounddata.curr_frequency = this->hapticeffect.basefrequency;
+        sounddevice->sounddata.curr_amplitude = this->hapticeffect.baseamplitude;
         sounddevice->sounddata.curr_duration = 0;
     }
     sounddevice->sounddata.last_gear = simdata->gear;
@@ -30,27 +32,29 @@ int gear_sound_set(SoundDevice* sounddevice, SimData* simdata)
 }
 
 
-double modulate(SoundDevice* sounddevice, double raw_effect, SoundEffectModulationType modulation)
+double modulate(SimDevice* this, double raw_effect, HapticEffectModulationType modulation)
 {
+    SoundDevice* sounddevice = (void *) this->derived;
+
     double modulated_effect = raw_effect;
     switch (modulation)
     {
-        case SOUND_EFFECT_MODULATION_FREQUENCY:
-            modulated_effect = ((sounddevice->sounddata.frequencyMax - sounddevice->sounddata.frequency) * raw_effect) + sounddevice->sounddata.frequency;
+        case HAPTIC_EFFECT_MODULATION_FREQUENCY:
+            modulated_effect = ((this->hapticeffect.frequencyMax - this->hapticeffect.basefrequency) * raw_effect) + this->hapticeffect.basefrequency;
             sounddevice->sounddata.curr_frequency = modulated_effect;
-            sounddevice->sounddata.curr_amplitude = sounddevice->sounddata.amplitude;
-            slogt("set curr frequency to %f from raw effect %f and base frequency %i", sounddevice->sounddata.curr_frequency, raw_effect, sounddevice->sounddata.frequency);
+            sounddevice->sounddata.curr_amplitude = this->hapticeffect.baseamplitude;
+            slogt("set curr frequency to %f from raw effect %f and base frequency %i", sounddevice->sounddata.curr_frequency, raw_effect, this->hapticeffect.basefrequency);
             break;
-        case SOUND_EFFECT_MODULATION_AMPLIFY:
-            modulated_effect = ((sounddevice->sounddata.amplitudeMax - sounddevice->sounddata.amplitude) * raw_effect) + sounddevice->sounddata.amplitude;
+        case HAPTIC_EFFECT_MODULATION_AMPLIFY:
+            modulated_effect = ((this->hapticeffect.amplitudeMax - this->hapticeffect.baseamplitude) * raw_effect) + this->hapticeffect.baseamplitude;
             sounddevice->sounddata.curr_amplitude = modulated_effect;
-            sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency;
-            slogt("set curr amplitude to %i from raw effect %f and base amplitude %i", sounddevice->sounddata.curr_amplitude, raw_effect, sounddevice->sounddata.amplitude);
+            sounddevice->sounddata.curr_frequency = this->hapticeffect.basefrequency;
+            slogt("set curr amplitude to %i from raw effect %f and base amplitude %i", sounddevice->sounddata.curr_amplitude, raw_effect, this->hapticeffect.baseamplitude);
             break;
-        case SOUND_EFFECT_MODULATION_NONE:
+        case HAPTIC_EFFECT_MODULATION_NONE:
         default:
-            sounddevice->sounddata.curr_frequency = sounddevice->sounddata.frequency;
-            sounddevice->sounddata.curr_amplitude = sounddevice->sounddata.amplitude;
+            sounddevice->sounddata.curr_frequency = this->hapticeffect.basefrequency;
+            sounddevice->sounddata.curr_amplitude = this->hapticeffect.baseamplitude;
             break;
     }
 
@@ -64,7 +68,7 @@ int sounddev_engine_update(SimDevice* this, SimData* simdata)
 
     double effect = ((double)simdata->rpms/60)/((double)simdata->maxrpm/60);
     slogt("Set base effect of %f from rpms of %i", effect, simdata->rpms);
-    modulate(sounddevice, effect, sounddevice->modulationType);
+    modulate(this, effect, this->hapticeffect.modulationType);
 }
 
 int sounddev_tyreslip_update(SimDevice* this, SimData* simdata)
@@ -72,11 +76,11 @@ int sounddev_tyreslip_update(SimDevice* this, SimData* simdata)
     SoundDevice* sounddevice = (void *) this->derived;
 
     double effect = slipeffect(simdata, this->hapticeffect.effecttype, this->hapticeffect.tyre, this->hapticeffect.threshold, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
-    slogt("Updating sound device frequency from original tyre slip effect %f", effect);
+    slogt("Updating sound device frequency from original %i tyre slip effect %f", this->hapticeffect.effecttype, effect);
 
     if (effect > 0)
     {
-        modulate(sounddevice, effect, sounddevice->modulationType);
+        modulate(this, effect, this->hapticeffect.modulationType);
     }
     else
     {
@@ -96,7 +100,7 @@ int sounddev_tyrelock_update(SimDevice* this, SimData* simdata)
 
     if (play > 0)
     {
-        modulate(sounddevice, play, sounddevice->modulationType);
+        modulate(this, play, this->hapticeffect.modulationType);
     }
     else
     {
@@ -114,7 +118,7 @@ int sounddev_absbrakes_update(SimDevice* this, SimData* simdata)
 
     if (play > 0)
     {
-        modulate(sounddevice, play, sounddevice->modulationType);
+        modulate(this, play, this->hapticeffect.modulationType);
     }
     else
     {
@@ -134,7 +138,7 @@ int sounddev_suspension_update(SimDevice* this, SimData* simdata)
 
     if (effect > 0)
     {
-        effect = modulate(sounddevice, effect, sounddevice->modulationType);
+        effect = modulate(this, effect, this->hapticeffect.modulationType);
     }
     else
     {
@@ -147,9 +151,7 @@ int sounddev_suspension_update(SimDevice* this, SimData* simdata)
 
 int sounddev_gearshift_update(SimDevice* this, SimData* simdata)
 {
-    SoundDevice* sounddevice = (void *) this->derived;
-
-    gear_sound_set(sounddevice, simdata);
+    gear_sound_set(this, simdata);
 }
 
 
@@ -163,28 +165,17 @@ int sounddev_free(SimDevice* this)
     return 0;
 }
 
-int sounddev_init(SoundDevice* sounddevice, const char* devname, MonocoqueTyreIdentifier tyre, SoundDeviceSettings sds)
+int sounddev_init(SoundDevice* sounddevice, const char* devname, SoundDeviceSettings sds)
 {
     slogi("initializing standalone sound device...");
 
 
     slogi("volume is: %i", sds.volume);
-    slogi("Modulation type: %i", sds.modulation);
-    slogi("frequency is: %i", sds.frequency);
-    slogi("frequency Max is: %i", sds.frequencyMax);
-    slogi("amplitude is: %i", sds.amplitude);
-    slogi("amplitude Max is: %i", sds.amplitudeMax);
     slogi("pan is: %i", sds.pan);
     slogi("channels is: %i", sds.channels);
-    slogi("duration is: %f", sds.duration);
     slogi("noise is: %i", sds.noise);
 
 
-    sounddevice->modulationType = sds.modulation;
-    sounddevice->sounddata.frequency = sds.frequency;
-    sounddevice->sounddata.frequencyMax = sds.frequencyMax;
-    sounddevice->sounddata.amplitude = sds.amplitude;
-    sounddevice->sounddata.amplitudeMax = sds.amplitudeMax;
     sounddevice->sounddata.noise = (double)sds.noise;
     sounddevice->sounddata.curr_duration = 0;
 
@@ -240,7 +231,7 @@ SoundDevice* new_sound_device(DeviceSettings* ds, MonocoqueSettings* ms, SimInfo
     this->m.derived = this;
     int error = 0;
 
-    switch (ds->effect_type)
+    switch (ds->hapticsettings.effect_type)
     {
         case (EFFECT_TYRESLIP):
         case (EFFECT_TYRELOCK):
@@ -258,73 +249,32 @@ SoundDevice* new_sound_device(DeviceSettings* ds, MonocoqueSettings* ms, SimInfo
 
     if(error == 0)
     {
-        slogt("Attempting to configure sound device with subtype: %i", ds->effect_type);
-        switch (ds->effect_type)
+        initializeHapticEffect(&this->m.hapticeffect, &ds->hapticsettings, ms);
+        slogt("Attempting to configure sound device with subtype: %i", ds->hapticsettings.effect_type);
+        switch (ds->hapticsettings.effect_type)
         {
             case (EFFECT_ENGINERPM):
-                this->m.hapticeffect.effecttype = EFFECT_ENGINERPM;
                 this->m.vtable = &engine_sound_simdevice_vtable;
                 slogi("Initializing sound device for engine vibrations.");
                 break;
             case (EFFECT_GEARSHIFT):
-                this->m.hapticeffect.effecttype = EFFECT_GEARSHIFT;
                 this->m.vtable = &gear_sound_simdevice_vtable;
                 slogi("Initializing sound device for gear shift vibrations.");
                 break;
             case (EFFECT_TYRESLIP):
-                this->m.hapticeffect.effecttype = EFFECT_TYRESLIP;
-                this->m.hapticeffect.threshold = ds->threshold;
-
-                this->m.hapticeffect.threshold = ds->threshold;
-                slogt("Haptic effect: %i %i", this->m.hapticeffect.effecttype, ds->effect_type);
-                this->m.hapticeffect.tyre = ds->tyre;
-                this->m.hapticeffect.useconfig = ms->useconfig;
-                this->m.hapticeffect.configcheck = &ms->configcheck;
-                this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
-
                 this->m.vtable = &tyreslip_sound_simdevice_vtable;
                 slogi("Initializing sound device for tyre slip vibrations.");
                 break;
             case (EFFECT_TYRELOCK):
-                this->m.hapticeffect.effecttype = EFFECT_TYRELOCK;
-                this->m.hapticeffect.threshold = ds->threshold;
-
-                this->m.hapticeffect.threshold = ds->threshold;
-                slogt("Haptic effect: %i %i", this->m.hapticeffect.effecttype, ds->effect_type);
-                this->m.hapticeffect.tyre = ds->tyre;
-                this->m.hapticeffect.useconfig = ms->useconfig;
-                this->m.hapticeffect.configcheck = &ms->configcheck;
-                this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
-
                 this->m.vtable = &tyrelock_sound_simdevice_vtable;
-                slogi("Initializing sound device for tyre slip vibrations.");
+                slogi("Initializing sound device for tyre lock vibrations.");
                 break;
             case (EFFECT_ABSBRAKES):
-                this->m.hapticeffect.effecttype = EFFECT_ABSBRAKES;
-                this->m.hapticeffect.threshold = ds->threshold;
-
-                this->m.hapticeffect.threshold = ds->threshold;
-                slogt("Haptic effect: %i %i", this->m.hapticeffect.effecttype, ds->effect_type);
-                this->m.hapticeffect.tyre = ds->tyre;
-                this->m.hapticeffect.useconfig = ms->useconfig;
-                this->m.hapticeffect.configcheck = &ms->configcheck;
-                this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
-
                 this->m.vtable = &absbrakes_sound_simdevice_vtable;
                 slogi("Initializing sound device for abs vibrations.");
                 break;
 
             case (EFFECT_SUSPENSION):
-                this->m.hapticeffect.effecttype = EFFECT_SUSPENSION;
-                this->m.hapticeffect.threshold = ds->threshold;
-
-                this->m.hapticeffect.threshold = ds->threshold;
-                slogt("Haptic effect: %i %i on tyre %i", this->m.hapticeffect.effecttype, ds->effect_type, ds->tyre);
-                this->m.hapticeffect.tyre = ds->tyre;
-                this->m.hapticeffect.useconfig = ms->useconfig;
-                this->m.hapticeffect.configcheck = &ms->configcheck;
-                this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
-
                 this->m.vtable = &suspension_sound_simdevice_vtable;
                 slogi("Initializing sound device for suspension vibrations.");
                 break;
@@ -334,7 +284,7 @@ SoundDevice* new_sound_device(DeviceSettings* ds, MonocoqueSettings* ms, SimInfo
     if(error == 0)
     {
         slogt("Attempting to use sound device %s", ds->sounddevsettings.dev);
-        error = sounddev_init(this, ds->sounddevsettings.dev, ds->tyre, ds->sounddevsettings);
+        error = sounddev_init(this, ds->sounddevsettings.dev, ds->sounddevsettings);
     }
 
     if (error != 0)

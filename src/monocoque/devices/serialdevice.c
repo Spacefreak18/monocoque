@@ -155,9 +155,9 @@ int arduino_simhaptic_update(SimDevice* this, SimData* simdata)
     }
     uint8_t effectspeed = ceil(255 * play);
 
-    uint8_t motor = serialdevice->motorsposition;
+    uint8_t motor = this->hapticeffect.motorposition;
 
-    if (play != serialdevice->state)
+    if (play != serialdevice->hapticstate)
     {
         // motor 1
         if (motor == 0 || motor == 4 || motor == 7 || motor == 8 || motor == 10 || motor == 11 || motor == 13 || motor == 14)
@@ -173,7 +173,7 @@ int arduino_simhaptic_update(SimDevice* this, SimData* simdata)
             serialdevice->u.simhapticdata.motor3 = 1;
             slogt("Updating arduino haptic device with effect type %i speed motor speed %i on motor %i from original effect %f with ampfactor %f", this->hapticeffect.effecttype, serialdevice->u.simhapticdata.effect3, 3, rplay, serialdevice->ampfactor);
         }
-        serialdevice->state = play;
+        serialdevice->hapticstate = play;
     }
 
     size_t size = sizeof(SimHapticData);
@@ -197,7 +197,7 @@ int serialdev_free(SimDevice* this)
             serialdevice->u.simhapticdata.motor3 = 1;
             serialdevice->u.simhapticdata.effect4 = 0;
             serialdevice->u.simhapticdata.motor4 = 1;
-            serialdevice->state = 0;
+            serialdevice->hapticstate = 0;
 
             size_t size = sizeof(SimHapticData);
             monocoque_serial_write_block(serialdevice->id, &serialdevice->u.simhapticdata, size, 9000);
@@ -356,7 +356,7 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms, SimIn
             this->u.simhapticdata.effect2 = 0;
             this->u.simhapticdata.effect3 = 0;
             this->u.simhapticdata.effect4 = 0;
-            this->state = 0;
+            this->hapticstate = 0;
             this->ampfactor = ds->serialdevsettings.ampfactor;
             this->fanpower = ds->serialdevsettings.fanpower;
             slogi("Initializing arduino device for haptic effects.");
@@ -388,10 +388,10 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms, SimIn
 
     if(this->devicetype == ARDUINODEV__HAPTIC && error == 0)
     {
-        this->m.hapticeffect.threshold = ds->threshold;
-        this->m.hapticeffect.effecttype = ds->effect_type;
-        slogt("Haptic effect: %i %i", this->m.hapticeffect.effecttype, ds->effect_type);
-        this->m.hapticeffect.tyre = ds->tyre;
+        this->m.hapticeffect.threshold = ds->hapticsettings.threshold;
+        this->m.hapticeffect.effecttype = ds->hapticsettings.effect_type;
+        slogt("Haptic effect: %i %i", this->m.hapticeffect.effecttype, ds->hapticsettings.effect_type);
+        this->m.hapticeffect.tyre = ds->hapticsettings.tyre;
         this->m.hapticeffect.useconfig = ms->useconfig;
         this->m.hapticeffect.configcheck = &ms->configcheck;
         this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;

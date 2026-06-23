@@ -76,6 +76,14 @@ VibrationEffectType;
 
 typedef enum
 {
+    EFFECT_MODULATION_NONE            = 0,
+    EFFECT_MODULATION_FREQUENCY       = 1,
+    EFFECT_MODULATION_AMPLIFY         = 2,
+}
+EffectModulationType;
+
+typedef enum
+{
     MOTOR_1       = 0,
     MOTOR_2       = 1,
     MOTOR_3       = 2,
@@ -177,29 +185,35 @@ SerialDeviceSettings;
 
 typedef struct
 {
-    uint32_t frequency;
     uint32_t volume;
-    int lowbound_frequency;
-    int upperbound_frequency;
-    uint32_t frequencyMax;
-    uint32_t amplitudeMax;
-    uint32_t amplitude;
     int pan;
     int channels;
     double duration;
     char* dev;
-    SoundEffectModulationType modulation;
     int noise;
 }
 SoundDeviceSettings;
 
 typedef struct
 {
-    int value0;
-    int value1;
     uint32_t frequency;
     uint32_t amplitude;
-    MotorPosition motorsposition;
+    uint32_t volume;
+    uint32_t frequencyMax;
+    uint32_t amplitudeMax;
+
+    double threshold;
+    double duration;
+
+    MotorPosition motorposition;
+    VibrationEffectType effect_type;
+    MonocoqueTyreIdentifier tyre;
+    EffectModulationType modulation;
+}
+HapticEffectSettings;
+
+typedef struct
+{
     char* dev;
 }
 USBDeviceSettings;
@@ -211,14 +225,15 @@ typedef struct
     DeviceType dev_type;
     DeviceSubType dev_subtype;
     DeviceSubSubType dev_subsubtype;
+    bool has_haptic_effects;
     // to get really fancy move the effect information to it's own structure that would be a member of
     // any device settings member structure that can carry an effect
-    VibrationEffectType effect_type;
-    MonocoqueTyreIdentifier tyre;
+
     double threshold;
     bool has_config;
     char* specific_config_file;
     // union?
+    HapticEffectSettings hapticsettings;
     TachometerSettings tachsettings;
     SerialDeviceSettings serialdevsettings;
     SoundDeviceSettings sounddevsettings;

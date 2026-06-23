@@ -8,12 +8,15 @@
 
 typedef enum
 {
-    WHEELDEV_UNKNOWN       = 0,
-    WHEELDEV_CAMMUSC5      = 1,
-    WHEELDEV_CAMMUSC12     = 2,
-    WHEELDEV_MOZAR5        = 3,
-    WHEELDEV_SIMAGICGTNEO  = 4,
-    WHEELDEV_LOGITECHG29   = 5
+    WHEELDEV_UNKNOWN                   = 0,
+    WHEELDEV_CAMMUSC5                  = 1,
+    WHEELDEV_CAMMUSC12                 = 2,
+    WHEELDEV_MOZAR5                    = 3,
+    WHEELDEV_SIMAGICGTNEO              = 4,
+    WHEELDEV_LOGITECHG29               = 5,
+    WHEELDEV_CSLELITEV3PEDALS          = 6,
+    WHEELDEV_SIMAGICP1000PEDALS        = 7,
+    WHEELDEV_SIMNETPEDALS              = 8
 }
 WheelType;
 

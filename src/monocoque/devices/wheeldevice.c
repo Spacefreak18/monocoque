@@ -2,19 +2,71 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 #include "usb/wheels/logitechg29.h"
 #include "usb/wheels/cammusc5.h"
 #include "usb/wheels/cammusc12.h"
 #include "usb/wheels/gtneo.h"
 #include "serial/moza.h"
 
+
+#include "usb/cslelitev3.h"
+#include "usb/simagicp1000.h"
+#include "usb/simnetpedals.h"
+
 #include "simdevice.h"
-#include "../helper/confighelper.h"
 #include "../simulatorapi/simapi/simapi/simdata.h"
 #include "../slog/slog.h"
 
-int wheeldev_update(USBDevice* usbdevice, SimData* simdata)
+int wheelhapticdev_update(SimDevice* this, SimData* simdata)
 {
+    USBDevice* usbdevice = (void *) this->derived;
+
+    double play = slipeffect(simdata, this->hapticeffect.effecttype, this->hapticeffect.tyre, this->hapticeffect.threshold, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
+
+    if (play != usbdevice->hapticstate)
+    {
+        int rplay = 0;
+        if(play > 0)
+        {
+            rplay = 1;
+            switch ( usbdevice->type )
+            {
+                case WHEELDEV_CSLELITEV3PEDALS:
+                    cslelitev3_update(usbdevice, this->hapticeffect.effecttype, rplay);
+                    break;
+                case WHEELDEV_SIMAGICP1000PEDALS:
+                    simagicp1000_update(usbdevice, this->hapticeffect.effecttype, rplay);
+                    break;
+                case WHEELDEV_SIMNETPEDALS:
+                    simnetpedals_update(usbdevice, this->hapticeffect.effecttype, rplay, this->hapticeffect.motorposition, this->hapticeffect.basefrequency, this->hapticeffect.baseamplitude);
+                    break;
+            }
+        }
+        else
+        {
+            switch ( usbdevice->type )
+            {
+                case WHEELDEV_CSLELITEV3PEDALS:
+                    cslelitev3_update(usbdevice, this->hapticeffect.effecttype, rplay);
+                    break;
+                case WHEELDEV_SIMAGICP1000PEDALS:
+                    simagicp1000_update(usbdevice, this->hapticeffect.effecttype, rplay);
+                    break;
+                case WHEELDEV_SIMNETPEDALS:
+                    simnetpedals_update(usbdevice, this->hapticeffect.effecttype, rplay, this->hapticeffect.motorposition, 0, 0);
+                    break;
+            }
+        }
+        usbdevice->hapticstate = play;
+    }
+    return 0;
+}
+
+int wheeldev_update(SimDevice* this, SimData* simdata)
+{
+    USBDevice* usbdevice = (void *) this->derived;
+
     WheelDevice* wheeldevice = &usbdevice->u.wheeldevice;
     switch ( wheeldevice->type )
     {
@@ -72,6 +124,15 @@ int wheeldev_free(USBDevice* usbdevice)
                 free(usbdevice->m.device_specific_config_file);
             }
             break;
+        case WHEELDEV_CSLELITEV3PEDALS:
+            cslelitev3_free(usbdevice);
+            break;
+        case WHEELDEV_SIMAGICP1000PEDALS:
+            simagicp1000_free(usbdevice);
+            break;
+        case WHEELDEV_SIMNETPEDALS:
+            simnetpedals_free(usbdevice);
+            break;
     }
 
     return 0;
@@ -79,8 +140,9 @@ int wheeldev_free(USBDevice* usbdevice)
 
 int wheeldev_init(USBDevice* usbdevice, DeviceSettings* ds)
 {
-    slogi("initializing wheel device...");
+    slogi("initializing wheel or pedals device...");
     int error = 0;
+
     // detection of wheel model
     WheelDevice* wheeldevice = &usbdevice->u.wheeldevice;
     switch (ds->dev_subsubtype) {
@@ -138,11 +200,20 @@ int wheeldev_init(USBDevice* usbdevice, DeviceSettings* ds)
                 error = -1;
             }
             break;
-        default:
-            wheeldevice->type = WHEELDEV_UNKNOWN;
-            slogw("Unknown cammus wheel detected, trying C5");
-            error = cammusc5_init(usbdevice);
+        case (SIMDEVSUBTYPE_SIMAGICP1000PEDALS):
+            wheeldevice->type = USBHAPTIC_SIMAGICP1000PEDALS;
+            error = simagicp1000_init(usbdevice);
             break;
+        case (SIMDEVSUBTYPE_CSLELITEV3PEDALS):
+            wheeldevice->type = USBHAPTIC_CSLELITEV3PEDALS;
+            error = cslelitev3_init(usbdevice);
+            break;
+        case (SIMDEVSUBTYPE_SIMNETPEDALS):
+            wheeldevice->type = USBHAPTIC_SIMNETPEDALS;
+            error = simnetpedals_init(usbdevice);
+            break;
+        default:
+            slogw("Possibly unknown device");
     }
 
 

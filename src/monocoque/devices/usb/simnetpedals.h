@@ -1,8 +1,11 @@
 #ifndef _SIMNETPEDALS_H
 #define _SIMNETPEDALS_H
 
-int simnetpedals_update(USBGenericHapticDevice* usbhapticdevice, int effecttype, int play);
-int simnetpedals_init(USBGenericHapticDevice* usbhapticdevice);
-int simnetpedals_free(USBGenericHapticDevice* usbhapticdevice);
+#include "../wheeldevice.h"
+#include "../simdevice.h"
+
+int simnetpedals_update(USBDevice* usbdevice, int effecttype, int play, int motorposition, int frequency, int amplitude);
+int simnetpedals_init(USBDevice* usbdevice);
+int simnetpedals_free(USBDevice* usbdevice);
 
 #endif

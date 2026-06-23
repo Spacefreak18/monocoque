@@ -19,11 +19,9 @@ int usbdev_update(SimDevice* this, SimData* simdata)
         case USBDEV_TACHOMETER :
             tachdev_update(usbdevice, simdata);
             break;
-        case USBDEV_WHEEL :
-            wheeldev_update(usbdevice, simdata);
-            break;
-        case USBDEV_GENERICHAPTIC :
-            usbhapticdev_update(&usbdevice->u.hapticdevice, simdata, this->hapticeffect.tyre, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
+        case USBDEV_WHEEL_OR_PEDALS :
+            // this should be directed via vtable to wheeldevice.c
+            //wheeldev_update(usbdevice, simdata);
             break;
     }
 
@@ -41,11 +39,8 @@ int usbdev_free(SimDevice* this)
         case USBDEV_TACHOMETER :
             tachdev_free(usbdevice);
             break;
-        case USBDEV_WHEEL :
+        case USBDEV_WHEEL_OR_PEDALS :
             wheeldev_free(usbdevice);
-            break;
-        case USBDEV_GENERICHAPTIC :
-            usbhapticdev_free(&usbdevice->u.hapticdevice);
             break;
     }
 
@@ -66,53 +61,55 @@ int usbdev_init(USBDevice* usbdevice, DeviceSettings* ds, SimInfo* siminfo)
         case USBDEV_TACHOMETER :
             error = tachdev_init(usbdevice, ds);
             break;
-        case USBDEV_WHEEL :
+        case USBDEV_WHEEL_OR_PEDALS :
             error = wheeldev_init(usbdevice, ds);
-            break;
-        case USBDEV_GENERICHAPTIC :
-            error = usbhapticdev_init(&usbdevice->u.hapticdevice, ds, siminfo);
             break;
     }
 
     return error;
 }
 
+
 static const vtable usb_simdevice_vtable = { &usbdev_update, &usbdev_free };
+static const vtable usb_wheeldevice_vtable = { &wheeldev_update, &usbdev_free };
+static const vtable usb_wheelhaptic_vtable = { &wheelhapticdev_update, &usbdev_free };
 
 USBDevice* new_usb_device(DeviceSettings* ds, MonocoqueSettings* ms, SimInfo* siminfo) {
 
     USBDevice* this = (USBDevice*) malloc(sizeof(USBDevice));
+    int error = 0;
 
     this->m.update = &update;
     this->m.free = &simdevfree;
     this->m.derived = this;
     this->m.vtable = &usb_simdevice_vtable;
 
-
-
     // TODO: turn this into a switch when we get more devices
     this->type = USBDEV_TACHOMETER;
     if(ds->dev_subtype == SIMDEVTYPE_USBWHEEL)
     {
-        this->type = USBDEV_WHEEL;
+        this->type = USBDEV_WHEEL_OR_PEDALS;
+        this->m.vtable = &usb_wheeldevice_vtable;
     }
 
-
-    // really generic haptic isn't and shouldn't be it's own type
-    // it's an attribute that is added to a device via composition
-    // same if that haptic device is a serial device
-    if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC)
+    if(ds->has_haptic_effects == true)
     {
-        this->m.hapticeffect.threshold = ds->threshold;
-        this->m.hapticeffect.effecttype = ds->effect_type;
-        this->m.hapticeffect.tyre = ds->tyre;
-        this->m.hapticeffect.useconfig = ms->useconfig;
-        this->m.hapticeffect.configcheck = &ms->configcheck;
-        this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
-        this->type = USBDEV_GENERICHAPTIC;
+        if(siminfo->SimSupportsHapticEffects == false)
+        {
+            // if the user added haptic effects to the config and the sim does not support it, but still wishes to use features
+            // just remove the haptic effect from the config?
+            slogi("This sim does not support haptic effects");
+            error = MONOCOQUE_ERROR_UNSUPPORTED_SIM_FEATURE;
+        }
+        else
+        {
+            int error = 0;
+            initializeHapticEffect(&this->m.hapticeffect, &ds->hapticsettings, ms);
+            this->m.vtable = &usb_wheelhaptic_vtable;
+        }
     }
 
-    int error = usbdev_init(this, ds, siminfo);
+    error = usbdev_init(this, ds, siminfo);
 
     if (error != 0)
     {

@@ -67,7 +67,7 @@ typedef struct
     int baudrate;
     double ampfactor;
     double fanpower;
-    double state;
+    double hapticstate;
     union
     {
         SimWindData simwinddata;
@@ -88,10 +88,10 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms, SimIn
 /********* USB HID Devices *****/
 typedef enum
 {
-    USBDEV_UNKNOWN       = 0,
-    USBDEV_TACHOMETER    = 1,
-    USBDEV_GENERICHAPTIC = 2,
-    USBDEV_WHEEL         = 3
+    USBDEV_UNKNOWN                = 0,
+    USBDEV_TACHOMETER             = 1,
+    USBDEV_GENERICHAPTIC          = 2,
+    USBDEV_WHEEL_OR_PEDALS        = 3
 }
 USBType;
 
@@ -100,12 +100,14 @@ typedef struct
     SimDevice m;
     int id;
     hid_device* handle;
+    FILE* filehandle;
+    char* dev;
+    double hapticstate;
     USBType type;
     union
     {
         TachDevice tachdevice;
         WheelDevice wheeldevice;
-        USBGenericHapticDevice hapticdevice;
     } u;
 }
 USBDevice;
@@ -122,7 +124,6 @@ typedef struct
     SimDevice m;
     int id;
     int configcheck;
-    SoundEffectModulationType modulationType;
     SoundData sounddata;
 //#ifdef USE_PULSEAUDIO
     pa_stream *stream;
@@ -154,7 +155,8 @@ int simdevfree(SimDevice* this);
 
 
 /****** USB SubTypes ****************/
-int wheeldev_update(USBDevice* usbdevice, SimData* simdata);
+int wheelhapticdev_update(SimDevice* this, SimData* simdata);
+int wheeldev_update(SimDevice* this, SimData* simdata);
 int wheeldev_init(USBDevice* usbdevice, DeviceSettings* ds);
 int wheeldev_free(USBDevice* usbdevice);
 

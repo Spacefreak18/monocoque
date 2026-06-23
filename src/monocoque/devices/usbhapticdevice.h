@@ -18,15 +18,6 @@ HapticType;
 typedef struct
 {
     int id;
-    HapticType type;
-    double state;
-    double threshold;
-    int value0;
-    int value1;
-    uint32_t frequency;
-    uint32_t amplitude;
-    uint32_t motorposition;
-    VibrationEffectType effecttype;
     FILE* filehandle;
     hid_device* handle;
     char* dev;

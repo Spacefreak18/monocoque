@@ -37,35 +37,35 @@ int strtoeffecttype(const char* effect, DeviceSettings* ds)
     if (strcicmp(effect, "Engine") == 0)
     {
         ds->is_valid = true;
-        ds->effect_type = EFFECT_ENGINERPM;
+        ds->hapticsettings.effect_type = EFFECT_ENGINERPM;
     }
     if (strcicmp(effect, "Gear") == 0)
     {
         ds->is_valid = true;
-        ds->effect_type = EFFECT_GEARSHIFT;
+        ds->hapticsettings.effect_type = EFFECT_GEARSHIFT;
     }
     if (strcicmp(effect, "Suspension") == 0)
     {
         ds->is_valid = true;
-        ds->effect_type = EFFECT_SUSPENSION;
+        ds->hapticsettings.effect_type = EFFECT_SUSPENSION;
     }
     if (strcicmp(effect, "ABS") == 0)
     {
         ds->is_valid = true;
         slogt("found abas effect set");
-        ds->effect_type = EFFECT_ABSBRAKES;
+        ds->hapticsettings.effect_type = EFFECT_ABSBRAKES;
     }
     if ((strcicmp(effect, "SLIP") == 0) || (strcicmp(effect, "TYRESLIP") == 0) || (strcicmp(effect, "TIRESLIP") == 0))
     {
         ds->is_valid = true;
         slogt("found tyreslip effect set");
-        ds->effect_type = EFFECT_TYRESLIP;
+        ds->hapticsettings.effect_type = EFFECT_TYRESLIP;
     }
     if ((strcicmp(effect, "LOCK") == 0) || (strcicmp(effect, "TYRELOCK") == 0) || (strcicmp(effect, "TIRELOCK") == 0))
     {
         ds->is_valid = true;
         slogt("found tyreslock effect set");
-        ds->effect_type = EFFECT_TYRELOCK;
+        ds->hapticsettings.effect_type = EFFECT_TYRELOCK;
     }
 
     if (ds->is_valid == false)
@@ -591,31 +591,31 @@ int gettyre(config_setting_t* device_settings, DeviceSettings* ds) {
     const char* temp;
     int found = config_setting_lookup_string(device_settings, "tyre", &temp);
 
-    ds->tyre = ALLFOUR;
+    ds->hapticsettings.tyre = ALLFOUR;
 
     if (strcicmp(temp, "FRONTS") == 0)
     {
-        ds->tyre = FRONTS;
+        ds->hapticsettings.tyre = FRONTS;
     }
     if (strcicmp(temp, "REARS") == 0)
     {
-        ds->tyre = REARS;
+        ds->hapticsettings.tyre = REARS;
     }
     if (strcicmp(temp, "FRONTLEFT") == 0)
     {
-        ds->tyre = FRONTLEFT;
+        ds->hapticsettings.tyre = FRONTLEFT;
     }
     if (strcicmp(temp, "FRONTRIGHT") == 0)
     {
-        ds->tyre = FRONTRIGHT;
+        ds->hapticsettings.tyre = FRONTRIGHT;
     }
     if (strcicmp(temp, "REARLEFT") == 0)
     {
-        ds->tyre = REARLEFT;
+        ds->hapticsettings.tyre = REARLEFT;
     }
     if (strcicmp(temp, "REARRIGHT") == 0)
     {
-        ds->tyre = REARRIGHT;
+        ds->hapticsettings.tyre = REARRIGHT;
     }
 
 }
@@ -725,54 +725,91 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         }
     }
 
-    if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC || ds->dev_subtype == SIMDEVTYPE_USBWHEEL || ds->dev_subtype == SIMDEVTYPE_SERIALWHEEL)
-    {
-        // logic for different devices
-        int b = 0;
-
-        const char* temp;
-        int found = config_setting_lookup_string(device_settings, "subtype", &temp);
-        if(temp != NULL && found > 0)
-        {
-            b = strtodevsubsubtype(temp, ds);
-        }
-        ds->usbdevsettings.frequency = 0;
-        ds->usbdevsettings.amplitude = 0;
-        ds->usbdevsettings.motorsposition = 0;
-        config_setting_lookup_int(device_settings, "frequency", &ds->usbdevsettings.frequency);
-        config_setting_lookup_int(device_settings, "amplitude", &ds->usbdevsettings.amplitude);
-
-        int motorposition = 1;
-        config_setting_lookup_int(device_settings, "motors", &motorposition);
-        ds->usbdevsettings.motorsposition = motorposition;
-    }
 
     if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC || ds->dev_type == SIMDEV_SOUND || ds->dev_subtype == SIMDEVTYPE_SERIALHAPTIC)
     {
         slogt("analysing haptic effect settings");
+        ds->has_haptic_effects = true;
         const char* effect;
         config_setting_lookup_string(device_settings, "effect", &effect);
         strtoeffecttype(effect, ds);
-        if (ds->effect_type == EFFECT_TYRESLIP || ds->effect_type == EFFECT_TYRELOCK || ds->effect_type == EFFECT_ABSBRAKES || ds->effect_type == EFFECT_SUSPENSION )
+        if (ds->hapticsettings.effect_type == EFFECT_TYRESLIP || ds->hapticsettings.effect_type == EFFECT_TYRELOCK || ds->hapticsettings.effect_type == EFFECT_ABSBRAKES || ds->hapticsettings.effect_type == EFFECT_SUSPENSION )
         {
             gettyre(device_settings, ds);
             ds->threshold = 0;
             int found = config_setting_lookup_float(device_settings, "threshold", &ds->threshold);
         }
 
+        slogi("reading configured haptic effect settings");
+        ds->hapticsettings.frequency = 0;
+        ds->hapticsettings.frequencyMax = 0;
+        ds->hapticsettings.amplitude = 50;
+        ds->hapticsettings.amplitudeMax = 50;
+        ds->hapticsettings.volume = 0;
+        if (ds->hapticsettings.effect_type == EFFECT_GEARSHIFT)
+        {
+            ds->hapticsettings.duration = .125;
+        }
+        if (device_settings != NULL)
+        {
+
+            config_setting_lookup_int(device_settings, "volume", &ds->hapticsettings.volume);
+            config_setting_lookup_int(device_settings, "frequency", &ds->hapticsettings.frequency);
+            config_setting_lookup_int(device_settings, "frequencyMax", &ds->hapticsettings.frequencyMax);
+            config_setting_lookup_int(device_settings, "amplitude", &ds->hapticsettings.amplitude);
+            config_setting_lookup_float(device_settings, "duration", &ds->sounddevsettings.duration);
+            config_setting_lookup_int(device_settings, "amplitudeMax", &ds->hapticsettings.amplitudeMax);
+
+            const char* temp = NULL;
+            int found = 0;
+            found = config_setting_lookup_string(device_settings, "modulation", &temp);
+            ds->hapticsettings.modulation = EFFECT_MODULATION_NONE;
+            if (found == 0)
+            {
+                ds->hapticsettings.modulation = EFFECT_MODULATION_NONE;
+                slogd("Effect modulation not found, set to none");
+            }
+            else
+            {
+                if(strcicmp(temp, "FREQUENCY") == 0)
+                {
+                    ds->hapticsettings.modulation = EFFECT_MODULATION_FREQUENCY;
+                    if(ds->hapticsettings.frequencyMax == 0 || ds->hapticsettings.frequencyMax < ds->hapticsettings.frequency)
+                    {
+                        ds->hapticsettings.modulation = EFFECT_MODULATION_NONE;
+                        slogw("Falling back to no frequency modulation since frequencyMax is either not set or set below target frequency");
+                    }
+                    else
+                    {
+                        slogi("Effect modulation found, set to FREQUENCY");
+                    }
+                }
+                else if(strcicmp(temp, "AMPLIFY") == 0)
+                {
+                    ds->hapticsettings.modulation = EFFECT_MODULATION_AMPLIFY;
+                    slogi("Effect modulation found, set to AMPLIFY");
+                }
+                else
+                {
+                    slogw("%s is not a valid modulation type, falling back to no effect modulation");
+                    ds->hapticsettings.modulation = EFFECT_MODULATION_NONE;
+                }
+            }
+
+            ds->hapticsettings.motorposition = 0;
+            int motorposition = 1;
+            config_setting_lookup_int(device_settings, "motors", &motorposition);
+            ds->hapticsettings.motorposition = motorposition;
+        }
+
         if (ds->dev_type == SIMDEV_SOUND)
         {
             slogi("reading configured sound device settings");
-            ds->sounddevsettings.frequency = 0;
-            ds->sounddevsettings.frequencyMax = 0;
-            ds->sounddevsettings.amplitude = 50;
-            ds->sounddevsettings.amplitudeMax = 50;
             ds->sounddevsettings.volume = 0;
             ds->sounddevsettings.pan = 0;
             ds->sounddevsettings.channels = 1;
-            ds->sounddevsettings.duration = 2.0;
             ds->sounddevsettings.noise = 0;
-            if (ds->effect_type == EFFECT_GEARSHIFT)
+            if (ds->hapticsettings.effect_type == EFFECT_GEARSHIFT)
             {
                 ds->sounddevsettings.duration = .125;
             }
@@ -780,13 +817,8 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
             {
 
                 config_setting_lookup_int(device_settings, "volume", &ds->sounddevsettings.volume);
-                config_setting_lookup_int(device_settings, "frequency", &ds->sounddevsettings.frequency);
-                config_setting_lookup_int(device_settings, "frequencyMax", &ds->sounddevsettings.frequencyMax);
-                config_setting_lookup_int(device_settings, "amplitude", &ds->sounddevsettings.amplitude);
-                config_setting_lookup_int(device_settings, "amplitudeMax", &ds->sounddevsettings.amplitudeMax);
                 config_setting_lookup_int(device_settings, "pan", &ds->sounddevsettings.pan);
                 config_setting_lookup_int(device_settings, "channels", &ds->sounddevsettings.channels);
-                config_setting_lookup_float(device_settings, "duration", &ds->sounddevsettings.duration);
                 config_setting_lookup_int(device_settings, "noise", &ds->sounddevsettings.noise);
 
                 const char* temp = NULL;
@@ -805,40 +837,8 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
                 }
 
 
-                found = config_setting_lookup_string(device_settings, "modulation", &temp);
-                ds->sounddevsettings.modulation = SOUND_EFFECT_MODULATION_NONE;
-                if (found == 0)
-                {
-                    ds->sounddevsettings.modulation = SOUND_EFFECT_MODULATION_NONE;
-                    slogd("Effect modulation not found, set to none");
-                }
-                else
-                {
-                    if(strcicmp(temp, "FREQUENCY") == 0)
-                    {
-                        ds->sounddevsettings.modulation = SOUND_EFFECT_MODULATION_FREQUENCY;
-                        if(ds->sounddevsettings.frequencyMax == 0 || ds->sounddevsettings.frequencyMax < ds->sounddevsettings.frequency)
-                        {
-                            ds->sounddevsettings.modulation = SOUND_EFFECT_MODULATION_NONE;
-                            slogw("Falling back to no frequency modulation since frequencyMax is either not set or set below target frequency");
-                        }
-                        else
-                        {
-                            slogi("Effect modulation found, set to FREQUENCY");
-                        }
-                    }
-                    else if(strcicmp(temp, "AMPLIFY") == 0)
-                    {
-                        ds->sounddevsettings.modulation = SOUND_EFFECT_MODULATION_AMPLIFY;
-                        slogi("Effect modulation found, set to AMPLIFY");
-                    }
-                    else
-                    {
-                        slogw("%s is not a valid modulation type, falling back to no effect modulation");
-                        ds->sounddevsettings.modulation = SOUND_EFFECT_MODULATION_NONE;
-                    }
-                }
             }
+
         }
     }
 
