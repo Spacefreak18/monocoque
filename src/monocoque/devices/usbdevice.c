@@ -104,6 +104,7 @@ USBDevice* new_usb_device(DeviceSettings* ds, MonocoqueSettings* ms, SimInfo* si
         else
         {
             int error = 0;
+            this->type = USBDEV_WHEEL_OR_PEDALS;
             initializeHapticEffect(&this->m.hapticeffect, &ds->hapticsettings, ms);
             this->m.vtable = &usb_wheelhaptic_vtable;
         }

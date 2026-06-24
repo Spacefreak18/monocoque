@@ -33,7 +33,6 @@ int cslelitev3_update(USBDevice* usbdevice, int effecttype, int play)
         }
     }
 
-
     fprintf(usbdevice->filehandle, "%i\n", value);
     fflush(usbdevice->filehandle);
 

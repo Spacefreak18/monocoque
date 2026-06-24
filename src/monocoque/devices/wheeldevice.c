@@ -21,8 +21,9 @@
 int wheelhapticdev_update(SimDevice* this, SimData* simdata)
 {
     USBDevice* usbdevice = (void *) this->derived;
+    WheelDevice* wheeldevice = &usbdevice->u.wheeldevice;
 
-    double play = slipeffect(simdata, this->hapticeffect.effecttype, this->hapticeffect.tyre, this->hapticeffect.threshold, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
+    double play = slipeffect(simdata, &this->hapticeffect, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
 
     if (play != usbdevice->hapticstate)
     {
@@ -30,7 +31,7 @@ int wheelhapticdev_update(SimDevice* this, SimData* simdata)
         if(play > 0)
         {
             rplay = 1;
-            switch ( usbdevice->type )
+            switch ( wheeldevice->type )
             {
                 case WHEELDEV_CSLELITEV3PEDALS:
                     cslelitev3_update(usbdevice, this->hapticeffect.effecttype, rplay);
@@ -45,7 +46,7 @@ int wheelhapticdev_update(SimDevice* this, SimData* simdata)
         }
         else
         {
-            switch ( usbdevice->type )
+            switch ( wheeldevice->type )
             {
                 case WHEELDEV_CSLELITEV3PEDALS:
                     cslelitev3_update(usbdevice, this->hapticeffect.effecttype, rplay);
@@ -66,8 +67,8 @@ int wheelhapticdev_update(SimDevice* this, SimData* simdata)
 int wheeldev_update(SimDevice* this, SimData* simdata)
 {
     USBDevice* usbdevice = (void *) this->derived;
-
     WheelDevice* wheeldevice = &usbdevice->u.wheeldevice;
+
     switch ( wheeldevice->type )
     {
         case WHEELDEV_UNKNOWN :
@@ -142,7 +143,7 @@ int wheeldev_init(USBDevice* usbdevice, DeviceSettings* ds)
 {
     slogi("initializing wheel or pedals device...");
     int error = 0;
-
+    usbdevice->hapticstate = 0;
     // detection of wheel model
     WheelDevice* wheeldevice = &usbdevice->u.wheeldevice;
     switch (ds->dev_subsubtype) {
@@ -201,19 +202,20 @@ int wheeldev_init(USBDevice* usbdevice, DeviceSettings* ds)
             }
             break;
         case (SIMDEVSUBTYPE_SIMAGICP1000PEDALS):
-            wheeldevice->type = USBHAPTIC_SIMAGICP1000PEDALS;
+            wheeldevice->type = WHEELDEV_SIMAGICP1000PEDALS;
             error = simagicp1000_init(usbdevice);
             break;
         case (SIMDEVSUBTYPE_CSLELITEV3PEDALS):
-            wheeldevice->type = USBHAPTIC_CSLELITEV3PEDALS;
+            slogi("Attempting to initialize CSL Elite V3 Pedals");
+            wheeldevice->type = WHEELDEV_CSLELITEV3PEDALS;
             error = cslelitev3_init(usbdevice);
             break;
         case (SIMDEVSUBTYPE_SIMNETPEDALS):
-            wheeldevice->type = USBHAPTIC_SIMNETPEDALS;
+            wheeldevice->type = WHEELDEV_SIMNETPEDALS;
             error = simnetpedals_init(usbdevice);
             break;
         default:
-            slogw("Possibly unknown device");
+            slogw("Possibly unknown wheel device");
     }
 
 

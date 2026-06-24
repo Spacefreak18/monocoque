@@ -725,8 +725,73 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
         }
     }
 
+    if (ds->dev_type == SIMDEV_USB)
+    {
+        if (device_settings != NULL)
+        {
+            const char* temp;
+            int found = config_setting_lookup_string(device_settings, "subtype", &temp);
+            if(temp != NULL && found > 0)
+            {
+              strtodevsubsubtype(temp, ds);
+            }
+        }
+    }
 
-    if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC || ds->dev_type == SIMDEV_SOUND || ds->dev_subtype == SIMDEVTYPE_SERIALHAPTIC)
+    if (ds->dev_type == SIMDEV_SERIAL)
+    {
+        if (device_settings != NULL)
+        {
+            const char* temp;
+            int found = config_setting_lookup_string(device_settings, "subtype", &temp);
+            if(temp != NULL && found > 0)
+            {
+              strtodevsubsubtype(temp, ds);
+            }
+
+            config_setting_lookup_string(device_settings, "devpath", &temp);
+            ds->serialdevsettings.portdev = strdup(temp);
+
+            int motorposition = 8;
+            config_setting_lookup_int(device_settings, "motors", &motorposition);
+            ds->serialdevsettings.motorsposition = motorposition;
+
+            int numlights = 6;
+            config_setting_lookup_int(device_settings, "numlights", &numlights);
+            ds->serialdevsettings.numlights = numlights;
+
+            int numleds = 6;
+            config_setting_lookup_int(device_settings, "numleds", &numleds);
+            ds->serialdevsettings.numleds = numleds;
+
+            int startled = 1;
+            config_setting_lookup_int(device_settings, "startled", &startled);
+            ds->serialdevsettings.startled = startled;
+
+            int endled = 1;
+            config_setting_lookup_int(device_settings, "endled", &endled);
+            ds->serialdevsettings.endled = endled;
+
+            int baud = 9600;
+            config_setting_lookup_int(device_settings, "baud", &baud);
+            ds->serialdevsettings.baud = baud;
+
+            double ampfactor = 1.0;
+            ds->serialdevsettings.ampfactor = 1.0;
+            found = config_setting_lookup_float(device_settings, "ampfactor", &ampfactor);
+            ds->serialdevsettings.ampfactor = ampfactor;
+
+            double fanpower = 0.6;
+            config_setting_lookup_float(device_settings, "fanpower", &fanpower);
+            ds->serialdevsettings.fanpower = fanpower;
+
+            slogt("set port baud rate to %i, ampfactor %f, fanpower %f", baud, ampfactor, fanpower);
+
+        }
+
+    }
+
+    if (ds->dev_subtype == SIMDEVTYPE_USBHAPTIC || ds->dev_subtype == SIMDEVTYPE_USBWHEEL || ds->dev_type == SIMDEV_SOUND || ds->dev_subtype == SIMDEVTYPE_SERIALHAPTIC)
     {
         slogt("analysing haptic effect settings");
         ds->has_haptic_effects = true;
@@ -838,58 +903,6 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
 
 
             }
-
-        }
-    }
-
-    if (ds->dev_type == SIMDEV_SERIAL)
-    {
-        if (device_settings != NULL)
-        {
-            const char* temp;
-            int found = config_setting_lookup_string(device_settings, "subtype", &temp);
-            if(temp != NULL && found > 0)
-            {
-              strtodevsubsubtype(temp, ds);
-            }
-
-            config_setting_lookup_string(device_settings, "devpath", &temp);
-            ds->serialdevsettings.portdev = strdup(temp);
-
-            int motorposition = 8;
-            config_setting_lookup_int(device_settings, "motors", &motorposition);
-            ds->serialdevsettings.motorsposition = motorposition;
-
-            int numlights = 6;
-            config_setting_lookup_int(device_settings, "numlights", &numlights);
-            ds->serialdevsettings.numlights = numlights;
-
-            int numleds = 6;
-            config_setting_lookup_int(device_settings, "numleds", &numleds);
-            ds->serialdevsettings.numleds = numleds;
-
-            int startled = 1;
-            config_setting_lookup_int(device_settings, "startled", &startled);
-            ds->serialdevsettings.startled = startled;
-
-            int endled = 1;
-            config_setting_lookup_int(device_settings, "endled", &endled);
-            ds->serialdevsettings.endled = endled;
-
-            int baud = 9600;
-            config_setting_lookup_int(device_settings, "baud", &baud);
-            ds->serialdevsettings.baud = baud;
-
-            double ampfactor = 1.0;
-            ds->serialdevsettings.ampfactor = 1.0;
-            found = config_setting_lookup_float(device_settings, "ampfactor", &ampfactor);
-            ds->serialdevsettings.ampfactor = ampfactor;
-
-            double fanpower = 0.6;
-            config_setting_lookup_float(device_settings, "fanpower", &fanpower);
-            ds->serialdevsettings.fanpower = fanpower;
-
-            slogt("set port baud rate to %i, ampfactor %f, fanpower %f", baud, ampfactor, fanpower);
 
         }
 

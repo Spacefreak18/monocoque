@@ -47,7 +47,7 @@ typedef struct
 HapticEffect;
 
 int initializeHapticEffect(HapticEffect* h, HapticEffectSettings* hs, MonocoqueSettings* ms);
-double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int useconfig, int* configcheck, char* configfile);
+double slipeffect(SimData* simdata, HapticEffect* h, int useconfig, int* configcheck, char* configfile);
 bool hasTyreDiameter(SimData* simdata);
 int loadtyreconfig(SimData* simdata, char* configfile, bool setDiameters);
 int savetyreconfig(SimData* simdata, char* configfile);

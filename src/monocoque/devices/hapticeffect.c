@@ -228,7 +228,7 @@ int initializeHapticEffect(HapticEffect* h, HapticEffectSettings* hs, MonocoqueS
     }
 
     h->tyre = hs->tyre;
-    slogt("Haptic effect: %i %i, tyre %i %i", h->effecttype, hs->effect_type, h->tyre, hs->tyre);
+    slogi("Haptic effect: %i %i, tyre %i %i", h->effecttype, hs->effect_type, h->tyre, hs->tyre);
 
     h->threshold = hs->threshold;
     h->modulationType = hs->modulation;
@@ -250,8 +250,11 @@ int initializeHapticEffect(HapticEffect* h, HapticEffectSettings* hs, MonocoqueS
 }
 
 
-double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, int useconfig, int* configcheck, char* configfile)
+double slipeffect(SimData* simdata, HapticEffect* h, int useconfig, int* configcheck, char* configfile)
 {
+    int effecttype = h->effecttype;
+    int tyre = h->tyre;
+    double threshold = h->threshold;
     double play = 0;
     double wheelslip[4];
     wheelslip[0] = 0;
@@ -301,7 +304,7 @@ double slipeffect(SimData* simdata, int effecttype, int tyre, double threshold, 
             case EFFECT_SUSPENSION:
                 break;
             default:
-                slogd("Unknown effect type %i", effecttype);
+                slogw("Unknown effect type %i", effecttype);
         }
         if(simdata->Yvelocity <= 0)
         {
