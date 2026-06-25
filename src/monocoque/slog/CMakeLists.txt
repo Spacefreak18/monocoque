@@ -4,3 +4,5 @@ set(slog_source_files
 )
 
 add_library(slog STATIC ${slog_source_files})
+
+set_property(TARGET slog PROPERTY POSITION_INDEPENDENT_CODE ON)

@@ -2,3 +2,6 @@
 	path = src/monocoque/simulatorapi/simapi
 	url = https://github.com/spacefreak18/simapi
 	# url = git@github.com:spacefreak18/simapi # ssh is better but Microsoft requires an account
+[submodule "src/monocoque/mgui/nappgui_src"]
+	path = src/monocoque/mgui/nappgui_src
+	url = https://github.com/frang75/nappgui_src

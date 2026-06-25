@@ -43,3 +43,5 @@ set(simulatorapi_source_files
 )
 
 add_library(simulatorapi STATIC ${simulatorapi_source_files})
+
+set_property(TARGET simulatorapi PROPERTY POSITION_INDEPENDENT_CODE ON)

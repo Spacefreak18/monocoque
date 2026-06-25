@@ -49,3 +49,5 @@ set(devices_source_files
 include_directories("." "usb" "sound" "serial")
 
 add_library(devices STATIC ${devices_source_files})
+
+set_property(TARGET devices PROPERTY POSITION_INDEPENDENT_CODE ON)

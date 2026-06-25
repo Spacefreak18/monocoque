@@ -24,6 +24,10 @@ bool go = false;
 bool go2 = false;
 struct sigaction act;
 
+SimData* simdata;
+SimMap* simmap;
+loop_data* baton;
+
 
 uv_idle_t idler;
 uv_timer_t datachecktimer;
@@ -33,7 +37,7 @@ uv_timer_t tyrediametertimer;
 uv_udp_t recv_socket;
 
 bool doui = false;
-int appstate = 0;
+
 
 void shmdatamapcallback(uv_timer_t* handle);
 void showstatscallback(uv_timer_t* handle);
@@ -628,12 +632,83 @@ void cb(uv_poll_t* handle, int status, int events)
 }
 
 
+int monocoque_mainloop_start(MonocoqueSettings* ms)
+{
+
+    simdata = malloc(sizeof(SimData));
+    simmap = simapi_simmap_create();
+
+    char ch;
+    struct pollfd mypoll = { STDIN_FILENO, POLLIN|POLLPRI };
+
+    uv_poll_t* poll = (uv_poll_t*) malloc(uv_handle_size(UV_POLL));
+
+    baton = (loop_data*) malloc(sizeof(loop_data));
+    baton->simmap = simmap;
+    baton->simdata = simdata;
+    baton->ms = ms;
+    baton->uion = false;
+    baton->releasing = false;
+    baton->use_udp = false;
+    baton->req.data = (void*) baton;
+
+    simapi_set_log_info(simapilib_loginfo);
+    simapi_set_log_debug(simapilib_logdebug);
+    simapi_set_log_trace(simapilib_logtrace);
+
+    if (0 != uv_poll_init(uv_default_loop(), poll, 0))
+    {
+        return 1;
+    };
+    
+    uv_udp_init(uv_default_loop(), &recv_socket);
+    uv_timer_init(uv_default_loop(), &datachecktimer);
+    uv_timer_init(uv_default_loop(), &showstatstimer);
+    uv_timer_init(uv_default_loop(), &datamaptimer);
+    uv_timer_init(uv_default_loop(), &tyrediametertimer);
+    slogd("setting initial app state");
+    appstate = 1;
+
+    uv_handle_set_data((uv_handle_t*) &datachecktimer, (void*) baton);
+    uv_handle_set_data((uv_handle_t*) &datamaptimer, (void*) baton);
+    uv_handle_set_data((uv_handle_t*) &showstatstimer, (void*) baton);
+    uv_handle_set_data((uv_handle_t*) &recv_socket, (void*) baton);
+    uv_handle_set_data((uv_handle_t*) poll, (void*) baton);
+
+    if (0 != uv_poll_start(poll, UV_READABLE, cb))
+    {
+        return 2;
+    };
+    uv_timer_start(&datachecktimer, datacheckcallback, 1000, 1000);
+
+    fprintf(stdout, "Searching for sim data... Press q to quit...\n");
+    uv_run(uv_default_loop(), UV_RUN_NOWAIT);
+
+    return 0;
+}
+
+int monocoque_mainloop_stop(MonocoqueSettings* ms)
+{
+
+    uv_stop(uv_default_loop());
+    //uv_walk(uv_default_loop(), close_walk_cb, NULL);
+    uv_loop_close(uv_default_loop());
+    uv_library_shutdown();
+    slogi("All threads stopped...");
+
+
+    free(baton);
+    free(simdata);
+    free(simmap);
+
+    return 0;
+}
 
 int monocoque_mainloop(MonocoqueSettings* ms)
 {
 
-    SimData* simdata = malloc(sizeof(SimData));
-    SimMap* simmap = simapi_simmap_create();
+    simdata = malloc(sizeof(SimData));
+    simmap = simapi_simmap_create();
 
     struct termios newsettings, canonicalmode;
     tcgetattr(0, &canonicalmode);
@@ -647,7 +722,7 @@ int monocoque_mainloop(MonocoqueSettings* ms)
 
     uv_poll_t* poll = (uv_poll_t*) malloc(uv_handle_size(UV_POLL));
 
-    loop_data* baton = (loop_data*) malloc(sizeof(loop_data));
+    baton = (loop_data*) malloc(sizeof(loop_data));
     baton->simmap = simmap;
     baton->simdata = simdata;
     baton->ms = ms;
