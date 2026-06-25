@@ -92,14 +92,13 @@ target_include_directories(monocoque PUBLIC config ${LIBXML_INCLUDE_DIR} ${LUA_I
 target_link_libraries(monocoque-cli m hidapi-hidraw pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir Lua::Lua proc2)
 target_include_directories(monocoque-cli PUBLIC config ${LIBXML_INCLUDE_DIR} ${LUA_INCLUDE_DIR})
 if(BUILD_GUI)
-    target_link_libraries(monocoque-gui m hidapi-hidraw pulse serialport xml2 argtable2 config gameloop helper devices slog simulatorapi uv xdg-basedir Lua::Lua proc2)
+    target_link_libraries(monocoque-gui m hidapi-hidraw pulse serialport xml2 argtable2 config mgui gameloop helper devices slog simulatorapi uv xdg-basedir Lua::Lua proc2)
     target_include_directories(monocoque-gui PUBLIC config ${LIBXML_INCLUDE_DIR} ${LUA_INCLUDE_DIR})
 endif()
 
 
 
-
-
+add_subdirectory(src/monocoque/mgui)
 add_subdirectory(src/monocoque/gameloop)
 add_subdirectory(src/monocoque/simulatorapi)
 add_subdirectory(src/monocoque/helper)
