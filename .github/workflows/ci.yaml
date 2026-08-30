@@ -185,6 +185,134 @@ jobs:
       with:
         files: monocoque-${{ matrix.os }}.rpm
 
+
+  build-monocoque-appimage:
+    # Deliberately ubuntu-22.04 rather than ubuntu-latest: an AppImage can
+    # only run on systems whose glibc is at least as new as the one it was
+    # linked against, so building on current Ubuntu would silently exclude
+    # every older distro -- which defeats the point of shipping one. 22.04
+    # (glibc 2.35) is the oldest image still available, and is confirmed to
+    # still resolve as a runner label (the flatpak job below uses it too).
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    # libprocps-dev, not libproc2-dev: 22.04 predates the procps-ng 4.x split
+    # that introduced libproc2. CMakeLists.txt accepts either.
+    #
+    # librsvg2-common and libgtk-3-bin are for linuxdeploy's gtk plugin, not
+    # the build itself -- it needs an svg pixbuf loader and
+    # gtk-update-icon-cache to assemble a self-contained GTK runtime.
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          build-essential cmake pkg-config \
+          libgtk-3-dev libuv1-dev libargtable2-dev libserialport-dev \
+          libconfig-dev libhidapi-dev liblua5.4-dev libxdg-basedir-dev \
+          libxml2-dev libpulse-dev libprocps-dev libcurl4-openssl-dev \
+          libglu1-mesa-dev \
+          desktop-file-utils file patchelf wget \
+          librsvg2-common libgtk-3-bin
+
+    - name: Build
+      run: |
+        cmake -B build -DBUILD_GUI=on -DCMAKE_BUILD_TYPE=Release -S .
+        cmake --build build --config Release
+
+    # Uses the install() rules rather than hand-copying binaries the way the
+    # deb job does -- that's what they were added for.
+    - name: Populate AppDir
+      run: |
+        DESTDIR="$PWD/AppDir" cmake --install build --prefix /usr
+        # Icon basename must match the desktop file's `Icon=monocoque`.
+        # tools/monocoque.svg is the square copy shared with the Flatpak
+        # build; the published 100x50 artwork is rejected by icon tooling.
+        install -Dm644 tools/monocoque.svg \
+          AppDir/usr/share/icons/hicolor/scalable/apps/monocoque.svg
+
+    # APPIMAGE_EXTRACT_AND_RUN=1 because these tools are themselves
+    # AppImages and there is no FUSE on the runner to mount them with.
+    - name: Build AppImage
+      env:
+        APPIMAGE_EXTRACT_AND_RUN: 1
+        OUTPUT: monocoque-x86_64.AppImage
+      run: |
+        wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+        wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-gtk/raw/master/linuxdeploy-plugin-gtk.sh
+        chmod +x linuxdeploy-x86_64.AppImage linuxdeploy-plugin-gtk.sh
+        PATH="$PWD:$PATH" ./linuxdeploy-x86_64.AppImage \
+          --appdir AppDir \
+          --plugin gtk \
+          --desktop-file AppDir/usr/share/applications/monocoque.desktop \
+          --icon-file tools/monocoque.svg \
+          --output appimage
+
+    - name: Upload the AppImage as a build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: monocoque-x86_64.AppImage
+        path: monocoque*.AppImage
+
+    - name: Release the Package
+      uses: softprops/action-gh-release@v1
+      with:
+        files: monocoque*.AppImage
+
+
+  build-monocoque-flatpak:
+    # Folded in from the standalone flatpak.yml so every artifact lands on
+    # one release. Kept as continue-on-error because it is the newest and
+    # least battle-tested leg: a Flatpak failure must never turn a release
+    # red or block the deb/rpm/AppImage artifacts, which are independent
+    # jobs and upload regardless.
+    runs-on: ubuntu-22.04
+    continue-on-error: true
+    permissions:
+      contents: write
+    steps:
+      # No submodules: recursive here -- the manifest fetches simapi and
+      # nappgui_src itself as explicit `type: git` sources (pinned commits,
+      # reproducible regardless of what's checked out on disk). Confirmed
+      # via a failed CI run: recursive submodule checkout populates those
+      # paths with real .git files first, which then collides with
+      # flatpak-builder's own git source trying to clone into the same spot
+      # ("cannot overwrite non-directory .git with directory").
+      - uses: actions/checkout@v4
+
+      # ppa:flatpak/stable, not Ubuntu's own package: 22.04's flatpak-builder
+      # predates freedesktop Sdk 25.08 dropping the legacy appstream-compose
+      # binary in favour of `appstreamcli compose`, and fails at the finish
+      # stage without that fallback.
+      - name: Install flatpak-builder + freedesktop runtime/SDK
+        run: |
+          sudo add-apt-repository -y ppa:flatpak/stable
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          sudo flatpak install -y --noninteractive flathub org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08
+
+      - name: Build .flatpak
+        working-directory: flatpak
+        run: |
+          flatpak-builder --force-clean --repo=repo build-dir io.github.spacefreak18.monocoque.yml
+          flatpak build-bundle repo monocoque.flatpak io.github.spacefreak18.monocoque
+
+      - name: Upload .flatpak as a build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: monocoque.flatpak
+          path: flatpak/monocoque.flatpak
+
+      - name: Release the Package
+        uses: softprops/action-gh-release@v1
+        with:
+          files: flatpak/monocoque.flatpak
+
   #arch-build:
   #  runs-on: ubuntu-latest
   #  container:
