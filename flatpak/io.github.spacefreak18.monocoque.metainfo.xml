@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<component type="desktop-application">
+<!-- console-application, not desktop-application: this build has
+     BUILD_GUI=off (see the Flatpak manifest's monocoque module for why),
+     so there's no gmonocoque binary or .desktop entry to be launchable
+     from an app grid yet -- revisit once the GUI is added as a follow-up. -->
+<component type="console-application">
   <id>io.github.spacefreak18.monocoque</id>
   <name>Monocoque</name>
   <summary>Device manager for racing sims</summary>
@@ -13,7 +17,9 @@
       and configuration tools.
     </p>
   </description>
-  <launchable type="desktop-id">io.github.spacefreak18.monocoque.desktop</launchable>
+  <provides>
+    <binary>monocoque</binary>
+  </provides>
   <url type="homepage">https://spacefreak18.github.io/simapi/monocoque.html</url>
   <url type="vcs-browser">https://github.com/Spacefreak18/monocoque</url>
   <content_rating type="oars-1.1" />
