@@ -147,6 +147,15 @@ modules:
     config-opts:
       - -DBUILD_GUI=on
       - -DCMAKE_BUILD_TYPE=Release
+      # CMakeLists.txt links most of the dependencies built as separate
+      # flatpak modules above (hidapi-hidraw, serialport, argtable2,
+      # config, uv, xdg-basedir) by bare library name with no explicit -L,
+      # relying on the linker's default search path -- fine on a real
+      # system where these install to /usr/lib, but /app/lib isn't in that
+      # default path. Confirmed via a failed local build: -lm/-lpulse/
+      # -lxml2/-lproc2 (genuine system libraries in /usr/lib) linked fine,
+      # everything installed to /app/lib did not.
+      - -DCMAKE_EXE_LINKER_FLAGS=-L/app/lib
     sources:
       # One level up from flatpak/manifest.yml is the repo root -- unlike
       # typiql-tauri/typiql's dual-checkout ($GITHUB_WORKSPACE containing
