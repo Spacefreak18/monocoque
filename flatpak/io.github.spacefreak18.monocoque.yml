@@ -36,12 +36,12 @@ finish-args:
   # not always well-behaved; needs real hardware testing, not just a
   # successful build.
   - --device=all
-  # monocoque exposes a local GraphQL API (port 9000, per
-  # typiql-tauri/typiql's README) that other apps -- including typiql's own
-  # Flatpak build -- connect to. Flatpak network-namespaces each sandboxed
-  # app separately, so this needs to be shared for loopback communication
-  # between two Flatpak apps to work at all (typiql-tauri/typiql's manifest
-  # needs the same flag added, currently missing there too).
+  # Retained, but not for the reason first written here: the GraphQL API on
+  # port 9000 is served by typiql's own Rust backend, not by monocoque --
+  # monocoque has no network code of its own, and the only libcurl in the
+  # binary is vendored nappgui's HTTP module, which nothing here calls. The
+  # two programs talk through ~/.config/monocoque and the process table, not
+  # a socket. This flag can probably be dropped.
   - --share=network
   # monocoque builds its paths from $HOME directly (e.g.
   # "%s/.config/monocoque/diameters.config" in monocoque-cli.c), not from
@@ -54,6 +54,16 @@ finish-args:
   # native one agree, and what lets typiql configure it.
   - --filesystem=xdg-config/monocoque:create
   - --filesystem=xdg-cache/monocoque:create
+  # Host /dev/shm, where simd publishes telemetry as POSIX shared memory
+  # (/dev/shm/SIMAPI.DAT, mapped in simapi's simmapper.c). shm is its own
+  # device option and is NOT implied by --device=all above -- measured, with
+  # simd running: `ls /dev/shm` inside this sandbox returned 0 entries
+  # against 18 on the host. The failure it caused is silent rather than
+  # loud: `monocoque play` started, read its config, connected pulseaudio,
+  # and then sat at "setting initial app state" forever, never logging
+  # "Opening universal shared memory api", because simd looked absent. The
+  # identical run with this flag reached that line one second in.
+  - --device=shm
 
 modules:
   - name: libconfig
