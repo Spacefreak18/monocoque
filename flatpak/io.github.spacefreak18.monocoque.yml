@@ -99,6 +99,9 @@ modules:
   - name: hidapi
     buildsystem: cmake-ninja
     config-opts:
+      # Same CMake-minimum-version issue as libconfig/argtable2, despite
+      # this otherwise being a current, actively maintained release.
+      - -DCMAKE_POLICY_VERSION_MINIMUM=3.5
       # monocoque links hidapi-hidraw specifically -- no need for the
       # libusb-backed variant, which would pull in an extra dependency.
       - -DHIDAPI_WITH_LIBUSB=OFF
