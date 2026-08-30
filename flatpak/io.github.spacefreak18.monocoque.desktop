@@ -2,8 +2,8 @@
 Version=1.0
 Type=Application
 Name=Monocoque
-Comment=Launch Monocoque
+Comment=Device manager for racing sims
 Exec=gmonocoque
-Icon=monocoque
+Icon=io.github.spacefreak18.monocoque
 Terminal=false
 Categories=Game;Development;
