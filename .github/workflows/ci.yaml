@@ -108,6 +108,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: monocoque-${{ matrix.os }}.deb
+        generate_release_notes: true
 
 
   build-monocoque-rpms:
@@ -184,6 +185,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: monocoque-${{ matrix.os }}.rpm
+        generate_release_notes: true
 
 
   build-monocoque-appimage:
@@ -271,6 +273,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: monocoque*.AppImage
+        generate_release_notes: true
 
 
   build-monocoque-flatpak:
@@ -321,6 +324,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: flatpak/monocoque.flatpak
+          generate_release_notes: true
 
   #arch-build:
   #  runs-on: ubuntu-latest
