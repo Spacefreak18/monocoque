@@ -4,11 +4,6 @@ Type=Application
 Name=Monocoque
 Comment=Device manager for racing sims
 Exec=gmonocoque
-# No Icon= for now -- the real monocoque.svg is 100x50, not square, and
-# Flatpak's export step rejects non-square icons outright. A dangling
-# Icon= reference to a name that's never installed made appstreamcli
-# compose hard-fail in CI (E: icon-not-found) even though it was only a
-# soft warning locally, on a different appstreamcli version. Add this
-# back once a properly square icon exists.
+Icon=io.github.spacefreak18.monocoque
 Terminal=false
 Categories=Game;Development;

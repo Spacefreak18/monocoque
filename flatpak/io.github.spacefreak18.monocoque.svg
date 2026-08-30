@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <!-- Square Flatpak icon canvas wrapping the real monocoque.svg artwork
+       (fetched from https://repo.spacefreak18.xyz/monocoque/icons/monocoque.svg,
+       viewBox 0 0 100 50), vertically centered via translate(0,25) rather
+       than stretched. Flatpak's export step requires square icons and
+       appstreamcli additionally requires any desktop-application to have
+       one at all, confirmed via two failed real CI runs. -->
+  <g transform="translate(0,25)">
+    <!-- Main Body / Chassis -->
+    <path d="M 25 28 C 35 28, 40 22, 55 22 L 72 24 C 76 24, 80 28, 85 28 L 85 34 L 25 34 Z" fill="#E10600" />
+
+    <!-- Nose Cone -->
+    <path d="M 25 28 L 12 30 C 10 30.5, 10 32.5, 12 33 L 25 34 Z" fill="#C00500" />
+
+    <!-- Front Wing -->
+    <rect x="5" y="31" width="10" height="4" rx="1" fill="#1A1A1A" />
+    <path d="M 12 31 L 12 35" stroke="#FFFFFF" stroke-width="1" />
+
+    <!-- Rear Wing -->
+    <path d="M 82 28 L 84 15 L 92 15 L 90 28 Z" fill="#1A1A1A" />
+    <rect x="80" y="13" width="14" height="4" rx="0.5" fill="#1A1A1A" />
+
+    <!-- Engine Cover / Airbox Intake -->
+    <path d="M 58 22 C 58 16, 64 16, 66 16 L 70 24 Z" fill="#E10600" />
+    <ellipse cx="61" cy="19" rx="2" ry="1.5" fill="#1A1A1A" />
+
+    <!-- Cockpit / Driver Helmet -->
+    <path d="M 48 23 C 48 20, 54 20, 54 23 Z" fill="#1A1A1A" />
+    <circle cx="52" cy="19" r="2.5" fill="#FFFFFF" />
+    <path d="M 51.5 17.5 L 54.5 18.5 L 53.5 20.5 L 51.5 19.5 Z" fill="#1A1A1A" /> <!-- Visor -->
+
+    <!-- Bargeboard / Sidepod Detail -->
+    <path d="M 38 27 L 55 25 L 58 34 L 36 34 Z" fill="#B00400" />
+
+    <!-- Wheels (Tires & Rims) -->
+    <!-- Rear Wheel -->
+    <circle cx="78" cy="32" r="11" fill="#1A1A1A" />
+    <circle cx="78" cy="32" r="5" fill="#4A4A4A" />
+    <circle cx="78" cy="32" r="2" fill="#D4AF37" />
+
+    <!-- Front Wheel -->
+    <circle cx="22" cy="33" r="9" fill="#1A1A1A" />
+    <circle cx="22" cy="33" r="4.2" fill="#4A4A4A" />
+    <circle cx="22" cy="33" r="1.8" fill="#D4AF37" />
+
+    <!-- Ground Shadow -->
+    <ellipse cx="50" cy="44" rx="42" ry="2" fill="#000000" fill-opacity="0.2" />
+  </g>
+</svg>
