@@ -3,26 +3,58 @@ name: Make Packages
 on:
   push:
     tags: [ "*" ]
+  workflow_dispatch: {}
 
 jobs:
   build-monocoque-debs:
+    # Previously this matrix used `runs-on: ${{ matrix.os }}` with
+    # debian-latest/debian-stable as runner *labels*, which only resolve to
+    # self-hosted runners. With none online those two legs sat queued
+    # indefinitely (observed: four runs stuck 17-60min, only the
+    # ubuntu-latest leg ever completing) until cancelled by hand. Building
+    # each distro in a container on ordinary GitHub-hosted runners removes
+    # the self-hosted dependency entirely.
+    #
+    # matrix.os stays the distro *name* because it's load-bearing: it picks
+    # the per-distro control file under tools/distro/debian/dpkg/<os>/ and
+    # names the released .deb. matrix.image is what it actually builds in.
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, debian-latest, debian-stable]
-    runs-on: ${{ matrix.os }}
-
+        include:
+          - os: ubuntu-latest
+            image: ubuntu:latest
+          - os: debian-latest
+            image: debian:testing
+          - os: debian-stable
+            image: debian:stable-slim
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.image }}
 
     permissions:
       contents: write
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Checkout submodules
-      run: git submodule update --init --recursive
-    - name: Update apt
-      run: sudo apt update
-    - name: Install Dependencies
-      run: sudo apt install -y libgtk-3-dev libuv1-dev libargtable2-dev libserialport-dev libconfig-dev libhidapi-dev liblua5.4-dev libxdg-basedir-dev libxml2-dev libpulse-dev libproc2-dev libcurl4-openssl-dev libglu1-mesa-dev
+    # Must come before actions/checkout: these images are minimal and ship
+    # no git, so checkout would fall back to a tarball download and silently
+    # skip submodules -- simapi and nappgui_src are both required to build.
+    # No sudo either; container jobs already run as root.
+    - name: Install build dependencies
+      run: |
+        apt-get update
+        apt-get install -y --no-install-recommends \
+          ca-certificates curl git \
+          build-essential cmake pkg-config \
+          libgtk-3-dev libuv1-dev libargtable2-dev libserialport-dev \
+          libconfig-dev libhidapi-dev liblua5.4-dev libxdg-basedir-dev \
+          libxml2-dev libpulse-dev libproc2-dev libcurl4-openssl-dev \
+          libglu1-mesa-dev
+
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
     - name: Set build dir
       id: strings
       shell: bash
@@ -73,22 +105,58 @@ jobs:
 
 
   build-monocoque-rpms:
+    # Same self-hosted-label problem as the deb jobs above (fedora-43 was a
+    # runner label with nothing online to claim it); now a container on an
+    # ordinary GitHub-hosted runner, with fedora-44 added alongside 43.
     strategy:
+      fail-fast: false
       matrix:
-        os: [fedora-43]
-    runs-on: ${{ matrix.os }}
+        include:
+          - os: fedora-43
+            image: fedora:43
+          - os: fedora-44
+            image: fedora:44
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.image }}
     permissions:
       contents: write
     steps:
+    # The -devel list is the one fedora.spec's own header comment documents,
+    # plus gtk3/libcurl/mesa-libGLU to match its `Requires:` line -- the spec
+    # configures with -DBUILD_GUI=on, so the GUI's deps are build deps too.
+    - name: Install build dependencies
+      run: |
+        dnf install -y --setopt=install_weak_deps=False \
+          rpm-build cmake gcc gcc-c++ make git curl \
+          pulseaudio-libs-devel argtable-devel libconfig-devel hidapi-devel \
+          libserialport-devel lua-devel libuv-devel libxdg-basedir-devel \
+          libxml2-devel procps-ng-devel gtk3-devel libcurl-devel \
+          mesa-libGLU-devel
+
+    - uses: actions/checkout@v4
 
     - name: create rpmbuild dirs
       run: mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-    - name: get spec file
-      run: curl -o ~/fedora.spec https://raw.githubusercontent.com/Spacefreak18/monocoque/refs/heads/master/tools/distro/fedora/rpm/fedora.spec
+
+    # Uses the spec from the checked-out tree instead of curl'ing it from
+    # upstream's master branch, so a tag builds the spec that tag contains.
+    #
+    # NOTE (pre-existing, deliberately not fixed here): the spec's own %prep
+    # still does a fresh `git clone` of upstream master for the *sources*,
+    # so the rpm's contents track master rather than the tag being built.
+    # Worth fixing separately -- it needs the spec parameterised, which is a
+    # bigger change than getting these jobs running again.
     - name: run spec file
-      run: rpmbuild -ba ~/fedora.spec
+      run: rpmbuild -ba tools/distro/fedora/rpm/fedora.spec
+
+    # Glob rather than the old hardcoded monocoque-0.0.5-1.x86_64.rpm: that
+    # filename has to track the spec's Version/Release exactly, and the spec
+    # still says 0.0.5 while real tags are well past it. A glob keeps this
+    # step working whenever that finally gets corrected.
     - name: rename file
-      run: cp ~/rpmbuild/RPMS/x86_64/monocoque-0.0.5-1.x86_64.rpm $GITHUB_WORKSPACE/monocoque-${{ matrix.os }}.rpm
+      run: cp ~/rpmbuild/RPMS/x86_64/monocoque-*.rpm "$GITHUB_WORKSPACE/monocoque-${{ matrix.os }}.rpm"
+
     - name: Release the Package
       uses: softprops/action-gh-release@v1
       with:
