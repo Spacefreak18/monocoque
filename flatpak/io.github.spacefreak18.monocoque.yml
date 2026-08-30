@@ -52,6 +52,11 @@ modules:
       # Same CMake-minimum-version issue as libconfig -- this one's
       # CMakeLists.txt is even older (2011).
       - -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+      # 2011-era code missing <ctype.h>/<strings.h> includes for
+      # isspace/toupper/bzero; GCC 14+ made implicit-function-declaration a
+      # hard error by default where it used to just warn. Confirmed via a
+      # failed local build.
+      - -DCMAKE_C_FLAGS=-Wno-error=implicit-function-declaration
     sources:
       - type: archive
         url: https://sourceforge.net/projects/argtable/files/argtable/argtable-2.13/argtable2-13.tar.gz/download
