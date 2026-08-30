@@ -1,12 +1,12 @@
 # Flatpak manifest for monocoque -- NOT submitted anywhere (Flathub or
-# otherwise) yet. Written 2026-08-30 using the exact patterns proven working
-# for the sibling typiql-tauri/typiql project's own Flatpak pipeline
-# (org.freedesktop.Platform runtime, ppa:flatpak/stable for a newer
-# flatpak-builder, libarchive-tools + a bsdunzip->unzip symlink) -- see that
-# project's .github/workflows/flatpak.yml header for the real bugs those
-# fixes were needed for. UNTESTED past a local flatpak-builder run at time
-# of writing; expect iteration once run against real CI, same as that
-# project needed ten rounds to get right.
+# otherwise) yet. Built 2026-08-30 on the patterns proven working for the
+# sibling typiql-tauri/typiql project's own Flatpak pipeline (see this
+# repo's .github/workflows/flatpak.yml header for the full list of bugs
+# found and fixed here, monocoque-specific beyond what that sibling project
+# already covered). VERIFIED LOCALLY end-to-end: built, installed, and ran
+# both `monocoque --help` and `gmonocoque` from the resulting bundle. Not
+# yet verified against real CI or real hardware (HID/serial/USB device
+# access under the sandbox).
 #
 # org.freedesktop.Platform, not org.gnome.Platform: monocoque's GUI
 # (gmonocoque) only needs GTK3, which freedesktop.Platform//25.08 already

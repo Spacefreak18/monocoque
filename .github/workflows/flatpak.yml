@@ -5,12 +5,33 @@ name: Flatpak (best effort)
 # proven recipe from the start here rather than rediscovering the same
 # bugs: a newer flatpak-builder from ppa:flatpak/stable (Ubuntu 22.04's
 # default apt package predates GNOME/freedesktop Sdk 25.08 dropping the
-# legacy appstream-compose binary in favor of appstreamcli). No npm/cargo
-# offline-source generation needed here (monocoque is pure C/CMake with no
-# node/rust toolchain), and no bsdunzip symlink needed either (none of this
-# manifest's sources are zip-type, unlike typiql's Playwright downloads).
+# legacy appstream-compose binary in favor of appstreamcli).
 #
-# UNTESTED against real CI at time of writing -- expect iteration.
+# VERIFIED LOCALLY (2026-08-30): built end-to-end via a real local
+# flatpak-builder run, then installed and ran the resulting bundle --
+# `monocoque --help` and `gmonocoque` (correctly failing only on "cannot
+# open display" in a headless test environment) both actually execute.
+# Getting there found several real, monocoque-specific bugs beyond the
+# ones typiql's own iteration already covered -- see
+# flatpak/io.github.spacefreak18.monocoque.yml's inline comments for each:
+# CMake-minimum-version issues in old vendored CMakeLists.txt files
+# (libconfig, argtable2, hidapi), argtable2's 2011-era code needing
+# -Wno-error=implicit-function-declaration for modern GCC, two git
+# submodules (simapi, nappgui_src) the `dir` source doesn't pull in, a
+# missing libuv dependency, a genuine upstream CMakeLists.txt bug in
+# libproc2 version detection (an "UNKNOWN" pkg-config version string
+# silently picked the wrong API), a stray always-on scratch test
+# executable (simlighttest) with its own pre-existing link bug, /app/lib
+# not being on the linker's default search path (needs LIBRARY_PATH, not
+# CMAKE_EXE_LINKER_FLAGS -- ordering matters), argtable2 needing to build
+# shared rather than static to avoid link-order sensitivity, and the real
+# monocoque.svg icon being non-square (100x50), which Flatpak's export
+# rejects outright.
+#
+# NOT YET VERIFIED: a real GitHub Actions run (this workflow itself,
+# rather than the manifest run directly via flatpak-builder), and real
+# hardware -- HID/serial/USB device access under Flatpak's sandbox is a
+# known risk area untested here.
 on:
   push:
     tags: ['*']
