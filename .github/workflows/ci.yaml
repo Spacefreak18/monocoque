@@ -187,13 +187,20 @@ jobs:
 
 
   build-monocoque-appimage:
-    # Deliberately ubuntu-22.04 rather than ubuntu-latest: an AppImage can
-    # only run on systems whose glibc is at least as new as the one it was
-    # linked against, so building on current Ubuntu would silently exclude
-    # every older distro -- which defeats the point of shipping one. 22.04
-    # (glibc 2.35) is the oldest image still available, and is confirmed to
-    # still resolve as a runner label (the flatpak job below uses it too).
-    runs-on: ubuntu-22.04
+    # An AppImage only runs where glibc is at least as new as the one it
+    # linked against, so it wants the OLDEST base that can build the code --
+    # building on current Ubuntu silently excludes older distros and defeats
+    # the point of shipping one.
+    #
+    # That floor is set by the compiler, not by choice: simapi's F1 2018
+    # headers use C23 enum-with-fixed-underlying-type (`enum TrackID :
+    # uint8_t`), which GCC only implements from 13 onwards. ubuntu-22.04
+    # ships GCC 11 and fails outright with `expected identifier or '(' before
+    # ':' token` -- confirmed by a real run, and no -std= value rescues it
+    # (verified separately: the construct is gated on compiler version, not
+    # on the standard flag). ubuntu-24.04 / GCC 13 is therefore the oldest
+    # usable base, giving a glibc 2.39 floor.
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
@@ -201,9 +208,6 @@ jobs:
       with:
         submodules: recursive
 
-    # libprocps-dev, not libproc2-dev: 22.04 predates the procps-ng 4.x split
-    # that introduced libproc2. CMakeLists.txt accepts either.
-    #
     # librsvg2-common and libgtk-3-bin are for linuxdeploy's gtk plugin, not
     # the build itself -- it needs an svg pixbuf loader and
     # gtk-update-icon-cache to assemble a self-contained GTK runtime.
@@ -214,14 +218,19 @@ jobs:
           build-essential cmake pkg-config \
           libgtk-3-dev libuv1-dev libargtable2-dev libserialport-dev \
           libconfig-dev libhidapi-dev liblua5.4-dev libxdg-basedir-dev \
-          libxml2-dev libpulse-dev libprocps-dev libcurl4-openssl-dev \
+          libxml2-dev libpulse-dev libproc2-dev libcurl4-openssl-dev \
           libglu1-mesa-dev \
           desktop-file-utils file patchelf wget \
           librsvg2-common libgtk-3-bin
 
+    # -std=gnu2x for the C23 enum syntax above: GCC 13 implements it but
+    # still defaults to gnu17, unlike GCC 15+ (which the container-based
+    # deb/rpm legs get, and which accept it without the flag). gnu2x rather
+    # than c2x so GNU extensions stay on -- simapi also relies on asprintf.
     - name: Build
       run: |
-        cmake -B build -DBUILD_GUI=on -DCMAKE_BUILD_TYPE=Release -S .
+        cmake -B build -DBUILD_GUI=on -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_C_FLAGS=-std=gnu2x -S .
         cmake --build build --config Release
 
     # Uses the install() rules rather than hand-copying binaries the way the
