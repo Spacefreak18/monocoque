@@ -15,9 +15,7 @@ app-id: io.github.spacefreak18.monocoque
 runtime: org.freedesktop.Platform
 runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
-# CLI, not GUI (gmonocoque) -- see the monocoque module's BUILD_GUI=off
-# comment below.
-command: monocoque
+command: gmonocoque
 finish-args:
   - --socket=fallback-x11
   - --socket=wayland
@@ -132,14 +130,7 @@ modules:
   - name: monocoque
     buildsystem: cmake-ninja
     config-opts:
-      # BUILD_GUI=off for now: the GUI needs the nappgui_src git submodule,
-      # which (like simapi below) the `dir` source's clean-checkout of HEAD
-      # doesn't populate. simapi is a hard dependency of the CLI build too,
-      # so it's added explicitly below; nappgui is a much larger GUI
-      # toolkit, and the CLI daemon is what actually bridges telemetry --
-      # deferring the GUI (and gmonocoque's desktop entry) to a follow-up
-      # rather than blocking the first working build on it.
-      - -DBUILD_GUI=off
+      - -DBUILD_GUI=on
       - -DCMAKE_BUILD_TYPE=Release
     sources:
       # One level up from flatpak/manifest.yml is the repo root -- unlike
@@ -150,16 +141,24 @@ modules:
       # got wrong twice before finding the right depth for that project.
       - type: dir
         path: ..
-      # git submodule, pinned to the exact commit .gitmodules/the tree
-      # tracks -- confirmed via a failed local build that the `dir` source
-      # above doesn't pull submodule content in (same class of issue as
-      # typiql-tauri/typiql's own submodules, src/lib/per-form etc.).
+      # Two git submodules, each pinned to the exact commit .gitmodules/the
+      # tree tracks -- confirmed via a failed local build that the `dir`
+      # source above doesn't pull submodule content in (same class of issue
+      # as typiql-tauri/typiql's own submodules, src/lib/per-form etc.).
       - type: git
         url: https://github.com/spacefreak18/simapi
         commit: 50fd181681862256780b2a0f74ef4bc459ed631a
         dest: src/monocoque/simulatorapi/simapi
-      # No .desktop file source for now -- it points at gmonocoque, which
-      # doesn't exist in this BUILD_GUI=off build (see above).
+      # nappgui_src is add_subdirectory()'d directly into monocoque's own
+      # CMake tree (src/monocoque/mgui/CMakeLists.txt), not a separately
+      # installed library -- so it's a source here, not its own flatpak
+      # module.
+      - type: git
+        url: https://github.com/frang75/nappgui_src
+        commit: 29c7bd3e0243eb38aa9a7e2eafe6cf74830c4ee8
+        dest: src/monocoque/mgui/nappgui_src
+      - type: file
+        path: io.github.spacefreak18.monocoque.desktop
       - type: file
         path: io.github.spacefreak18.monocoque.metainfo.xml
       # Not stored in-repo -- fetched from the same URL the deb/rpm CI
@@ -169,5 +168,6 @@ modules:
         dest-filename: io.github.spacefreak18.monocoque.svg
         sha256: a15a3055c2426f4cf38635f36aa34445bfc21b2610f6ffdbd8bdcfdf13118cd7
     build-commands:
+      - install -Dm644 io.github.spacefreak18.monocoque.desktop /app/share/applications/io.github.spacefreak18.monocoque.desktop
       - install -Dm644 io.github.spacefreak18.monocoque.metainfo.xml /app/share/metainfo/io.github.spacefreak18.monocoque.metainfo.xml
       - install -Dm644 io.github.spacefreak18.monocoque.svg /app/share/icons/hicolor/scalable/apps/io.github.spacefreak18.monocoque.svg
