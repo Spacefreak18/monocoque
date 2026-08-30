@@ -45,9 +45,17 @@ jobs:
     runs-on: ubuntu-22.04
     continue-on-error: true
     steps:
+      # No submodules: recursive here -- the manifest fetches simapi and
+      # nappgui_src itself as explicit `type: git` sources (pinned commits,
+      # reproducible regardless of what's checked out on disk). Confirmed
+      # via a failed CI run: recursive submodule checkout here populates
+      # those paths with real .git files first, which then collides with
+      # flatpak-builder's own git source trying to clone into the same
+      # spot ("cannot overwrite non-directory .git with directory").
+      # Local testing never hit this because a plain worktree checkout
+      # (what was actually tested against) doesn't fetch submodules by
+      # default either.
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Install flatpak-builder + freedesktop runtime/SDK
         run: |
