@@ -17,8 +17,19 @@ runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
 command: gmonocoque
 finish-args:
-  - --socket=fallback-x11
+  # --socket=x11, not fallback-x11: nappgui (the GUI toolkit gmonocoque uses)
+  # goes to X11 even when a Wayland display is available. fallback-x11 is
+  # deliberately inactive whenever Wayland works, so under a Wayland session
+  # DISPLAY stayed empty and gmonocoque died with `cannot open display` --
+  # confirmed on a real launch, with WAYLAND_DISPLAY=wayland-0 present and the
+  # socket visible inside the sandbox. Granting real X11 routes it through
+  # XWayland instead. --socket=wayland is kept so the toolkit can use it
+  # directly if that ever changes.
+  - --socket=x11
   - --socket=wayland
+  # Standard companion to X11 access: without it MIT-SHM is unavailable and
+  # some toolkits fall over.
+  - --share=ipc
   - --socket=pulseaudio
   # HID/serial/USB access for wheels, pedals, shifters, and shaker/LED
   # devices -- known risk area, Flatpak's sandboxing of raw device nodes is
