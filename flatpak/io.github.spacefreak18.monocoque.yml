@@ -43,6 +43,17 @@ finish-args:
   # between two Flatpak apps to work at all (typiql-tauri/typiql's manifest
   # needs the same flag added, currently missing there too).
   - --share=network
+  # monocoque builds its paths from $HOME directly (e.g.
+  # "%s/.config/monocoque/diameters.config" in monocoque-cli.c), not from
+  # XDG_CONFIG_HOME, so it reads and writes the host's real directories.
+  # Without these grants a real launch failed with
+  #   Failed to read config file '/home/david/.config/monocoque/monocoque.config'
+  #   slog_open_file: Failed to open file: /home/david/.cache/monocoque/...log
+  # -- the manifest previously granted no filesystem access at all. Sharing
+  # the real config directory is also what makes a Flatpak monocoque and a
+  # native one agree, and what lets typiql configure it.
+  - --filesystem=xdg-config/monocoque:create
+  - --filesystem=xdg-cache/monocoque:create
 
 modules:
   - name: libconfig
