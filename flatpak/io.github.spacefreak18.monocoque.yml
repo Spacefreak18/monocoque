@@ -182,7 +182,21 @@ modules:
         url: https://repo.spacefreak18.xyz/monocoque/icons/monocoque.svg
         dest-filename: io.github.spacefreak18.monocoque.svg
         sha256: a15a3055c2426f4cf38635f36aa34445bfc21b2610f6ffdbd8bdcfdf13118cd7
+    # Building only the two real targets (mapped by CMake's OUTPUT_NAME to
+    # monocoque/gmonocoque), not `ninja install` / the default "all" target:
+    # master's CMakeLists.txt still has the always-on stray test
+    # executables (simlighttest, getmem, setmem -- see the unmerged
+    # feature/ci-test-automation branch's own commit for the full context
+    # on these being hardware-dependent scratch tools, not real tests) as
+    # unconditional build targets, and simlighttest fails to link here
+    # (`cannot find -lserialport`, a pre-existing CMakeLists.txt bug
+    # unrelated to Flatpak) -- confirmed via a failed local build. Not
+    # worth fixing that out-of-scope target just to reach install; building
+    # only what's actually needed sidesteps it entirely.
     build-commands:
+      - ninja monocoque-cli monocoque-gui
+      - install -Dm755 monocoque /app/bin/monocoque
+      - install -Dm755 gmonocoque /app/bin/gmonocoque
       - install -Dm644 io.github.spacefreak18.monocoque.desktop /app/share/applications/io.github.spacefreak18.monocoque.desktop
       - install -Dm644 io.github.spacefreak18.monocoque.metainfo.xml /app/share/metainfo/io.github.spacefreak18.monocoque.metainfo.xml
       - install -Dm644 io.github.spacefreak18.monocoque.svg /app/share/icons/hicolor/scalable/apps/io.github.spacefreak18.monocoque.svg
