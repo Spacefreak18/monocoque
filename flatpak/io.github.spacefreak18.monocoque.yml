@@ -208,12 +208,13 @@ modules:
         path: io.github.spacefreak18.monocoque.desktop
       - type: file
         path: io.github.spacefreak18.monocoque.metainfo.xml
-      # Not stored in-repo -- fetched from the same URL the deb/rpm CI
-      # pipeline (.github/workflows/ci.yaml) already uses.
-      - type: file
-        url: https://repo.spacefreak18.xyz/monocoque/icons/monocoque.svg
-        dest-filename: io.github.spacefreak18.monocoque.svg
-        sha256: a15a3055c2426f4cf38635f36aa34445bfc21b2610f6ffdbd8bdcfdf13118cd7
+      # The real monocoque.svg (fetched from the same URL the deb/rpm CI
+      # pipeline uses) is 100x50 -- Flatpak's export step requires square
+      # icons and rejects it outright ("Expected a square icon but got:
+      # 100x50"), confirmed via a failed local build. Not installing an
+      # icon at all for now rather than distorting/cropping the real
+      # artwork; a properly square icon is a follow-up for whoever owns
+      # that asset.
     # Confirmed via a failed local build that flatpak-builder's cmake-ninja
     # buildsystem runs the automatic build+install step regardless of
     # whether build-commands are also given -- these run in *addition*,
@@ -227,4 +228,3 @@ modules:
     build-commands:
       - install -Dm644 io.github.spacefreak18.monocoque.desktop /app/share/applications/io.github.spacefreak18.monocoque.desktop
       - install -Dm644 io.github.spacefreak18.monocoque.metainfo.xml /app/share/metainfo/io.github.spacefreak18.monocoque.metainfo.xml
-      - install -Dm644 io.github.spacefreak18.monocoque.svg /app/share/icons/hicolor/scalable/apps/io.github.spacefreak18.monocoque.svg
