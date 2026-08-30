@@ -57,6 +57,22 @@ modules:
       # hard error by default where it used to just warn. Confirmed via a
       # failed local build.
       - -DCMAKE_C_FLAGS=-Wno-error=implicit-function-declaration
+      # add_library(argtable2 ...) has no explicit STATIC/SHARED, so it
+      # defaults to CMake's global BUILD_SHARED_LIBS (off by default -> a
+      # static .a). monocoque's own target_link_libraries() lists argtable2
+      # before helper (which needs its symbols, e.g. arg_end/arg_parse in
+      # parameters.c) -- fine for a shared library (all symbols always
+      # available regardless of link-line position, which is what real
+      # distro packages of this ship), but a static archive only pulls
+      # symbols already needed by things linked *before* it, so helper's
+      # later reference to argtable2's symbols never resolves. Confirmed
+      # via a failed local build ("undefined reference to arg_end" etc.
+      # from helper's parameters.c, even though libargtable2.a genuinely
+      # contained those symbols). Building shared instead matches how this
+      # dependency normally ships and avoids the link-order sensitivity
+      # entirely, rather than reordering every target_link_libraries() call
+      # in CMakeLists.txt.
+      - -DBUILD_SHARED_LIBS=ON
     # This CMake port has no install() rules at all (confirmed: no
     # CMakeLists.txt in the tree calls install()), so the default
     # cmake-ninja `ninja install` step silently does nothing -- monocoque's
