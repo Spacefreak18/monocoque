@@ -120,6 +120,15 @@ modules:
         url: https://gitlab.freedesktop.org/mesa/glu/-/archive/glu-9.0.3/glu-glu-9.0.3.tar.gz
         sha256: 7e919cbc1b2677b01d65fc28fd36a19d1f3e23d76663020e0f3b82b991475e8b
 
+  - name: libuv
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DBUILD_TESTING=OFF
+    sources:
+      - type: archive
+        url: https://github.com/libuv/libuv/archive/refs/tags/v1.49.2.tar.gz
+        sha256: 388ffcf3370d4cf7c4b3a3205504eea06c4be5f9e80d2ab32d19f8235accc1cf
+
   - name: monocoque
     buildsystem: cmake-ninja
     config-opts:
