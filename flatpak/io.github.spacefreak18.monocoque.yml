@@ -57,6 +57,21 @@ modules:
       # hard error by default where it used to just warn. Confirmed via a
       # failed local build.
       - -DCMAKE_C_FLAGS=-Wno-error=implicit-function-declaration
+    # This CMake port has no install() rules at all (confirmed: no
+    # CMakeLists.txt in the tree calls install()), so the default
+    # cmake-ninja `ninja install` step silently does nothing -- monocoque's
+    # own build then fails on a missing argtable2.h. build-commands here
+    # replace the default install step: `ninja` still does the real
+    # compile, then copy the header and whatever library form actually got
+    # built (glob rather than a fixed versioned filename, since the exact
+    # .so version suffix isn't predictable without a build).
+    build-commands:
+      - ninja
+      - install -Dm644 src/argtable2.h /app/include/argtable2.h
+      - |
+        for f in src/libargtable2.so* src/libargtable2.a; do
+          [ -e "$f" ] && cp -P "$f" /app/lib/
+        done
     sources:
       - type: archive
         url: https://sourceforge.net/projects/argtable/files/argtable/argtable-2.13/argtable2-13.tar.gz/download
