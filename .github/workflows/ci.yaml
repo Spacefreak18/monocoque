@@ -95,14 +95,38 @@ jobs:
     - name: Download svg icon
       run: |
         curl -sSL https://repo.spacefreak18.xyz/monocoque/icons/monocoque.svg -o PKG_SOURCE/usr/share/icons/hicolor/scalable/apps/monocoque.svg
+    - name: Determine package version
+      id: pkgver
+      shell: bash
+      run: |
+        # The control files carry a hardcoded `Version: 1` that nobody
+        # maintains, so every .deb ever released claims version 1 regardless
+        # of its tag. Take the version from the tag instead.
+        #
+        # Guarded rather than used blindly: a Debian version must start with a
+        # digit, so a branch build (workflow_dispatch) or a non-release tag
+        # like `pkgtest-5` would make dpkg-deb fail outright. Anything that
+        # doesn't look like a version falls back to 0.0.0.
+        v=""
+        [ "$GITHUB_REF_TYPE" = tag ] && v="${GITHUB_REF_NAME#v}"
+        case "$v" in
+          [0-9]*) ;;
+          *) v="0.0.0" ;;
+        esac
+        echo "version=$v" >> "$GITHUB_OUTPUT"
+        echo "packaging as version $v"
+
     - name: Copy script files around to stop .github from being added to the package then build the package
       run: |
         cp ./tools/distro/debian/dpkg/${{ matrix.os }}/control ./PKG_SOURCE/DEBIAN/control
+        sed -i "s/^Version:.*/Version: ${{ steps.pkgver.outputs.version }}/" ./PKG_SOURCE/DEBIAN/control
         cp ./tools/distro/debian/dpkg/copyright ./PKG_SOURCE/DEBIAN/copyright
         cp ./build/monocoque ./PKG_SOURCE/usr/bin/monocoque
         cp ./build/gmonocoque ./PKG_SOURCE/usr/bin/gmonocoque
         cp ./tools/monocoque.desktop ./PKG_SOURCE/usr/share/applications/monocoque.desktop
         dpkg-deb --build PKG_SOURCE monocoque-${{ matrix.os }}.deb
+        echo "--- control as packaged ---"
+        dpkg-deb --field monocoque-${{ matrix.os }}.deb Package Version
 
     - name: Release the Package
       uses: softprops/action-gh-release@v1
@@ -166,20 +190,38 @@ jobs:
     # Uses the spec from the checked-out tree instead of curl'ing it from
     # upstream's master branch, so a tag builds the spec that tag contains.
     #
+    # The spec's `Version: 0.0.5` is stale and hand-maintained -- real tags are
+    # well past it, so released rpms have been installing as monocoque-0.0.5.
+    # Stamped from the tag here rather than edited in the spec, so the file
+    # stays a working default for local rpmbuild while CI releases carry the
+    # real version. Same digit guard as the deb job: rpm versions can't start
+    # with a non-digit, and scratch tags / branch builds would break it.
+    #
     # NOTE (pre-existing, deliberately not fixed here): the spec's own %prep
     # still does a fresh `git clone` of upstream master for the *sources*,
     # so the rpm's contents track master rather than the tag being built.
     # Worth fixing separately -- it needs the spec parameterised, which is a
     # bigger change than getting these jobs running again.
     - name: run spec file
-      run: rpmbuild -ba tools/distro/fedora/rpm/fedora.spec
+      shell: bash
+      run: |
+        v=""
+        [ "$GITHUB_REF_TYPE" = tag ] && v="${GITHUB_REF_NAME#v}"
+        case "$v" in
+          [0-9]*) ;;
+          *) v="0.0.0" ;;
+        esac
+        echo "packaging as version $v"
+        sed -i "s/^Version:.*/Version: $v/" tools/distro/fedora/rpm/fedora.spec
+        rpmbuild -ba tools/distro/fedora/rpm/fedora.spec
 
-    # Glob rather than the old hardcoded monocoque-0.0.5-1.x86_64.rpm: that
-    # filename has to track the spec's Version/Release exactly, and the spec
-    # still says 0.0.5 while real tags are well past it. A glob keeps this
-    # step working whenever that finally gets corrected.
+    # Glob rather than a hardcoded monocoque-0.0.5-1.x86_64.rpm: the filename
+    # tracks the spec's Version/Release, which is now stamped per-tag above.
     - name: rename file
-      run: cp ~/rpmbuild/RPMS/x86_64/monocoque-*.rpm "$GITHUB_WORKSPACE/monocoque-${{ matrix.os }}.rpm"
+      run: |
+        cp ~/rpmbuild/RPMS/x86_64/monocoque-*.rpm "$GITHUB_WORKSPACE/monocoque-${{ matrix.os }}.rpm"
+        echo "--- rpm identity as built ---"
+        rpm -qp --qf '%{NAME} %{VERSION}-%{RELEASE}\n' "$GITHUB_WORKSPACE/monocoque-${{ matrix.os }}.rpm"
 
     - name: Release the Package
       uses: softprops/action-gh-release@v1
@@ -251,8 +293,20 @@ jobs:
     - name: Build AppImage
       env:
         APPIMAGE_EXTRACT_AND_RUN: 1
-        OUTPUT: monocoque-x86_64.AppImage
       run: |
+        # An AppImage carries no package metadata, so its filename is the only
+        # place a version can live -- hence versioning the output name here
+        # rather than stamping a field as the deb/rpm jobs do. Same digit
+        # guard, so scratch tags and branch builds still produce a valid name.
+        v=""
+        [ "$GITHUB_REF_TYPE" = tag ] && v="${GITHUB_REF_NAME#v}"
+        case "$v" in
+          [0-9]*) ;;
+          *) v="0.0.0" ;;
+        esac
+        export OUTPUT="monocoque-${v}-x86_64.AppImage"
+        echo "packaging as $OUTPUT"
+
         wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
         wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-gtk/raw/master/linuxdeploy-plugin-gtk.sh
         chmod +x linuxdeploy-x86_64.AppImage linuxdeploy-plugin-gtk.sh
@@ -262,6 +316,7 @@ jobs:
           --desktop-file AppDir/usr/share/applications/monocoque.desktop \
           --icon-file tools/monocoque.svg \
           --output appimage
+        ls -la monocoque*.AppImage
 
     - name: Upload the AppImage as a build artifact
       uses: actions/upload-artifact@v4
