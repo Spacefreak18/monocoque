@@ -147,15 +147,21 @@ modules:
     config-opts:
       - -DBUILD_GUI=on
       - -DCMAKE_BUILD_TYPE=Release
-      # CMakeLists.txt links most of the dependencies built as separate
-      # flatpak modules above (hidapi-hidraw, serialport, argtable2,
-      # config, uv, xdg-basedir) by bare library name with no explicit -L,
-      # relying on the linker's default search path -- fine on a real
-      # system where these install to /usr/lib, but /app/lib isn't in that
-      # default path. Confirmed via a failed local build: -lm/-lpulse/
-      # -lxml2/-lproc2 (genuine system libraries in /usr/lib) linked fine,
-      # everything installed to /app/lib did not.
-      - -DCMAKE_EXE_LINKER_FLAGS=-L/app/lib
+    # CMakeLists.txt links most of the dependencies built as separate
+    # flatpak modules above (hidapi-hidraw, serialport, argtable2, config,
+    # uv, xdg-basedir) by bare library name with no explicit -L, relying on
+    # the linker's default search path -- fine on a real system where these
+    # install to /usr/lib, but /app/lib isn't in that default path.
+    # -DCMAKE_EXE_LINKER_FLAGS=-L/app/lib didn't work: CMake appends
+    # EXE_LINKER_FLAGS at the *end* of the link command, after the -l
+    # flags that need it, and ld resolves -l against -L directories seen
+    # so far, left to right -- confirmed via a failed local build showing
+    # the exact same missing-library set with that flag present but
+    # useless. LIBRARY_PATH is a GCC driver environment variable, applied
+    # to its search regardless of where in the command line things land.
+    build-options:
+      env:
+        LIBRARY_PATH: /app/lib
     sources:
       # One level up from flatpak/manifest.yml is the repo root -- unlike
       # typiql-tauri/typiql's dual-checkout ($GITHUB_WORKSPACE containing
