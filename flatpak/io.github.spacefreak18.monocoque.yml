@@ -38,6 +38,9 @@ modules:
     buildsystem: cmake-ninja
     config-opts:
       - -DBUILD_TESTS=OFF
+      # libconfig 1.7.3's CMakeLists.txt predates CMake 3.5's minimum
+      # version policy; confirmed via a failed local build.
+      - -DCMAKE_POLICY_VERSION_MINIMUM=3.5
     sources:
       - type: archive
         url: https://github.com/hyperrealm/libconfig/archive/refs/tags/v1.7.3.tar.gz
@@ -45,6 +48,10 @@ modules:
 
   - name: argtable2
     buildsystem: cmake-ninja
+    config-opts:
+      # Same CMake-minimum-version issue as libconfig -- this one's
+      # CMakeLists.txt is even older (2011).
+      - -DCMAKE_POLICY_VERSION_MINIMUM=3.5
     sources:
       - type: archive
         url: https://sourceforge.net/projects/argtable/files/argtable/argtable-2.13/argtable2-13.tar.gz/download
