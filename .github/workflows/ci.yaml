@@ -55,11 +55,17 @@ jobs:
       with:
         submodules: recursive
 
+    # $GITHUB_WORKSPACE, not ${{ github.workspace }}: in a container job the
+    # expression still renders the *host* path (/home/runner/work/...) while
+    # the repo is actually mounted at /__w/... inside the container. Using
+    # the expression made cmake fail with `The source directory
+    # "/home/runner/work/monocoque/monocoque" does not exist`. The env var is
+    # set to the container-side path, so it's correct either way.
     - name: Set build dir
       id: strings
       shell: bash
       run: |
-        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+        echo "build-output-dir=$GITHUB_WORKSPACE/build" >> "$GITHUB_OUTPUT"
         github_sha_hash=${{ github.sha }}
         echo "github-sha-short=${github_sha_hash:0:7}" >> $GITHUB_OUTPUT
 
@@ -70,7 +76,7 @@ jobs:
         -DCMAKE_CXX_COMPILER=g++
         -DCMAKE_C_COMPILER=gcc
         -DCMAKE_BUILD_TYPE=Release
-        -S ${{ github.workspace }}
+        -S "$GITHUB_WORKSPACE"
 
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release
@@ -125,14 +131,31 @@ jobs:
     # The -devel list is the one fedora.spec's own header comment documents,
     # plus gtk3/libcurl/mesa-libGLU to match its `Requires:` line -- the spec
     # configures with -DBUILD_GUI=on, so the GUI's deps are build deps too.
+    #
+    # Retried because this pulls openh264 from Fedora's third-party Cisco
+    # repo (ciscobinary.openh264.org), which is a single-mirror CDN outside
+    # Fedora's own infrastructure and has proven flaky: the fedora-43 leg of
+    # the first run died on `Curl error (7): Could not connect to server`
+    # for it while fedora-44 downloaded the very same package fine in the
+    # same run -- i.e. transient, not a dependency or package-name problem.
+    # Not disabling that repo outright: openh264 is still pulled in even
+    # with weak deps off, so something here requires it outright (which
+    # package wasn't traced) and dropping the repo would likely break
+    # dependency resolution rather than fix anything.
     - name: Install build dependencies
       run: |
-        dnf install -y --setopt=install_weak_deps=False \
-          rpm-build cmake gcc gcc-c++ make git curl \
-          pulseaudio-libs-devel argtable-devel libconfig-devel hidapi-devel \
-          libserialport-devel lua-devel libuv-devel libxdg-basedir-devel \
-          libxml2-devel procps-ng-devel gtk3-devel libcurl-devel \
-          mesa-libGLU-devel
+        for attempt in 1 2 3; do
+          dnf install -y --setopt=install_weak_deps=False \
+            rpm-build cmake gcc gcc-c++ make git curl \
+            pulseaudio-libs-devel argtable-devel libconfig-devel hidapi-devel \
+            libserialport-devel lua-devel libuv-devel libxdg-basedir-devel \
+            libxml2-devel procps-ng-devel gtk3-devel libcurl-devel \
+            mesa-libGLU-devel && exit 0
+          echo "dnf install failed (attempt $attempt), retrying in 15s..."
+          sleep 15
+        done
+        echo "dnf install failed after 3 attempts" >&2
+        exit 1
 
     - uses: actions/checkout@v4
 
