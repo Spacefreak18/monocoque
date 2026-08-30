@@ -3,3 +3,9 @@
 /src/monocoque/simulatorapi/simapi
 
 .vscode
+
+# flatpak-builder outputs from local builds -- CI regenerates these.
+# flatpak/repo in particular is an OSTree store: ~1000 binary objects.
+/flatpak/repo/
+/flatpak/build-dir/
+/flatpak/.flatpak-builder/
