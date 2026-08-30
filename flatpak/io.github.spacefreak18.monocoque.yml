@@ -208,18 +208,14 @@ modules:
         path: io.github.spacefreak18.monocoque.desktop
       - type: file
         path: io.github.spacefreak18.monocoque.metainfo.xml
-      # The real monocoque.svg (from the same URL the deb/rpm CI pipeline
-      # uses) is 100x50 -- Flatpak's export rejects non-square icons
-      # outright, and appstreamcli separately hard-requires any
-      # desktop-application to have *an* icon at all (both confirmed via
-      # failed real CI runs, neither of which reproduced with only a
-      # warning locally on a different, more lenient appstreamcli version).
-      # io.github.spacefreak18.monocoque.svg here is a local copy padded to
-      # a square 100x100 viewBox (vertically centered via a <g
-      # transform="translate(0,25)">, not stretched/distorted) rather than
-      # the fetched original.
-      - type: file
-        path: io.github.spacefreak18.monocoque.svg
+      # Icon comes from tools/monocoque.svg via the `dir` source above (no
+      # separate file source needed). That file is a square 100x100 copy of
+      # the upstream artwork -- the published monocoque.svg the deb job
+      # downloads is 100x50, which Flatpak's export rejects outright, while
+      # appstreamcli separately hard-requires any desktop-application to
+      # have an icon at all (both confirmed via failed real CI runs). It is
+      # padded via a <g transform="translate(0,25)">, not stretched. Shared
+      # with the AppImage job, which has the same square-icon need.
     # Confirmed via a failed local build that flatpak-builder's cmake-ninja
     # buildsystem runs the automatic build+install step regardless of
     # whether build-commands are also given -- these run in *addition*,
@@ -233,4 +229,4 @@ modules:
     build-commands:
       - install -Dm644 io.github.spacefreak18.monocoque.desktop /app/share/applications/io.github.spacefreak18.monocoque.desktop
       - install -Dm644 io.github.spacefreak18.monocoque.metainfo.xml /app/share/metainfo/io.github.spacefreak18.monocoque.metainfo.xml
-      - install -Dm644 io.github.spacefreak18.monocoque.svg /app/share/icons/hicolor/scalable/apps/io.github.spacefreak18.monocoque.svg
+      - install -Dm644 tools/monocoque.svg /app/share/icons/hicolor/scalable/apps/io.github.spacefreak18.monocoque.svg
