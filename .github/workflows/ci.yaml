@@ -49,7 +49,8 @@ jobs:
           libgtk-3-dev libuv1-dev libargtable2-dev libserialport-dev \
           libconfig-dev libhidapi-dev liblua5.4-dev libxdg-basedir-dev \
           libxml2-dev libpulse-dev libproc2-dev libcurl4-openssl-dev \
-          libglu1-mesa-dev
+          libglu1-mesa-dev \
+          libyder-dev
 
     - uses: actions/checkout@v4
       with:
@@ -89,6 +90,7 @@ jobs:
         mkdir -p PKG_SOURCE/usr/share/applications
         mkdir -p PKG_SOURCE/usr/share/pixmaps
         mkdir -p PKG_SOURCE/usr/share/icons/hicolor/scalable/apps
+        mkdir -p PKG_SOURCE/usr/share/monocoque
     - name: Download xpm icon
       run: |
         curl -sSL https://repo.spacefreak18.xyz/monocoque/icons/monocoque.xpm -o PKG_SOURCE/usr/share/pixmaps/monocoque.xpm
@@ -123,6 +125,18 @@ jobs:
         cp ./tools/distro/debian/dpkg/copyright ./PKG_SOURCE/DEBIAN/copyright
         cp ./build/monocoque ./PKG_SOURCE/usr/bin/monocoque
         cp ./build/gmonocoque ./PKG_SOURCE/usr/bin/gmonocoque
+        # monocoque does nothing without simd -- with no daemon publishing
+        # /dev/shm/SIMAPI.DAT it falls back to scanning /proc for the game
+        # itself. Shipped in the same package rather than expecting users to
+        # build simapi separately.
+        cp ./build/simd ./PKG_SOURCE/usr/bin/simd
+        # simd still runs without ~/.config/simd/simd.config, but loses its
+        # auto-bridge: it logs "Disabling Automatic Bridge Mode" and never
+        # launches the Windows bridge under Proton, which is how a sim's
+        # telemetry reaches /dev/shm in the first place. Shipped as an example
+        # because a package must not write into $HOME.
+        cp ./src/monocoque/simulatorapi/simapi/simd/conf/simd.config \
+           ./PKG_SOURCE/usr/share/monocoque/simd.config
         cp ./tools/monocoque.desktop ./PKG_SOURCE/usr/share/applications/monocoque.desktop
         dpkg-deb --build PKG_SOURCE monocoque-${{ matrix.os }}.deb
         echo "--- control as packaged ---"
@@ -182,10 +196,66 @@ jobs:
         echo "dnf install failed after 3 attempts" >&2
         exit 1
 
+    # yder (and orcania beneath it) is what simd logs through, and neither is
+    # packaged for Fedora -- `dnf search yder orcania` finds nothing on 43 or
+    # 44, while Debian and Ubuntu both ship libyder2.0t64. Built here as
+    # *static* libraries on purpose: linked into simd they leave the rpm with
+    # no runtime dependency that Fedora cannot satisfy, so `Requires:` stays
+    # as it was and the package installs on a stock system.
+    - name: Build vendored orcania and yder (static)
+      run: |
+        set -eux
+        # BUILD_SHARED=OFF as well as BUILD_STATIC=ON: both projects default to
+        # shared-only, and if a libyder.so is left in the prefix the linker
+        # picks it over the archive, putting a runtime dependency back into the
+        # rpm that no Fedora repo can satisfy.
+        #
+        # CMAKE_C_FLAGS_RELEASE carries -Wno-error because both projects append
+        # `-Wall -Werror` to CMAKE_C_FLAGS themselves, and orcania 2.3.3 does
+        # not build clean on Fedora's GCC: orcania.c:372 assigns the result of
+        # strstr() on a const pointer to a char*, which is -Werror=discarded-
+        # qualifiers. Setting CMAKE_C_FLAGS would be overridden (they append to
+        # it); the _RELEASE flags land after it on the command line, where the
+        # last of -Werror/-Wno-error wins. Found by rehearsing this whole job
+        # in a fedora:44 container before spending a CI round on it.
+        cflags='-O2 -DNDEBUG -Wno-error'
+
+        git clone --depth 1 --branch v2.3.3 https://github.com/babelouest/orcania /tmp/orcania
+        cmake -S /tmp/orcania -B /tmp/orcania/build \
+          -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_C_FLAGS_RELEASE="$cflags" \
+          -DBUILD_SHARED=OFF -DBUILD_STATIC=ON -DBUILD_ORCANIA_TESTING=OFF
+        cmake --build /tmp/orcania/build --target install
+
+        git clone --depth 1 --branch v1.4.20 https://github.com/babelouest/yder /tmp/yder
+        # Journald support would drag in systemd-devel for a logging backend
+        # simd never selects; file and syslog are what its config offers.
+        cmake -S /tmp/yder -B /tmp/yder/build \
+          -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_C_FLAGS_RELEASE="$cflags" \
+          -DBUILD_SHARED=OFF -DBUILD_STATIC=ON -DWITH_JOURNALD=OFF \
+          -DBUILD_YDER_TESTING=OFF
+        cmake --build /tmp/yder/build --target install
+
+        # Fail loudly here rather than shipping a broken rpm: nothing later in
+        # this job would notice a dynamically linked simd.
+        test -f /usr/lib64/libyder.a || test -f /usr/lib/libyder.a
+
     - uses: actions/checkout@v4
 
     - name: create rpmbuild dirs
       run: mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+
+    # The spec's %prep used to `git clone` upstream master, so the rpm's
+    # contents tracked master rather than the tag being built -- flagged as a
+    # known bug on the previous pass and now load-bearing: simd only exists in
+    # this tree's CMakeLists, so a package built from upstream master would
+    # quietly ship without it. Staged here and copied by %prep instead.
+    - name: Stage the checked-out tree as the rpm source
+      run: |
+        rm -rf ~/rpmbuild/SOURCES/monocoque
+        cp -r "$GITHUB_WORKSPACE" ~/rpmbuild/SOURCES/monocoque
+        rm -rf ~/rpmbuild/SOURCES/monocoque/.github
 
     # Uses the spec from the checked-out tree instead of curl'ing it from
     # upstream's master branch, so a tag builds the spec that tag contains.
@@ -263,7 +333,7 @@ jobs:
           libgtk-3-dev libuv1-dev libargtable2-dev libserialport-dev \
           libconfig-dev libhidapi-dev liblua5.4-dev libxdg-basedir-dev \
           libxml2-dev libpulse-dev libproc2-dev libcurl4-openssl-dev \
-          libglu1-mesa-dev \
+          libglu1-mesa-dev libyder-dev \
           desktop-file-utils file patchelf wget \
           librsvg2-common libgtk-3-bin
 

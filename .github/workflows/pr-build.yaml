@@ -18,7 +18,11 @@ jobs:
         # Same list as ci.yaml's ubuntu-latest leg, minus the GUI-only deps
         # (libgtk-3-dev, libglu1-mesa-dev) and libcurl4-openssl-dev — this
         # workflow builds the CLI + test suite only, not the GUI.
-        run: sudo apt install -y libuv1-dev libargtable2-dev libserialport-dev libconfig-dev libhidapi-dev liblua5.4-dev libxdg-basedir-dev libxml2-dev libpulse-dev libproc2-dev
+        #
+        # libyder-dev is for the simd target, which builds by default. Kept
+        # here rather than turning BUILD_SIMD off so a PR that breaks simd
+        # fails its checks instead of only the release build.
+        run: sudo apt install -y libuv1-dev libargtable2-dev libserialport-dev libconfig-dev libhidapi-dev liblua5.4-dev libxdg-basedir-dev libxml2-dev libpulse-dev libproc2-dev libyder-dev
       - name: Configure CMake
         run: cmake -B build -DENABLE_TESTS=ON -DCMAKE_BUILD_TYPE=Debug
       - name: Build

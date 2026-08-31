@@ -11,6 +11,24 @@
 # org.freedesktop.Platform, not org.gnome.Platform: monocoque's GUI
 # (gmonocoque) only needs GTK3, which freedesktop.Platform//25.08 already
 # ships -- no need for the heavier GNOME runtime typiql needs for WebKitGTK.
+# NOT SHIPPED HERE: simd. The deb, rpm and AppImage packages all carry it
+# (monocoque does nothing without a daemon publishing /dev/shm/SIMAPI.DAT), but
+# a sandboxed simd could never work. It identifies the running sim by scanning
+# /proc for process names -- get_process_match() in simapi's simmapper.c, over
+# 19 executables -- and reads /proc/<pid>/environ for the Steam compat vars its
+# auto-bridge needs. Flatpak gives every sandbox its own PID namespace and has
+# no option to share the host's: measured here, 5 pids visible inside against
+# 497 on the host, unchanged by --allow=devel or --filesystem=host. It would
+# install, start, log cheerfully, and never find a sim.
+#
+# The only escape is flatpak-spawn --host, which works (verified: 500 host pids
+# and a readable /proc/<pid>/environ from inside this sandbox) but needs
+# --talk-name=org.freedesktop.Flatpak plus a sandbox-aware rewrite of simapi's
+# process layer -- upstream code pinned here as a submodule commit. Not worth a
+# third fork to keep in sync.
+#
+# monocoque itself is unaffected: simapi_get_sim() checks /dev/shm/SIMAPI.DAT
+# before it ever scans /proc, so it reads a host simd's telemetry happily.
 app-id: io.github.spacefreak18.monocoque
 runtime: org.freedesktop.Platform
 runtime-version: '25.08'
@@ -196,6 +214,11 @@ modules:
     config-opts:
       - -DBUILD_GUI=on
       - -DCMAKE_BUILD_TYPE=Release
+      # simd is deliberately absent from this Flatpak -- see the note at the
+      # top of this file for why a sandboxed one cannot work. Without this the
+      # build would also simply fail: the target needs yder, which the
+      # freedesktop runtime doesn't ship and no module here builds.
+      - -DBUILD_SIMD=off
     # CMakeLists.txt links most of the dependencies built as separate
     # flatpak modules above (hidapi-hidraw, serialport, argtable2, config,
     # uv, xdg-basedir) by bare library name with no explicit -L, relying on
