@@ -241,7 +241,14 @@ jobs:
         # this job would notice a dynamically linked simd.
         test -f /usr/lib64/libyder.a || test -f /usr/lib/libyder.a
 
+    # submodules: recursive is new here. It didn't matter while %prep cloned
+    # upstream and ran `git submodule update` itself; now that the staged
+    # checkout is what gets built, an empty nappgui_src fails configure with
+    # "does not contain a CMakeLists.txt file". Missed by the local fedora:44
+    # rehearsal, which mounted a working tree that already had its submodules.
     - uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
     - name: create rpmbuild dirs
       run: mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
