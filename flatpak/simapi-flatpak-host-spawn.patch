@@ -20,7 +20,7 @@ index d3e0678..a4975b7 100644
      endif()
  else()
 diff --git a/simapi/getpid.c b/simapi/getpid.c
-index c88ac84..33815d5 100644
+index c88ac84..5b183cb 100644
 --- a/simapi/getpid.c
 +++ b/simapi/getpid.c
 @@ -1,4 +1,5 @@
@@ -79,7 +79,7 @@ index c88ac84..33815d5 100644
  
      envNameLen = strlen(envName);
      cur = buf;
-@@ -171,9 +192,229 @@ int check_if_number (char* str)
+@@ -171,9 +192,249 @@ int check_if_number (char* str)
  }
  
  
@@ -157,7 +157,10 @@ index c88ac84..33815d5 100644
 +     * SIGCHLD handling reaps children this call did not spawn, which makes
 +     * system()'s own waitpid fail and lose the status. */
 +    snprintf(cmd, sizeof(cmd),
-+             "flatpak-spawn --host sh -c '%s > %s.part 2>/dev/null; mv %s.part %s' >/dev/null 2>&1",
++             /* hostcmd is grouped: it may itself be a sequence, and without
++              * the braces the redirect would bind to its last command only --
++              * which silently dropped half the process table. */
++             "flatpak-spawn --host sh -c '{ %s ; } > %s.part 2>/dev/null; mv %s.part %s' >/dev/null 2>&1",
 +             hostcmd, out, out, out);
 +    (void) system(cmd);
 +
@@ -250,7 +253,18 @@ index c88ac84..33815d5 100644
 +    p.pid = -1;
 +    p.pos = -1;
 +
-+    char* table = simapi_host_capture("ps -A -o pid=,comm=,args=", NULL);
++    /* Two ps runs, each line tagged, because a single `ps -o pid=,comm=,args=`
++     * cannot be parsed: comm may contain spaces. Wine names Assetto Corsa's
++     * process "AC: main thread", which a naive scanf read as comm="AC:" and
++     * argv[0]="main" -- nothing matched "acs.exe", simapi never set simstatus,
++     * and simd mapped no telemetry at all while the game ran. Splitting the
++     * two fields into their own lines keeps each one unambiguous: "A <pid>
++     * <args...>" gives argv[0] as the first token after the pid, and
++     * "C <pid> <comm...>" gives comm as the whole rest of the line, which is
++     * the same pair libproc2 hands the native path below. */
++    char* table = simapi_host_capture(
++        "ps -A -o pid=,args= | sed \"s/^/A /\"; ps -A -o pid=,comm= | sed \"s/^/C /\"",
++        NULL);
 +    if (table == NULL)
 +    {
 +        return p;
@@ -261,30 +275,36 @@ index c88ac84..33815d5 100644
 +         line != NULL;
 +         line = strtok_r(NULL, "\n", &saveptr))
 +    {
-+        int pid = 0;
-+        char comm[256] = { 0 };
-+        char cmdline[2048] = { 0 };
-+
-+        if (sscanf(line, " %d %255s %2047[^\n]", &pid, comm, cmdline) < 2)
++        char kind = line[0];
++        if (kind != 'A' && kind != 'C')
 +        {
 +            continue;
 +        }
 +
-+        /* argv[0] only, which is what PIDS_CMDLINE_V's first element gives the
-+         * libproc2 path below. Matching the whole of `ps -o args=` would be
-+         * looser than the code this stands in for -- a shell whose arguments
-+         * merely mention a sim's exe, a Steam launch command say, would match
-+         * and simd would track that shell as the game. Observed doing exactly
-+         * that before this was narrowed. */
-+        char* argv0_end = strchr(cmdline, ' ');
-+        if (argv0_end != NULL)
++        int pid = 0;
++        int consumed = 0;
++        if (sscanf(line + 1, " %d %n", &pid, &consumed) < 1 || consumed == 0)
 +        {
-+            *argv0_end = '\0';
++            continue;
++        }
++
++        char* field = line + 1 + consumed;
++        if (kind == 'A')
++        {
++            /* argv[0] only. The whole of `ps -o args=` would be looser than
++             * libproc2's PIDS_CMDLINE_V first element: a shell whose arguments
++             * merely mention a sim's exe -- a Steam launch command, say --
++             * would match, and simd would track that shell as the game. */
++            char* end = strchr(field, ' ');
++            if (end != NULL)
++            {
++                *end = '\0';
++            }
 +        }
 +
 +        for (int i = 0; pname[i] != NULL && i < num; i++)
 +        {
-+            if (strcasestr(cmdline, pname[i]) != NULL || strcasestr(comm, pname[i]) != NULL)
++            if (strcasestr(field, pname[i]) != NULL)
 +            {
 +                p.pid = pid;
 +                p.pos = i;
