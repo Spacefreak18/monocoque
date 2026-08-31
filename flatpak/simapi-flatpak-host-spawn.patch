@@ -1,0 +1,453 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d3e0678..a4975b7 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -20,9 +20,13 @@ pkg_check_modules(LIBPROC2 libproc2)
+ if (LIBPROCPS_FOUND)
+     #add_compile_definitions(USE_OLD_PID_VAL=0)
+ elseif (LIBPROC2_FOUND)
+-    if (LIBPROC2_VERSION VERSION_GREATER_EQUAL "4.0.5")
+-        #add_compile_definitions(USE_OLD_PID_VAL=0)
+-    else()
++    # Some distro packagings -- the freedesktop Flatpak SDK among them -- ship
++    # a libproc2.pc whose Version field is the literal string UNKNOWN. Compared
++    # against that, VERSION_GREATER_EQUAL is always false, so this fell through
++    # to the pre-4.0.5 four-argument PIDS_VAL API and failed to compile against
++    # a current libproc2 whose header has long since moved to three. Take the
++    # old-API branch only when the version really parses and really is old.
++    if (LIBPROC2_VERSION MATCHES "^[0-9]" AND LIBPROC2_VERSION VERSION_LESS "4.0.5")
+         add_compile_definitions(USE_OLD_PID_VAL)
+     endif()
+ else()
+diff --git a/simapi/getpid.c b/simapi/getpid.c
+index c88ac84..33815d5 100644
+--- a/simapi/getpid.c
++++ b/simapi/getpid.c
+@@ -1,4 +1,5 @@
+ #include <stdio.h>
++#include <unistd.h>
+ #include <string.h>
+ #include <stdlib.h>
+ #include <ctype.h>
+@@ -38,6 +39,11 @@ static int isMatch(const char* possibleMatch, const char* checkAgainst)
+ 
+ int is_pid_running(pid_t pid)
+ {
++    if (simapi_in_flatpak())
++    {
++        return simapi_host_pid_alive(pid);
++    }
++
+     if (pid <= 0)
+     {
+         return 0;
+@@ -114,16 +120,31 @@ char* getEnvValueForPid(pid_t pid, const char* envName)
+ 
+     sprintf( &path[6], "%d/environ", pid );
+ 
+-    envFile = fopen(path, "r");
+-    if ( envFile == NULL )
++    /* The pid came from the host's process table, so its /proc entry exists
++     * only out there -- see simapi_host_capture(). */
++    if ( simapi_in_flatpak() )
+     {
+-//        errno = ESRCH;
+-        return NULL;
++        char hostcmd[96];
++        snprintf(hostcmd, sizeof(hostcmd), "cat /proc/%d/environ", (int) pid);
++        buf = simapi_host_capture(hostcmd, &maxIdx);
++        if ( buf == NULL )
++        {
++            return NULL;
++        }
+     }
++    else
++    {
++        envFile = fopen(path, "r");
++        if ( envFile == NULL )
++        {
++//        errno = ESRCH;
++            return NULL;
++        }
+ 
+-    maxIdx = readData(&buf, envFile);
++        maxIdx = readData(&buf, envFile);
+ 
+-    fclose(envFile);
++        fclose(envFile);
++    }
+ 
+     envNameLen = strlen(envName);
+     cur = buf;
+@@ -171,9 +192,229 @@ int check_if_number (char* str)
+ }
+ 
+ 
++
++/* ------------------------------------------------------------------------
++ * Looking at the host from inside a Flatpak sandbox.
++ *
++ * A sandbox gets its own PID namespace -- measured on a real install, 5 pids
++ * visible inside against 497 on the host -- so the /proc walk below finds only
++ * the sandbox itself and no sim is ever detected. Flatpak has no option to
++ * share the host's namespace (--allow=devel and --filesystem=host both change
++ * nothing), leaving `flatpak-spawn --host`, which asks the session helper to
++ * run a command outside. That needs --talk-name=org.freedesktop.Flatpak in the
++ * manifest.
++ *
++ * The output comes back through a FILE, not a pipe. A popen()'d
++ * `flatpak-spawn --host ...` hands the pipe's write end to the session helper,
++ * and a copy of it outlives every process the sandbox can see: reading to EOF
++ * never returns. Measured -- simd sat in anon_pipe_read with no children left
++ * and no further log line, forever. So the host writes to a file under
++ * $XDG_RUNTIME_DIR/app/$FLATPAK_ID, the one directory mounted at the same path
++ * on both sides, and renames it into place; the sandbox then reads an ordinary
++ * file where EOF means what it says. The rename is what makes "the file
++ * exists" mean "the output is complete".
++ *
++ * None of this is reached outside a sandbox: every caller keeps its original
++ * code path, so native builds are byte-for-byte unaffected.
++ * --------------------------------------------------------------------- */
++int simapi_in_flatpak(void)
++{
++    static int cached = -1;
++    if (cached < 0)
++    {
++        cached = (access("/.flatpak-info", F_OK) == 0) ? 1 : 0;
++    }
++    return cached;
++}
++
++/* Visible under the same path inside the sandbox and out. */
++static const char* host_share_dir(void)
++{
++    static char dir[256];
++    if (dir[0] == '\0')
++    {
++        const char* runtime = getenv("XDG_RUNTIME_DIR");
++        const char* app_id = getenv("FLATPAK_ID");
++        if (runtime != NULL && app_id != NULL)
++        {
++            snprintf(dir, sizeof(dir), "%s/app/%s", runtime, app_id);
++        }
++        else
++        {
++            snprintf(dir, sizeof(dir), "/tmp");
++        }
++    }
++    return dir;
++}
++
++/* Runs `hostcmd` on the host and returns its stdout, or NULL. Caller frees. */
++char* simapi_host_capture(const char* hostcmd, size_t* out_len)
++{
++    static unsigned long seq = 0;
++    char out[320];
++    char cmd[1024];
++
++    if (out_len != NULL)
++    {
++        *out_len = 0;
++    }
++
++    snprintf(out, sizeof(out), "%s/simapi-host-%d-%lu", host_share_dir(), (int) getpid(), seq++);
++
++    /* Written to <out>.part and renamed, so the file only appears complete.
++     * The exit status is deliberately ignored: simd runs a libuv loop whose
++     * SIGCHLD handling reaps children this call did not spawn, which makes
++     * system()'s own waitpid fail and lose the status. */
++    snprintf(cmd, sizeof(cmd),
++             "flatpak-spawn --host sh -c '%s > %s.part 2>/dev/null; mv %s.part %s' >/dev/null 2>&1",
++             hostcmd, out, out, out);
++    (void) system(cmd);
++
++    /* system() normally returns only once the command is done; the wait can
++     * still be lost to that same reaping, so give the rename a moment. */
++    FILE* f = NULL;
++    for (int waited = 0; waited < 2000; waited += 20)
++    {
++        f = fopen(out, "r");
++        if (f != NULL)
++        {
++            break;
++        }
++        usleep(20 * 1000);
++    }
++
++    if (f == NULL)
++    {
++        return NULL;
++    }
++
++    size_t cap = 8192;
++    size_t len = 0;
++    char* buf = malloc(cap);
++
++    if (buf != NULL)
++    {
++        for (;;)
++        {
++            size_t n = fread(buf + len, 1, cap - len - 1, f);
++            len += n;
++            if (len + 1 < cap)
++            {
++                break;      /* short read on a real file means EOF */
++            }
++            cap *= 2;
++            char* grown = realloc(buf, cap);
++            if (grown == NULL)
++            {
++                break;
++            }
++            buf = grown;
++        }
++        buf[len] = '\0';
++    }
++
++    fclose(f);
++    unlink(out);
++
++    if (out_len != NULL)
++    {
++        *out_len = len;
++    }
++    return buf;
++}
++
++/* Is a pid in the *host's* namespace alive? kill(2) would resolve the number
++ * against the sandbox's own processes -- usually nothing, occasionally the
++ * wrong one. */
++int simapi_host_pid_alive(pid_t pid)
++{
++    char hostcmd[96];
++    snprintf(hostcmd, sizeof(hostcmd), "kill -0 %d 2>/dev/null && echo alive", (int) pid);
++
++    char* out = simapi_host_capture(hostcmd, NULL);
++    int alive = (out != NULL && strncmp(out, "alive", 5) == 0);
++    free(out);
++    return alive;
++}
++
++/* Does a path exist on the *host*? For paths that are the host's by nature --
++ * a Proton binary under STEAM_COMPAT_TOOL_PATHS, say -- since the sandbox's
++ * own filesystem knows nothing about them. Checking locally is how the bridge
++ * launch failed silently: Proton was never found, so the fork never happened
++ * and nothing was logged above debug level. */
++int simapi_host_file_exists(const char* path)
++{
++    char hostcmd[1024];
++    snprintf(hostcmd, sizeof(hostcmd), "test -e '%s' && echo yes", path);
++
++    char* out = simapi_host_capture(hostcmd, NULL);
++    int exists = (out != NULL && strncmp(out, "yes", 3) == 0);
++    free(out);
++    return exists;
++}
++
++static struct SimProcessInfo pidof_host(char* pname[], int num)
++{
++    struct SimProcessInfo p;
++    p.pid = -1;
++    p.pos = -1;
++
++    char* table = simapi_host_capture("ps -A -o pid=,comm=,args=", NULL);
++    if (table == NULL)
++    {
++        return p;
++    }
++
++    char* saveptr = NULL;
++    for (char* line = strtok_r(table, "\n", &saveptr);
++         line != NULL;
++         line = strtok_r(NULL, "\n", &saveptr))
++    {
++        int pid = 0;
++        char comm[256] = { 0 };
++        char cmdline[2048] = { 0 };
++
++        if (sscanf(line, " %d %255s %2047[^\n]", &pid, comm, cmdline) < 2)
++        {
++            continue;
++        }
++
++        /* argv[0] only, which is what PIDS_CMDLINE_V's first element gives the
++         * libproc2 path below. Matching the whole of `ps -o args=` would be
++         * looser than the code this stands in for -- a shell whose arguments
++         * merely mention a sim's exe, a Steam launch command say, would match
++         * and simd would track that shell as the game. Observed doing exactly
++         * that before this was narrowed. */
++        char* argv0_end = strchr(cmdline, ' ');
++        if (argv0_end != NULL)
++        {
++            *argv0_end = '\0';
++        }
++
++        for (int i = 0; pname[i] != NULL && i < num; i++)
++        {
++            if (strcasestr(cmdline, pname[i]) != NULL || strcasestr(comm, pname[i]) != NULL)
++            {
++                p.pid = pid;
++                p.pos = i;
++                free(table);
++                return p;
++            }
++        }
++    }
++
++    free(table);
++    return p;
++}
++
+ struct SimProcessInfo pidof (char* pname[], int num)
+ {
+ 
++    if (simapi_in_flatpak())
++    {
++        return pidof_host(pname, num);
++    }
++
+     struct SimProcessInfo p;
+     p.pid = -1;
+     p.pos = -1;
+diff --git a/simapi/simapi.h b/simapi/simapi.h
+index 3d53b12..4667bbc 100644
+--- a/simapi/simapi.h
++++ b/simapi/simapi.h
+@@ -113,6 +113,10 @@ struct SimProcessInfo
+ 
+ void simapi_set_faux_siminfo(SimInfo* si);
+ 
++int simapi_in_flatpak(void);
++char* simapi_host_capture(const char* hostcmd, size_t* out_len);
++int simapi_host_pid_alive(pid_t pid);
++int simapi_host_file_exists(const char* path);
+ int is_pid_running(pid_t pid);
+ struct SimProcessInfo get_process_match(char* pidstrings[], int num);
+ char* getEnvValueForPid(pid_t pid, const char* envName);
+diff --git a/simd/simd.c b/simd/simd.c
+index f422f76..320ad7a 100644
+--- a/simd/simd.c
++++ b/simd/simd.c
+@@ -350,6 +350,21 @@ int startudp(int port)
+     return err;
+ }
+ 
++/* Paths handed to the bridge launch are the host's whenever this is a Flatpak
++ * build; everywhere else this is the ordinary local check. */
++static bool bridge_file_exists(const char* path)
++{
++    if (path == NULL)
++    {
++        return false;
++    }
++    if (simapi_in_flatpak())
++    {
++        return simapi_host_file_exists(path) ? true : false;
++    }
++    return does_file_exist(path);
++}
++
+ int is_pid_running(pid_t pid)
+ {
+     if (pid <= 0)
+@@ -357,6 +372,14 @@ int is_pid_running(pid_t pid)
+         return 0;
+     }
+ 
++    /* Sandboxed, the pids simd tracks belong to the host's namespace, where
++     * kill(2) cannot reach them. Shared with simapi so both halves agree on
++     * how the question is asked. */
++    if (simapi_in_flatpak())
++    {
++        return simapi_host_pid_alive(pid);
++    }
++
+     // send signal 0 (no actual signal)
+     if (kill(pid, 0) == 0)
+     {
+@@ -395,7 +418,8 @@ void bridgeclosecallback(uv_timer_t* handle)
+         if(simds.notify == true)
+         {
+             char cmd[512];
+-            snprintf(cmd, sizeof(cmd), "notify-send -t 3000 \"%s\" \"game stopped\"", "simd");
++            snprintf(cmd, sizeof(cmd), "%snotify-send -t 3000 \"%s\" \"game stopped\"",
++                     simapi_in_flatpak() ? "flatpak-spawn --host " : "", "simd");
+             system(cmd);
+         }
+ 
+@@ -519,7 +543,10 @@ void gamefindcallback(uv_timer_t* handle)
+                 {
+                     char* pathcheck1 = NULL;
+                     asprintf(&pathcheck1, "%s/dist/bin/wine", token);
+-                    if(does_file_exist(pathcheck1) == true)
++                    /* Proton lives on the host, so ask the host. Locally this
++                     * always answered false under Flatpak and the bridge was
++                     * never launched. */
++                    if(bridge_file_exists(pathcheck1) == true)
+                     {
+                         wineexe = strdup(pathcheck1);
+                     }
+@@ -531,7 +558,7 @@ void gamefindcallback(uv_timer_t* handle)
+                     if(wineexe == NULL)
+                     {
+                         asprintf(&pathcheck1, "%s/files/bin/wine", token);
+-                        if(does_file_exist(pathcheck1) == true)
++                        if(bridge_file_exists(pathcheck1) == true)
+                         {
+                             wineexe = strdup(pathcheck1);
+                         }
+@@ -598,13 +625,41 @@ void gamefindcallback(uv_timer_t* handle)
+                         close(devnull);
+                     }
+ 
+-                    if(env_simd_wrap_exe == NULL)
++                    char* target = (env_simd_wrap_exe == NULL) ? wineexe : env_simd_wrap_exe;
++
++                    if(simapi_in_flatpak())
+                     {
+-                        ret = execve(wineexe, newargv, newenviron);
++                        /* Proton, its prefix and the bridge exe are all on the
++                         * host; execve here would look for them inside the
++                         * runtime. --env carries the environment across, since
++                         * flatpak-spawn does not pass this one through, and
++                         * --watch-bus ties the host process's lifetime to this
++                         * one so the existing SIGTERM teardown still ends it. */
++                        char* hostargv[16];
++                        char envopts[4][512];
++                        int n = 0;
++                        int e = 0;
++
++                        hostargv[n++] = "flatpak-spawn";
++                        hostargv[n++] = "--host";
++                        hostargv[n++] = "--watch-bus";
++                        for(int i = 0; newenviron[i] != NULL && e < 4; i++)
++                        {
++                            snprintf(envopts[e], sizeof(envopts[e]), "--env=%s", newenviron[i]);
++                            hostargv[n++] = envopts[e];
++                            e++;
++                        }
++                        for(int i = 0; newargv[i] != NULL && n < 15; i++)
++                        {
++                            hostargv[n++] = newargv[i];
++                        }
++                        hostargv[n] = NULL;
++
++                        ret = execvp("flatpak-spawn", hostargv);
+                     }
+                     else
+                     {
+-                        ret = execve(env_simd_wrap_exe, newargv, newenviron);
++                        ret = execve(target, newargv, newenviron);
+                     }
+                     _exit(127);
+                 }
+@@ -642,7 +697,8 @@ void gamefindcallback(uv_timer_t* handle)
+             {
+                 char cmd[512];
+                 const char* gamename = simapi_gametofullstr(sim);
+-                snprintf(cmd, sizeof(cmd), "notify-send -t 3000 \"%s\" \"Detected %s (%i)\"", "simd", gamename, sim);
++                snprintf(cmd, sizeof(cmd), "%snotify-send -t 3000 \"%s\" \"Detected %s (%i)\"",
++                        simapi_in_flatpak() ? "flatpak-spawn --host " : "", "simd", gamename, sim);
+                 system(cmd);
+             }
+         }

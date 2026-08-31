@@ -11,24 +11,26 @@
 # org.freedesktop.Platform, not org.gnome.Platform: monocoque's GUI
 # (gmonocoque) only needs GTK3, which freedesktop.Platform//25.08 already
 # ships -- no need for the heavier GNOME runtime typiql needs for WebKitGTK.
-# NOT SHIPPED HERE: simd. The deb, rpm and AppImage packages all carry it
-# (monocoque does nothing without a daemon publishing /dev/shm/SIMAPI.DAT), but
-# a sandboxed simd could never work. It identifies the running sim by scanning
-# /proc for process names -- get_process_match() in simapi's simmapper.c, over
-# 19 executables -- and reads /proc/<pid>/environ for the Steam compat vars its
-# auto-bridge needs. Flatpak gives every sandbox its own PID namespace and has
-# no option to share the host's: measured here, 5 pids visible inside against
-# 497 on the host, unchanged by --allow=devel or --filesystem=host. It would
-# install, start, log cheerfully, and never find a sim.
+# BUNDLED HERE: simapi (libsimapi.so) and simd, built from simapi's own
+# CMakeLists at the same commit monocoque's submodule pins, plus the yder and
+# orcania modules simd logs through -- neither is in the freedesktop runtime.
 #
-# The only escape is flatpak-spawn --host, which works (verified: 500 host pids
-# and a readable /proc/<pid>/environ from inside this sandbox) but needs
-# --talk-name=org.freedesktop.Flatpak plus a sandbox-aware rewrite of simapi's
-# process layer -- upstream code pinned here as a submodule commit. Not worth a
-# third fork to keep in sync.
+# A sandboxed simd only works because it steps outside the sandbox to do its
+# looking. simapi identifies a running sim by scanning /proc for 19 process
+# names (get_process_match() in simmapper.c) and reads /proc/<pid>/environ for
+# the Steam compat vars behind its auto-bridge, while Flatpak gives every
+# sandbox its own PID namespace and no way to share the host's -- measured
+# here: 5 pids visible inside against 497 outside, unchanged by --allow=devel
+# or --filesystem=host, and simd has no flag to force a sim either (see
+# simd/parameters.c). So simapi-flatpak-host-spawn.patch, applied to the simapi
+# module below, routes the sim lookup, the environ read, both liveness checks,
+# notify-send and the bridge exec through `flatpak-spawn --host`, guarded on
+# /.flatpak-info so native builds keep the original code paths. That is what
+# --talk-name=org.freedesktop.Flatpak in finish-args is for.
 #
-# monocoque itself is unaffected: simapi_get_sim() checks /dev/shm/SIMAPI.DAT
-# before it ever scans /proc, so it reads a host simd's telemetry happily.
+# monocoque itself is unaffected either way: simapi_get_sim() checks
+# /dev/shm/SIMAPI.DAT before it ever scans /proc, so it reads the telemetry a
+# *host* simd publishes perfectly well.
 app-id: io.github.spacefreak18.monocoque
 runtime: org.freedesktop.Platform
 runtime-version: '25.08'
@@ -72,6 +74,18 @@ finish-args:
   # native one agree, and what lets typiql configure it.
   - --filesystem=xdg-config/monocoque:create
   - --filesystem=xdg-cache/monocoque:create
+  # The bundled simd reads ~/.config/simd/simd.config, and builds that path
+  # from getpwuid() rather than $HOME or XDG_CONFIG_HOME (simd.c), so it wants
+  # the host's real directory for the same reason monocoque does above.
+  # Without it simd runs on but logs "Disabling Automatic Bridge Mode".
+  - --filesystem=xdg-config/simd:create
+  # What the bundled simd's escape hatch depends on: without it every
+  # `flatpak-spawn --host` in the patched simapi is refused and simd is back to
+  # seeing 5 pids and no sim. It also makes this sandbox largely decorative --
+  # an app that can run arbitrary host commands can do anything the user can.
+  # Packaged this way because Flatpak is a convenient delivery mechanism on
+  # immutable distros, not because it isolates anything here.
+  - --talk-name=org.freedesktop.Flatpak
   # Host /dev/shm, where simd publishes telemetry as POSIX shared memory
   # (/dev/shm/SIMAPI.DAT, mapped in simapi's simmapper.c). shm is its own
   # device option and is NOT implied by --device=all above -- measured, with
@@ -209,15 +223,86 @@ modules:
         url: https://github.com/libuv/libuv/archive/refs/tags/v1.49.2.tar.gz
         sha256: 388ffcf3370d4cf7c4b3a3205504eea06c4be5f9e80d2ab32d19f8235accc1cf
 
+  # orcania and yder are what simd logs through. Neither is in the freedesktop
+  # runtime and neither is packaged for Fedora either (the rpm legs vendor both
+  # as static libraries); here they are ordinary /app/lib shared libraries that
+  # ship inside the bundle.
+  #
+  # CMAKE_C_FLAGS_RELEASE carries -Wno-error because both projects append their
+  # own `-Wall -Werror` to CMAKE_C_FLAGS -- setting that variable would be
+  # overridden, while the _RELEASE flags land after it where the last of
+  # -Werror/-Wno-error wins. orcania 2.3.3 assigns strstr() on a const pointer
+  # to a char*, which newer compilers reject outright.
+  - name: orcania
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_C_FLAGS_RELEASE=-O2 -DNDEBUG -Wno-error
+      - -DBUILD_ORCANIA_TESTING=OFF
+    sources:
+      - type: git
+        url: https://github.com/babelouest/orcania
+        commit: ffc8b55d09a3488f4f6be38034b33bc64bf8b0ce
+
+  - name: yder
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_C_FLAGS_RELEASE=-O2 -DNDEBUG -Wno-error
+      # Journald would need systemd-devel for a backend simd never selects;
+      # its config offers file and syslog.
+      - -DWITH_JOURNALD=OFF
+      - -DBUILD_YDER_TESTING=OFF
+    sources:
+      - type: git
+        url: https://github.com/babelouest/yder
+        commit: dffe82c0483bb95d0d518ba1e36c568e63a24628
+
+  # simapi built through its *own* CMakeLists, unlike the monocoque module
+  # below which compiles the same sources into a static library of its own.
+  # That is what produces libsimapi.so and, with BUILD_SIMD, the simd binary --
+  # pinned to the exact commit monocoque's submodule tracks, so the daemon and
+  # the app in this bundle agree on the SimData layout they map.
+  - name: simapi
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DBUILD_SIMD=ON
+      # Both default ON and write into $ENV{HOME} -- a systemd user unit and a
+      # default config -- which during a flatpak-builder run would land in the
+      # build user's home rather than the prefix.
+      - -DINSTALL_SYSTEMD_SERVICE=off
+      - -DINSTALL_DEFAULT_CONFIG=off
+    build-options:
+      env:
+        LIBRARY_PATH: /app/lib
+    post-install:
+      # The config simd looks for in ~/.config/simd. Shipped as an example, in
+      # the same place the deb/rpm/AppImage put it, since nothing may write to
+      # a user's home at install time.
+      - install -Dm644 simd/conf/simd.config /app/share/monocoque/simd.config
+    sources:
+      - type: git
+        url: https://github.com/spacefreak18/simapi
+        commit: 50fd181681862256780b2a0f74ef4bc459ed631a
+      # Teaches simapi's process layer to look at the *host* when sandboxed:
+      # the sim lookup, the /proc/<pid>/environ read behind the auto-bridge,
+      # both liveness checks, notify-send, and the bridge exec itself all route
+      # through `flatpak-spawn --host`. Carried as a patch rather than a fork so
+      # the pinned upstream commit stays the source of truth; if it ever lands
+      # upstream this source simply goes away.
+      - type: patch
+        path: simapi-flatpak-host-spawn.patch
+
   - name: monocoque
     buildsystem: cmake-ninja
     config-opts:
       - -DBUILD_GUI=on
       - -DCMAKE_BUILD_TYPE=Release
-      # simd is deliberately absent from this Flatpak -- see the note at the
-      # top of this file for why a sandboxed one cannot work. Without this the
-      # build would also simply fail: the target needs yder, which the
-      # freedesktop runtime doesn't ship and no module here builds.
+      # Off here only because the simapi module above already installs simd
+      # from simapi's own build -- this tree's target exists for the distro
+      # packages, where simapi is not built as a separate library. Two copies
+      # of the same binary in one prefix would just be confusing.
       - -DBUILD_SIMD=off
     # CMakeLists.txt links most of the dependencies built as separate
     # flatpak modules above (hidapi-hidraw, serialport, argtable2, config,
@@ -243,6 +328,17 @@ modules:
       # got wrong twice before finding the right depth for that project.
       - type: dir
         path: ..
+        # Skip the submodule paths. If the tree being built has them checked
+        # out, the copy brings along a real `.git` *file* at each path, and the
+        # git sources below then fail to clone into the same spot: "cannot
+        # overwrite non-directory .git with directory". Without this the
+        # manifest only builds from a checkout that deliberately omits
+        # submodules -- which is why CI's flatpak job checks out without them,
+        # and why a local build right after `git submodule update --init`
+        # breaks. Skipping makes it work either way.
+        skip:
+          - src/monocoque/simulatorapi/simapi
+          - src/monocoque/mgui/nappgui_src
       # Two git submodules, each pinned to the exact commit .gitmodules/the
       # tree tracks -- confirmed via a failed local build that the `dir`
       # source above doesn't pull submodule content in (same class of issue
