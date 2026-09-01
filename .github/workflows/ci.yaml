@@ -4,6 +4,21 @@ on:
   push:
     tags: [ "*" ]
   workflow_dispatch: {}
+  # Called by release-please.yml once it has cut a release. A tag pushed by
+  # release-please carries the default GITHUB_TOKEN, and GitHub deliberately
+  # refuses to start a workflow from an event that token created -- so the
+  # `push: tags` trigger above never fires for a release-please tag. Being
+  # callable means the release build runs inside release-please's own run
+  # instead, with no personal access token to store on a public repo.
+  workflow_call:
+    inputs:
+      release_tag:
+        description: >-
+          Tag release-please just created. Supplies the package version and
+          names the release to upload to, both of which would otherwise come
+          from github.ref_name.
+        type: string
+        required: true
 
 jobs:
   build-monocoque-debs:
@@ -100,6 +115,8 @@ jobs:
     - name: Determine package version
       id: pkgver
       shell: bash
+      env:
+        RELEASE_TAG: ${{ inputs.release_tag }}
       run: |
         # The control files carry a hardcoded `Version: 1` that nobody
         # maintains, so every .deb ever released claims version 1 regardless
@@ -110,7 +127,11 @@ jobs:
         # like `pkgtest-5` would make dpkg-deb fail outright. Anything that
         # doesn't look like a version falls back to 0.0.0.
         v=""
-        [ "$GITHUB_REF_TYPE" = tag ] && v="${GITHUB_REF_NAME#v}"
+        # RELEASE_TAG is set only when release-please calls this workflow;
+        # its tag exists but the run itself is on a branch, so GITHUB_REF_*
+        # would report master and fall through to 0.0.0.
+        v="${RELEASE_TAG#v}"
+        [ -z "$v" ] && [ "$GITHUB_REF_TYPE" = tag ] && v="${GITHUB_REF_NAME#v}"
         case "$v" in
           [0-9]*) ;;
           *) v="0.0.0" ;;
@@ -146,11 +167,15 @@ jobs:
       # Only a tag can publish a release; without this a workflow_dispatch run
       # builds everything correctly and then reports failure on a step that
       # cannot work, which makes a green build look broken.
-      if: github.ref_type == 'tag'
+      if: github.ref_type == 'tag' || inputs.release_tag != ''
       uses: softprops/action-gh-release@v1
       with:
+        tag_name: ${{ inputs.release_tag || github.ref_name }}
         files: monocoque-${{ matrix.os }}.deb
-        generate_release_notes: true
+        # release-please writes the release body from the changelog it just
+        # generated. Letting this action generate its own notes as well would
+        # overwrite them, so it only does so for a hand-pushed tag.
+        generate_release_notes: ${{ inputs.release_tag == '' }}
 
 
   build-monocoque-rpms:
@@ -285,9 +310,15 @@ jobs:
     # bigger change than getting these jobs running again.
     - name: run spec file
       shell: bash
+      env:
+        RELEASE_TAG: ${{ inputs.release_tag }}
       run: |
         v=""
-        [ "$GITHUB_REF_TYPE" = tag ] && v="${GITHUB_REF_NAME#v}"
+        # RELEASE_TAG is set only when release-please calls this workflow;
+        # its tag exists but the run itself is on a branch, so GITHUB_REF_*
+        # would report master and fall through to 0.0.0.
+        v="${RELEASE_TAG#v}"
+        [ -z "$v" ] && [ "$GITHUB_REF_TYPE" = tag ] && v="${GITHUB_REF_NAME#v}"
         case "$v" in
           [0-9]*) ;;
           *) v="0.0.0" ;;
@@ -308,11 +339,15 @@ jobs:
       # Only a tag can publish a release; without this a workflow_dispatch run
       # builds everything correctly and then reports failure on a step that
       # cannot work, which makes a green build look broken.
-      if: github.ref_type == 'tag'
+      if: github.ref_type == 'tag' || inputs.release_tag != ''
       uses: softprops/action-gh-release@v1
       with:
+        tag_name: ${{ inputs.release_tag || github.ref_name }}
         files: monocoque-${{ matrix.os }}.rpm
-        generate_release_notes: true
+        # release-please writes the release body from the changelog it just
+        # generated. Letting this action generate its own notes as well would
+        # overwrite them, so it only does so for a hand-pushed tag.
+        generate_release_notes: ${{ inputs.release_tag == '' }}
 
 
   build-monocoque-appimage:
@@ -378,13 +413,18 @@ jobs:
     - name: Build AppImage
       env:
         APPIMAGE_EXTRACT_AND_RUN: 1
+        RELEASE_TAG: ${{ inputs.release_tag }}
       run: |
         # An AppImage carries no package metadata, so its filename is the only
         # place a version can live -- hence versioning the output name here
         # rather than stamping a field as the deb/rpm jobs do. Same digit
         # guard, so scratch tags and branch builds still produce a valid name.
         v=""
-        [ "$GITHUB_REF_TYPE" = tag ] && v="${GITHUB_REF_NAME#v}"
+        # RELEASE_TAG is set only when release-please calls this workflow;
+        # its tag exists but the run itself is on a branch, so GITHUB_REF_*
+        # would report master and fall through to 0.0.0.
+        v="${RELEASE_TAG#v}"
+        [ -z "$v" ] && [ "$GITHUB_REF_TYPE" = tag ] && v="${GITHUB_REF_NAME#v}"
         case "$v" in
           [0-9]*) ;;
           *) v="0.0.0" ;;
@@ -432,11 +472,15 @@ jobs:
       # Only a tag can publish a release; without this a workflow_dispatch run
       # builds everything correctly and then reports failure on a step that
       # cannot work, which makes a green build look broken.
-      if: github.ref_type == 'tag'
+      if: github.ref_type == 'tag' || inputs.release_tag != ''
       uses: softprops/action-gh-release@v1
       with:
+        tag_name: ${{ inputs.release_tag || github.ref_name }}
         files: monocoque*.AppImage
-        generate_release_notes: true
+        # release-please writes the release body from the changelog it just
+        # generated. Letting this action generate its own notes as well would
+        # overwrite them, so it only does so for a hand-pushed tag.
+        generate_release_notes: ${{ inputs.release_tag == '' }}
 
 
   build-monocoque-flatpak:
@@ -484,11 +528,15 @@ jobs:
           path: flatpak/monocoque.flatpak
 
       - name: Release the Package
-        if: github.ref_type == 'tag'
+        if: github.ref_type == 'tag' || inputs.release_tag != ''
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ inputs.release_tag || github.ref_name }}
           files: flatpak/monocoque.flatpak
-          generate_release_notes: true
+          # release-please writes the release body from the changelog it just
+          # generated. Letting this action generate its own notes as well would
+          # overwrite them, so it only does so for a hand-pushed tag.
+          generate_release_notes: ${{ inputs.release_tag == '' }}
 
   #arch-build:
   #  runs-on: ubuntu-latest
