@@ -143,6 +143,10 @@ jobs:
         dpkg-deb --field monocoque-${{ matrix.os }}.deb Package Version
 
     - name: Release the Package
+      # Only a tag can publish a release; without this a workflow_dispatch run
+      # builds everything correctly and then reports failure on a step that
+      # cannot work, which makes a green build look broken.
+      if: github.ref_type == 'tag'
       uses: softprops/action-gh-release@v1
       with:
         files: monocoque-${{ matrix.os }}.deb
@@ -301,6 +305,10 @@ jobs:
         rpm -qp --qf '%{NAME} %{VERSION}-%{RELEASE}\n' "$GITHUB_WORKSPACE/monocoque-${{ matrix.os }}.rpm"
 
     - name: Release the Package
+      # Only a tag can publish a release; without this a workflow_dispatch run
+      # builds everything correctly and then reports failure on a step that
+      # cannot work, which makes a green build look broken.
+      if: github.ref_type == 'tag'
       uses: softprops/action-gh-release@v1
       with:
         files: monocoque-${{ matrix.os }}.rpm
@@ -421,6 +429,10 @@ jobs:
         path: monocoque*.AppImage
 
     - name: Release the Package
+      # Only a tag can publish a release; without this a workflow_dispatch run
+      # builds everything correctly and then reports failure on a step that
+      # cannot work, which makes a green build look broken.
+      if: github.ref_type == 'tag'
       uses: softprops/action-gh-release@v1
       with:
         files: monocoque*.AppImage
@@ -472,6 +484,7 @@ jobs:
           path: flatpak/monocoque.flatpak
 
       - name: Release the Package
+        if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v1
         with:
           files: flatpak/monocoque.flatpak
