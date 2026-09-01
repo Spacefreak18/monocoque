@@ -387,13 +387,32 @@ jobs:
         wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
         wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-gtk/raw/master/linuxdeploy-plugin-gtk.sh
         chmod +x linuxdeploy-x86_64.AppImage linuxdeploy-plugin-gtk.sh
+
+        # Deploy dependencies first, without packaging, so there is a populated
+        # AppDir to take licences from -- an AppImage distributes every library
+        # it bundles, so their copyright files have to travel with it. A .deb
+        # needs none of this because its dependencies stay separate packages.
         PATH="$PWD:$PATH" ./linuxdeploy-x86_64.AppImage \
           --appdir AppDir \
           --plugin gtk \
           --desktop-file AppDir/usr/share/applications/monocoque.desktop \
-          --icon-file tools/monocoque.svg \
+          --icon-file tools/monocoque.svg
+
+        tools/appimage-collect-licenses.sh AppDir
+
+        # monocoque itself and its vendored components are built here rather
+        # than installed from packages, so dpkg cannot account for them.
+        install -Dm644 LICENSE.rst AppDir/usr/share/doc/monocoque/LICENSE.rst
+        install -Dm644 tools/distro/debian/dpkg/copyright AppDir/usr/share/doc/monocoque/copyright
+        install -Dm644 src/monocoque/mgui/nappgui_src/LICENSE AppDir/usr/share/doc/nappgui/LICENSE
+
+        # Now package the AppDir, licences included.
+        PATH="$PWD:$PATH" ./linuxdeploy-x86_64.AppImage \
+          --appdir AppDir \
           --output appimage
         ls -la monocoque*.AppImage
+        echo "--- licence files in the image ---"
+        find AppDir/usr/share/doc -name copyright | wc -l
 
     - name: Upload the AppImage as a build artifact
       uses: actions/upload-artifact@v4

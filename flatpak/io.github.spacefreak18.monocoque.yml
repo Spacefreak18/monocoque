@@ -105,6 +105,8 @@ modules:
       # libconfig 1.7.3's CMakeLists.txt predates CMake 3.5's minimum
       # version policy; confirmed via a failed local build.
       - -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+    post-install:
+      - sh -c 'f=$(ls -1 COPYING COPYING.txt COPYING.LIB LICENSE LICENSE.txt LICENSE.md LICENCE licence.txt 2>/dev/null | head -1); if [ -n "$f" ]; then install -Dm644 "$f" /app/share/licenses/libconfig/$(basename "$f"); else echo "WARNING: no licence file found for libconfig"; fi'
     sources:
       - type: archive
         url: https://github.com/hyperrealm/libconfig/archive/refs/tags/v1.7.3.tar.gz
@@ -153,6 +155,8 @@ modules:
           if [ -e "$f" ]; then cp -P "$f" /app/lib/; fi
         done
         true
+    post-install:
+      - sh -c 'f=$(ls -1 COPYING COPYING.txt COPYING.LIB LICENSE LICENSE.txt LICENSE.md LICENCE licence.txt 2>/dev/null | head -1); if [ -n "$f" ]; then install -Dm644 "$f" /app/share/licenses/argtable2/$(basename "$f"); else echo "WARNING: no licence file found for argtable2"; fi'
     sources:
       - type: archive
         url: https://sourceforge.net/projects/argtable/files/argtable/argtable-2.13/argtable2-13.tar.gz/download
@@ -178,6 +182,8 @@ modules:
     # autogen.sh.
     build-commands:
       - ./autogen.sh
+    post-install:
+      - sh -c 'f=$(ls -1 COPYING COPYING.txt COPYING.LIB LICENSE LICENSE.txt LICENSE.md LICENCE licence.txt 2>/dev/null | head -1); if [ -n "$f" ]; then install -Dm644 "$f" /app/share/licenses/libserialport/$(basename "$f"); else echo "WARNING: no licence file found for libserialport"; fi'
     sources:
       - type: archive
         url: https://github.com/sigrokproject/libserialport/archive/refs/tags/libserialport-0.1.2.tar.gz
@@ -187,6 +193,8 @@ modules:
     buildsystem: autotools
     build-commands:
       - ./autogen.sh
+    post-install:
+      - sh -c 'f=$(ls -1 COPYING COPYING.txt COPYING.LIB LICENSE LICENSE.txt LICENSE.md LICENCE licence.txt 2>/dev/null | head -1); if [ -n "$f" ]; then install -Dm644 "$f" /app/share/licenses/libxdg-basedir/$(basename "$f"); else echo "WARNING: no licence file found for libxdg-basedir"; fi'
     sources:
       - type: archive
         url: https://github.com/devnev/libxdg-basedir/archive/refs/tags/libxdg-basedir-1.2.3.tar.gz
@@ -202,6 +210,8 @@ modules:
       # libusb-backed variant, which would pull in an extra dependency.
       - -DHIDAPI_WITH_LIBUSB=OFF
       - -DHIDAPI_WITH_HIDRAW=ON
+    post-install:
+      - sh -c 'f=$(ls -1 COPYING COPYING.txt COPYING.LIB LICENSE LICENSE.txt LICENSE.md LICENCE licence.txt 2>/dev/null | head -1); if [ -n "$f" ]; then install -Dm644 "$f" /app/share/licenses/hidapi/$(basename "$f"); else echo "WARNING: no licence file found for hidapi"; fi'
     sources:
       - type: archive
         url: https://github.com/libusb/hidapi/archive/refs/tags/hidapi-0.14.0.tar.gz
@@ -218,6 +228,8 @@ modules:
     buildsystem: cmake-ninja
     config-opts:
       - -DBUILD_TESTING=OFF
+    post-install:
+      - sh -c 'f=$(ls -1 COPYING COPYING.txt COPYING.LIB LICENSE LICENSE.txt LICENSE.md LICENCE licence.txt 2>/dev/null | head -1); if [ -n "$f" ]; then install -Dm644 "$f" /app/share/licenses/libuv/$(basename "$f"); else echo "WARNING: no licence file found for libuv"; fi'
     sources:
       - type: archive
         url: https://github.com/libuv/libuv/archive/refs/tags/v1.49.2.tar.gz
@@ -239,6 +251,8 @@ modules:
       - -DCMAKE_BUILD_TYPE=Release
       - -DCMAKE_C_FLAGS_RELEASE=-O2 -DNDEBUG -Wno-error
       - -DBUILD_ORCANIA_TESTING=OFF
+    post-install:
+      - sh -c 'f=$(ls -1 COPYING COPYING.txt COPYING.LIB LICENSE LICENSE.txt LICENSE.md LICENCE licence.txt 2>/dev/null | head -1); if [ -n "$f" ]; then install -Dm644 "$f" /app/share/licenses/orcania/$(basename "$f"); else echo "WARNING: no licence file found for orcania"; fi'
     sources:
       - type: git
         url: https://github.com/babelouest/orcania
@@ -253,6 +267,8 @@ modules:
       # its config offers file and syslog.
       - -DWITH_JOURNALD=OFF
       - -DBUILD_YDER_TESTING=OFF
+    post-install:
+      - sh -c 'f=$(ls -1 COPYING COPYING.txt COPYING.LIB LICENSE LICENSE.txt LICENSE.md LICENCE licence.txt 2>/dev/null | head -1); if [ -n "$f" ]; then install -Dm644 "$f" /app/share/licenses/yder/$(basename "$f"); else echo "WARNING: no licence file found for yder"; fi'
     sources:
       - type: git
         url: https://github.com/babelouest/yder
@@ -367,6 +383,26 @@ modules:
       # have an icon at all (both confirmed via failed real CI runs). It is
       # padded via a <g transform="translate(0,25)">, not stretched. Shared
       # with the AppImage job, which has the same square-icon need.
+    post-install:
+      # This package's own licence, the vendored nappgui's (a source rather
+      # than a module, so the per-module collection above misses it), and the
+      # notices file naming every bundled dependency's origin.
+      - install -Dm644 LICENSE.rst /app/share/licenses/monocoque/LICENSE.rst
+      # The Debian copyright file is upstream's own account of what is in this
+      # source tree and under what terms -- slog (MIT), nappgui (MIT), simapi
+      # (LGPL) -- which a bundle has to carry because it distributes all of
+      # them, unlike a .deb whose dependencies are separate packages. Shipped
+      # verbatim rather than restated.
+      - install -Dm644 tools/distro/debian/dpkg/copyright /app/share/licenses/monocoque/copyright
+      # lua and glu ship no licence file in their tarballs -- Lua's MIT text
+      # lives in doc/readme.html, glu's SGI Free B only in source headers -- so
+      # checked-in copies are installed from here, where the repo is the build
+      # directory. (Doing it in their own modules fails: those build
+      # out-of-tree, so their source directory is not the working directory.)
+      - install -Dm644 packaging/licenses/lua-5.4-LICENSE.txt /app/share/licenses/lua5.4/LICENSE
+      - install -Dm644 packaging/licenses/glu-LICENSE.txt /app/share/licenses/glu/LICENSE
+      - install -Dm644 src/monocoque/mgui/nappgui_src/LICENSE /app/share/licenses/nappgui/LICENSE
+      - sh -c 'python3 tools/generate-third-party-notices.py flatpak/io.github.spacefreak18.monocoque.yml > /tmp/notices.md && install -Dm644 /tmp/notices.md /app/share/licenses/THIRD-PARTY-NOTICES.md'
     # Confirmed via a failed local build that flatpak-builder's cmake-ninja
     # buildsystem runs the automatic build+install step regardless of
     # whether build-commands are also given -- these run in *addition*,
