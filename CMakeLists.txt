@@ -181,73 +181,8 @@ if(ENABLE_TESTS AND NOT MONOCOQUE_SUBPROJECT)
     add_subdirectory(tests)
 endif()
 
-# simd -- the telemetry daemon everything else here reads from. simapi ships
-# its own CMakeLists with a BUILD_SIMD option, but this tree never invokes it:
-# src/monocoque/simulatorapi compiles simapi's sources straight into the static
-# `simulatorapi` library instead. So the target is declared here over that same
-# library, which also means the simd in a monocoque package is built from the
-# exact simapi commit monocoque itself was built against, rather than whatever
-# happens to be installed system-wide.
-#
-# Packaged alongside monocoque because monocoque does nothing without it: with
-# no simd running, simapi_get_sim() finds no /dev/shm/SIMAPI.DAT and falls back
-# to scanning /proc for the game itself.
-option(BUILD_SIMD "Build the simd telemetry daemon alongside monocoque" ON)
-if(BUILD_SIMD)
-    set(SIMAPI_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/monocoque/simulatorapi/simapi)
-    add_executable(simd
-        ${SIMAPI_SRC_DIR}/simd/simd.c
-        ${SIMAPI_SRC_DIR}/simd/parameters.c
-        ${SIMAPI_SRC_DIR}/simd/confighelper.c
-        ${SIMAPI_SRC_DIR}/simd/dirhelper.c
-        ${SIMAPI_SRC_DIR}/simd/poke.c
-        # Not part of the simulatorapi library above, which only pulls in
-        # mapacdata.c from simmap/.
-        ${SIMAPI_SRC_DIR}/simmap/mapsimdata.c)
-    # simd's own build prefers argtable3 and falls back to argtable2. monocoque
-    # links argtable2 everywhere, so pin the same one rather than let two halves
-    # of one package disagree about which argtable they need at runtime.
-    # simd.c carries its own copy of is_pid_running(), and so does simapi's
-    # getpid.c. Upstream links simd against libsimapi.so, where the executable's
-    # definition simply wins; here simapi is a static archive and the linker
-    # refuses the duplicate outright. Renaming simd's copy for its own
-    # translation units keeps both definitions and leaves each caller bound to
-    # the one it was written against -- no patch to the pinned submodule, and no
-    # --allow-multiple-definition silently picking a winner.
-    target_compile_definitions(simd PRIVATE HAVE_ARGTABLE2 is_pid_running=simd_is_pid_running)
-    target_include_directories(simd PRIVATE
-        ${SIMAPI_SRC_DIR}/simapi
-        ${SIMAPI_SRC_DIR}/include
-        ${SIMAPI_SRC_DIR}/simmap
-        ${SIMAPI_SRC_DIR}/simd)
-    target_link_libraries(simd m dl uv yder argtable2 config simulatorapi proc2)
-    # orcania sits under yder. A shared libyder.so records that dependency and
-    # pulls it in on its own, which is why Debian and Ubuntu need nothing here;
-    # a static libyder.a records nothing, so every o_malloc/split_string it
-    # calls comes back undefined. Fedora has no yder package at all and its rpm
-    # job vendors both as static archives, so the link has to name orcania
-    # explicitly -- after yder, which is the order a static link needs.
-    find_library(ORCANIA_LIBRARY orcania)
-    if(ORCANIA_LIBRARY)
-        target_link_libraries(simd ${ORCANIA_LIBRARY})
-    endif()
-endif()
-
 install(TARGETS monocoque-cli RUNTIME DESTINATION bin)
 if(BUILD_GUI)
     install(TARGETS monocoque-gui RUNTIME DESTINATION bin)
-endif()
-if(BUILD_SIMD)
-    install(TARGETS simd RUNTIME DESTINATION bin)
-    # simd runs without ~/.config/simd/simd.config, but degraded: it logs
-    # "Error with config file" then "Disabling Automatic Bridge Mode" and
-    # carries on mapping telemetry (observed by running it with an empty home
-    # bind-mounted over the real one). What it loses is the auto-bridge -- the
-    # per-game launchexe/liveexe table that starts the Windows bridge under
-    # Proton, which is how a sim's telemetry reaches /dev/shm at all. simapi's
-    # own build installs this file straight into $HOME, which a package must
-    # not do, so it ships as an example to copy. Note simd resolves that path
-    # from getpwuid(), not $HOME.
-    install(FILES ${SIMAPI_SRC_DIR}/simd/conf/simd.config DESTINATION share/monocoque)
 endif()
 install(FILES tools/monocoque.desktop DESTINATION share/applications)

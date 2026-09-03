@@ -5,4 +5,4 @@ Priority: optional
 Architecture: amd64
 Maintainer: Paul Jones <paul@spacefreak18.xyz>
 Description: Racing Simulator Device Manager
-Depends: libyder2.0t64,libpulse0,libconfig11,libargtable2-0,liblua5.4-0,libuv1t64,libserialport0,libxml2,libxdg-basedir1,libhidapi-hidraw0,libgtk-3-0t64,libglu1-mesa,libcurl4t64
+Depends: libpulse0,libconfig11,libargtable2-0,liblua5.4-0,libuv1t64,libserialport0,libxml2,libxdg-basedir1,libhidapi-hidraw0,libgtk-3-0t64,libglu1-mesa,libcurl4t64

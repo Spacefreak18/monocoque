@@ -40,20 +40,9 @@ make
 
 %install
 mkdir -p $RPM_BUILD_ROOT/usr/bin
-mkdir -p $RPM_BUILD_ROOT/usr/share/monocoque
 cp $RPM_BUILD_DIR/monocoque/build/monocoque $RPM_BUILD_ROOT/usr/bin/monocoque
 cp $RPM_BUILD_DIR/monocoque/build/gmonocoque $RPM_BUILD_ROOT/usr/bin/gmonocoque
-# simd is statically linked against the vendored yder/orcania (see the CI job),
-# so it adds no Requires: Fedora packages neither library.
-cp $RPM_BUILD_DIR/monocoque/build/simd $RPM_BUILD_ROOT/usr/bin/simd
-# Without ~/.config/simd/simd.config simd still maps telemetry but disables its
-# Automatic Bridge Mode, so nothing launches the Windows bridge under Proton.
-# Shipped as an example because a package must not write into $HOME.
-cp $RPM_BUILD_DIR/monocoque/src/monocoque/simulatorapi/simapi/simd/conf/simd.config \
-   $RPM_BUILD_ROOT/usr/share/monocoque/simd.config
 
 %files
 /usr/bin/monocoque
 /usr/bin/gmonocoque
-/usr/bin/simd
-/usr/share/monocoque/simd.config
