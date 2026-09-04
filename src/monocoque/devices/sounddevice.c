@@ -211,8 +211,16 @@ int sounddev_init(SoundDevice* sounddevice, const char* devname, SoundDeviceSett
     }
 
 
-    usb_generic_shaker_init(sounddevice, mainloop, context, devname, sds.volume, sds.pan, sds.channels, streamname);
-    //usb_generic_shaker_init(sounddevice);
+    // Returned, not discarded: this function is declared int and used to fall
+    // off its end, so new_sound_device() read whatever happened to be in the
+    // return register and treated most devices as failures -- "Could not
+    // initialize Sound Device" for 22 of 24 configured shakers, while their
+    // PulseAudio streams had in fact connected. The devices were freed and
+    // never fed telemetry, so the graph looked correct in qpwgraph and nothing
+    // shook. Being undefined behaviour it varied by build, which is why the
+    // same config worked against a locally compiled monocoque and not the
+    // packaged one.
+    return usb_generic_shaker_init(sounddevice, mainloop, context, devname, sds.volume, sds.pan, sds.channels, streamname);
 }
 
 static const vtable engine_sound_simdevice_vtable = { &sounddev_engine_update, &sounddev_free };

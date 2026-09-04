@@ -91,7 +91,10 @@ int monocoque_initialize(int argc, char** argv)
     }
 
     p = NULL;
-    p = malloc(sizeof(Parameters));
+    // calloc, not malloc: freeparams() walks every pointer in this struct
+    // on the early-exit paths, before getParameters has set them. See the
+    // same change in monocoque-cli.c.
+    p = calloc(1, sizeof(Parameters));
     p->config_dirpath = NULL;
     p->config_filepath = NULL;
     p->log_filename_str = NULL;

@@ -84,8 +84,16 @@ int main(int argc, char** argv)
         return 0;
     }
     Parameters* p = NULL;
-    p = malloc(sizeof(Parameters));
-    MonocoqueSettings* ms = malloc(sizeof(MonocoqueSettings));;
+    // calloc, not malloc: a --help or --version run jumps straight to
+    // cleanup_final before a single field is set, and the cleanup path frees
+    // every pointer in both structs. Uninitialised heap made that a free() of
+    // whatever junk was there -- confirmed on Debian forky, where the
+    // released .deb aborted with `free(): invalid pointer` in
+    // monocoquesettingsfree() on `monocoque --help`. Older glibc happened not
+    // to notice, which is the only reason this looked fine on stable and
+    // Fedora.
+    p = calloc(1, sizeof(Parameters));
+    MonocoqueSettings* ms = calloc(1, sizeof(MonocoqueSettings));
 
     ConfigError ppe = getParameters(argc, argv, p);
     if (ppe == E_SUCCESS_AND_EXIT || ppe == E_SOMETHING_BAD)

@@ -21,6 +21,11 @@ typedef struct pa_devicelist {
 	char description[256];
 } pa_devicelist_t;
 
+static int matches_any(const char *value)
+{
+    return strcmp(value, "default") == 0 || strcmp(value, "all") == 0;
+}
+
 int find_default_config(config_setting_t *configs)
 {
     int count = config_setting_length(configs);
@@ -29,20 +34,20 @@ int find_default_config(config_setting_t *configs)
     {
         config_setting_t *entry = config_setting_get_elem(configs, i);
 
-        const char *sim;
-        const char *api;
-        const char *car;
+        // A key that isn't in the entry doesn't constrain the match. This used
+        // to require all three, which no real config has: conf/monocoque.config
+        // -- the example the README points at -- sets sim and car and never
+        // mentions api, so every entry was skipped, -1 came back, and the
+        // caller dereferenced the NULL that produced.
+        const char *sim = "default";
+        const char *api = "default";
+        const char *car = "default";
 
-        if (!config_setting_lookup_string(entry, "sim", &sim))
-            continue;
-        if (!config_setting_lookup_string(entry, "api", &api))
-            continue;
-        if (!config_setting_lookup_string(entry, "car", &car))
-            continue;
+        config_setting_lookup_string(entry, "sim", &sim);
+        config_setting_lookup_string(entry, "api", &api);
+        config_setting_lookup_string(entry, "car", &car);
 
-        if ((strcmp(sim, "default") == 0 || strcmp(sim, "all") == 0) &&
-            (strcmp(api, "default") == 0 || strcmp(api, "all") == 0) &&
-            (strcmp(car, "default") == 0 || strcmp(car, "all") == 0))
+        if (matches_any(sim) && matches_any(api) && matches_any(car))
         {
             return i;
         }
@@ -137,11 +142,31 @@ void populate_device_list(ListBox *listbox, config_t* cfg)
     config = config_lookup(cfg, "configs");
 
     int config_num = find_default_config(config);
+    if (config_num < 0)
+    {
+        // No entry claims to be the default one: list the first, which is what
+        // a single-entry config means anyway, rather than nothing.
+        config_num = 0;
+    }
 
     config_setting_t* selectedconfig = config_setting_get_elem(config, config_num);
+    if (selectedconfig == NULL)
+    {
+        fprintf(stderr, "No config entry to list devices for\n");
+        return;
+    }
+
     config_setting_t* config_devices = NULL;
     config_devices = config_setting_lookup(selectedconfig, "devices");
-
+    if (config_devices == NULL)
+    {
+        // config_setting_lookup dereferences its argument, so reaching here
+        // with a NULL selectedconfig used to segfault inside libconfig --
+        // gmonocoque died on launch, before drawing a window, for anyone whose
+        // config didn't produce a match above.
+        fprintf(stderr, "Config entry has no devices section\n");
+        return;
+    }
 
     count = config_setting_length(config_devices);
 
