@@ -1,0 +1,320 @@
+# Flatpak manifest for monocoque -- NOT submitted anywhere (Flathub or
+# otherwise) yet. Built 2026-08-30 on the patterns proven working for the
+# sibling typiql-tauri/typiql project's own Flatpak pipeline (see this
+# repo's .github/workflows/flatpak.yml header for the full list of bugs
+# found and fixed here, monocoque-specific beyond what that sibling project
+# already covered). VERIFIED LOCALLY end-to-end: built, installed, and ran
+# both `monocoque --help` and `gmonocoque` from the resulting bundle. Not
+# yet verified against real CI or real hardware (HID/serial/USB device
+# access under the sandbox).
+#
+# org.freedesktop.Platform, not org.gnome.Platform: monocoque's GUI
+# (gmonocoque) only needs GTK3, which freedesktop.Platform//25.08 already
+# ships -- no need for the heavier GNOME runtime typiql needs for WebKitGTK.
+# simd is NOT bundled. It is a separate daemon with its own packaging, and
+# monocoque does not need it inside the sandbox to use it: simapi_get_sim()
+# checks /dev/shm/SIMAPI.DAT before it ever scans /proc, so a simd running on
+# the host -- however it was installed -- publishes telemetry this sandbox
+# reads directly. That is what --device=shm below is for, and it is the only
+# thing this manifest needs in order to work with simd.
+#
+# simapi itself is still present, but only as monocoque's own statically
+# linked submodule, exactly as upstream's CMakeLists builds it. There is no
+# separate simapi module here.
+app-id: io.github.spacefreak18.monocoque
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+command: gmonocoque
+finish-args:
+  # --socket=x11, not fallback-x11: nappgui (the GUI toolkit gmonocoque uses)
+  # goes to X11 even when a Wayland display is available. fallback-x11 is
+  # deliberately inactive whenever Wayland works, so under a Wayland session
+  # DISPLAY stayed empty and gmonocoque died with `cannot open display` --
+  # confirmed on a real launch, with WAYLAND_DISPLAY=wayland-0 present and the
+  # socket visible inside the sandbox. Granting real X11 routes it through
+  # XWayland instead. --socket=wayland is kept so the toolkit can use it
+  # directly if that ever changes.
+  - --socket=x11
+  - --socket=wayland
+  # Standard companion to X11 access: without it MIT-SHM is unavailable and
+  # some toolkits fall over.
+  - --share=ipc
+  - --socket=pulseaudio
+  # HID/serial/USB access for wheels, pedals, shifters, and shaker/LED
+  # devices -- known risk area, Flatpak's sandboxing of raw device nodes is
+  # not always well-behaved; needs real hardware testing, not just a
+  # successful build.
+  - --device=all
+  # Retained, but not for the reason first written here: the GraphQL API on
+  # port 9000 is served by typiql's own Rust backend, not by monocoque --
+  # monocoque has no network code of its own, and the only libcurl in the
+  # binary is vendored nappgui's HTTP module, which nothing here calls. The
+  # two programs talk through ~/.config/monocoque and the process table, not
+  # a socket. This flag can probably be dropped.
+  - --share=network
+  # monocoque builds its paths from $HOME directly (e.g.
+  # "%s/.config/monocoque/diameters.config" in monocoque-cli.c), not from
+  # XDG_CONFIG_HOME, so it reads and writes the host's real directories.
+  # Without these grants a real launch failed with
+  #   Failed to read config file '/home/david/.config/monocoque/monocoque.config'
+  #   slog_open_file: Failed to open file: /home/david/.cache/monocoque/...log
+  # -- the manifest previously granted no filesystem access at all. Sharing
+  # the real config directory is also what makes a Flatpak monocoque and a
+  # native one agree, and what lets typiql configure it.
+  - --filesystem=xdg-config/monocoque:create
+  - --filesystem=xdg-cache/monocoque:create
+  # Host /dev/shm, where a host simd publishes telemetry as POSIX shared memory
+  # (/dev/shm/SIMAPI.DAT, mapped in simapi's simmapper.c). This is the flag
+  # that makes a Flatpak monocoque work with a simd installed on the host, so
+  # it matters more now that simd is not bundled, not less.
+  #
+  # shm is its own device option and is NOT implied by --device=all above --
+  # measured, with simd running: `ls /dev/shm` inside this sandbox returned 0
+  # entries against 18 on the host. The failure it caused is silent rather
+  # than loud: `monocoque play` started, read its config, connected
+  # pulseaudio, and then sat at "setting initial app state" forever, never
+  # logging "Opening universal shared memory api", because simd looked absent.
+  # The identical run with this flag reached that line one second in.
+  - --device=shm
+
+modules:
+  - name: libconfig
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DBUILD_TESTS=OFF
+      # libconfig 1.7.3's CMakeLists.txt predates CMake 3.5's minimum
+      # version policy; confirmed via a failed local build.
+      - -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+    post-install:
+      - sh -c 'f=$(ls -1 COPYING COPYING.txt COPYING.LIB LICENSE LICENSE.txt LICENSE.md LICENCE licence.txt 2>/dev/null | head -1); if [ -n "$f" ]; then install -Dm644 "$f" /app/share/licenses/libconfig/$(basename "$f"); else echo "WARNING: no licence file found for libconfig"; fi'
+    sources:
+      - type: archive
+        url: https://github.com/hyperrealm/libconfig/archive/refs/tags/v1.7.3.tar.gz
+        sha256: 68757e37c567fd026330c8a8449aa5f9cac08a642f213f2687186b903bd7e94e
+
+  - name: argtable2
+    buildsystem: cmake-ninja
+    config-opts:
+      # Same CMake-minimum-version issue as libconfig -- this one's
+      # CMakeLists.txt is even older (2011).
+      - -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+      # 2011-era code missing <ctype.h>/<strings.h> includes for
+      # isspace/toupper/bzero; GCC 14+ made implicit-function-declaration a
+      # hard error by default where it used to just warn. Confirmed via a
+      # failed local build.
+      - -DCMAKE_C_FLAGS=-Wno-error=implicit-function-declaration
+      # add_library(argtable2 ...) has no explicit STATIC/SHARED, so it
+      # defaults to CMake's global BUILD_SHARED_LIBS (off by default -> a
+      # static .a). monocoque's own target_link_libraries() lists argtable2
+      # before helper (which needs its symbols, e.g. arg_end/arg_parse in
+      # parameters.c) -- fine for a shared library (all symbols always
+      # available regardless of link-line position, which is what real
+      # distro packages of this ship), but a static archive only pulls
+      # symbols already needed by things linked *before* it, so helper's
+      # later reference to argtable2's symbols never resolves. Confirmed
+      # via a failed local build ("undefined reference to arg_end" etc.
+      # from helper's parameters.c, even though libargtable2.a genuinely
+      # contained those symbols). Building shared instead matches how this
+      # dependency normally ships and avoids the link-order sensitivity
+      # entirely, rather than reordering every target_link_libraries() call
+      # in CMakeLists.txt.
+      - -DBUILD_SHARED_LIBS=ON
+    # This CMake port has no install() rules at all (confirmed: no
+    # CMakeLists.txt in the tree calls install()), so the default
+    # cmake-ninja `ninja install` step silently does nothing -- monocoque's
+    # own build then fails on a missing argtable2.h. build-commands here
+    # replace the default install step: `ninja` still does the real
+    # compile, then copy the header and whatever library form actually got
+    # built (glob rather than a fixed versioned filename, since the exact
+    # .so version suffix isn't predictable without a build).
+    build-commands:
+      - ninja
+      - install -Dm644 src/argtable2.h /app/include/argtable2.h
+      - |
+        for f in src/libargtable2.so* src/libargtable2.a; do
+          if [ -e "$f" ]; then cp -P "$f" /app/lib/; fi
+        done
+        true
+    post-install:
+      - sh -c 'f=$(ls -1 COPYING COPYING.txt COPYING.LIB LICENSE LICENSE.txt LICENSE.md LICENCE licence.txt 2>/dev/null | head -1); if [ -n "$f" ]; then install -Dm644 "$f" /app/share/licenses/argtable2/$(basename "$f"); else echo "WARNING: no licence file found for argtable2"; fi'
+    sources:
+      - type: archive
+        url: https://sourceforge.net/projects/argtable/files/argtable/argtable-2.13/argtable2-13.tar.gz/download
+        sha256: 8f77e8a7ced5301af6e22f47302fdbc3b1ff41f2b83c43c77ae5ca041771ddbf
+        dest-filename: argtable2-13.tar.gz
+
+  - name: lua5.4
+    # Lua's own Makefile, not CMake/autotools. `posix` (not `linux`) avoids
+    # a readline dependency only needed for the interactive REPL binary,
+    # which monocoque doesn't use -- only the library.
+    buildsystem: simple
+    build-commands:
+      - make posix MYCFLAGS=-fPIC
+      - make install INSTALL_TOP=/app
+    sources:
+      - type: archive
+        url: https://www.lua.org/ftp/lua-5.4.7.tar.gz
+        sha256: 9fbf5e28ef86c69858f6d3d34eccc32e911c1a28b4120ff3e84aaa70cfbf1e30
+
+  - name: libserialport
+    buildsystem: autotools
+    # No pre-generated configure script in the git-archive tarball, only
+    # autogen.sh.
+    build-commands:
+      - ./autogen.sh
+    post-install:
+      - sh -c 'f=$(ls -1 COPYING COPYING.txt COPYING.LIB LICENSE LICENSE.txt LICENSE.md LICENCE licence.txt 2>/dev/null | head -1); if [ -n "$f" ]; then install -Dm644 "$f" /app/share/licenses/libserialport/$(basename "$f"); else echo "WARNING: no licence file found for libserialport"; fi'
+    sources:
+      - type: archive
+        url: https://github.com/sigrokproject/libserialport/archive/refs/tags/libserialport-0.1.2.tar.gz
+        sha256: cbb1192a09ff31d34e7efdb17a2f50d9d1974461c0b81c29bb449515d78d8950
+
+  - name: libxdg-basedir
+    buildsystem: autotools
+    build-commands:
+      - ./autogen.sh
+    post-install:
+      - sh -c 'f=$(ls -1 COPYING COPYING.txt COPYING.LIB LICENSE LICENSE.txt LICENSE.md LICENCE licence.txt 2>/dev/null | head -1); if [ -n "$f" ]; then install -Dm644 "$f" /app/share/licenses/libxdg-basedir/$(basename "$f"); else echo "WARNING: no licence file found for libxdg-basedir"; fi'
+    sources:
+      - type: archive
+        url: https://github.com/devnev/libxdg-basedir/archive/refs/tags/libxdg-basedir-1.2.3.tar.gz
+        sha256: ff30c60161f7043df4dcc6e7cdea8e064e382aa06c73dcc3d1885c7d2c77451d
+
+  - name: hidapi
+    buildsystem: cmake-ninja
+    config-opts:
+      # Same CMake-minimum-version issue as libconfig/argtable2, despite
+      # this otherwise being a current, actively maintained release.
+      - -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+      # monocoque links hidapi-hidraw specifically -- no need for the
+      # libusb-backed variant, which would pull in an extra dependency.
+      - -DHIDAPI_WITH_LIBUSB=OFF
+      - -DHIDAPI_WITH_HIDRAW=ON
+    post-install:
+      - sh -c 'f=$(ls -1 COPYING COPYING.txt COPYING.LIB LICENSE LICENSE.txt LICENSE.md LICENCE licence.txt 2>/dev/null | head -1); if [ -n "$f" ]; then install -Dm644 "$f" /app/share/licenses/hidapi/$(basename "$f"); else echo "WARNING: no licence file found for hidapi"; fi'
+    sources:
+      - type: archive
+        url: https://github.com/libusb/hidapi/archive/refs/tags/hidapi-0.14.0.tar.gz
+        sha256: a5714234abe6e1f53647dd8cba7d69f65f71c558b7896ed218864ffcf405bcbd
+
+  - name: glu
+    buildsystem: meson
+    sources:
+      - type: archive
+        url: https://gitlab.freedesktop.org/mesa/glu/-/archive/glu-9.0.3/glu-glu-9.0.3.tar.gz
+        sha256: 7e919cbc1b2677b01d65fc28fd36a19d1f3e23d76663020e0f3b82b991475e8b
+
+  - name: libuv
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DBUILD_TESTING=OFF
+    post-install:
+      - sh -c 'f=$(ls -1 COPYING COPYING.txt COPYING.LIB LICENSE LICENSE.txt LICENSE.md LICENCE licence.txt 2>/dev/null | head -1); if [ -n "$f" ]; then install -Dm644 "$f" /app/share/licenses/libuv/$(basename "$f"); else echo "WARNING: no licence file found for libuv"; fi'
+    sources:
+      - type: archive
+        url: https://github.com/libuv/libuv/archive/refs/tags/v1.49.2.tar.gz
+        sha256: 388ffcf3370d4cf7c4b3a3205504eea06c4be5f9e80d2ab32d19f8235accc1cf
+
+  - name: monocoque
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DBUILD_GUI=on
+      - -DCMAKE_BUILD_TYPE=Release
+    # CMakeLists.txt links most of the dependencies built as separate
+    # flatpak modules above (hidapi-hidraw, serialport, argtable2, config,
+    # uv, xdg-basedir) by bare library name with no explicit -L, relying on
+    # the linker's default search path -- fine on a real system where these
+    # install to /usr/lib, but /app/lib isn't in that default path.
+    # -DCMAKE_EXE_LINKER_FLAGS=-L/app/lib didn't work: CMake appends
+    # EXE_LINKER_FLAGS at the *end* of the link command, after the -l
+    # flags that need it, and ld resolves -l against -L directories seen
+    # so far, left to right -- confirmed via a failed local build showing
+    # the exact same missing-library set with that flag present but
+    # useless. LIBRARY_PATH is a GCC driver environment variable, applied
+    # to its search regardless of where in the command line things land.
+    build-options:
+      env:
+        LIBRARY_PATH: /app/lib
+    sources:
+      # One level up from flatpak/manifest.yml is the repo root -- unlike
+      # typiql-tauri/typiql's dual-checkout ($GITHUB_WORKSPACE containing
+      # two separate repos side by side, needing an extra level), monocoque
+      # is checked out on its own with the standard single-repo layout, so
+      # this doesn't need the same `../..`/`../../..` juggling that session
+      # got wrong twice before finding the right depth for that project.
+      - type: dir
+        path: ..
+        # Skip the submodule paths. If the tree being built has them checked
+        # out, the copy brings along a real `.git` *file* at each path, and the
+        # git sources below then fail to clone into the same spot: "cannot
+        # overwrite non-directory .git with directory". Without this the
+        # manifest only builds from a checkout that deliberately omits
+        # submodules -- which is why CI's flatpak job checks out without them,
+        # and why a local build right after `git submodule update --init`
+        # breaks. Skipping makes it work either way.
+        skip:
+          - src/monocoque/simulatorapi/simapi
+          - src/monocoque/mgui/nappgui_src
+      # Two git submodules, each pinned to the exact commit .gitmodules/the
+      # tree tracks -- confirmed via a failed local build that the `dir`
+      # source above doesn't pull submodule content in (same class of issue
+      # as typiql-tauri/typiql's own submodules, src/lib/per-form etc.).
+      - type: git
+        url: https://github.com/spacefreak18/simapi
+        commit: 50fd181681862256780b2a0f74ef4bc459ed631a
+        dest: src/monocoque/simulatorapi/simapi
+      # nappgui_src is add_subdirectory()'d directly into monocoque's own
+      # CMake tree (src/monocoque/mgui/CMakeLists.txt), not a separately
+      # installed library -- so it's a source here, not its own flatpak
+      # module.
+      - type: git
+        url: https://github.com/frang75/nappgui_src
+        commit: 29c7bd3e0243eb38aa9a7e2eafe6cf74830c4ee8
+        dest: src/monocoque/mgui/nappgui_src
+      - type: file
+        path: io.github.spacefreak18.monocoque.desktop
+      - type: file
+        path: io.github.spacefreak18.monocoque.metainfo.xml
+      # Icon comes from tools/monocoque.svg via the `dir` source above (no
+      # separate file source needed). That file is a square 100x100 copy of
+      # the upstream artwork -- the published monocoque.svg the deb job
+      # downloads is 100x50, which Flatpak's export rejects outright, while
+      # appstreamcli separately hard-requires any desktop-application to
+      # have an icon at all (both confirmed via failed real CI runs). It is
+      # padded via a <g transform="translate(0,25)">, not stretched. Shared
+      # with the AppImage job, which has the same square-icon need.
+    post-install:
+      # This package's own licence, the vendored nappgui's (a source rather
+      # than a module, so the per-module collection above misses it), and the
+      # notices file naming every bundled dependency's origin.
+      - install -Dm644 LICENSE.rst /app/share/licenses/monocoque/LICENSE.rst
+      # The Debian copyright file is upstream's own account of what is in this
+      # source tree and under what terms -- slog (MIT), nappgui (MIT), simapi
+      # (LGPL) -- which a bundle has to carry because it distributes all of
+      # them, unlike a .deb whose dependencies are separate packages. Shipped
+      # verbatim rather than restated.
+      - install -Dm644 tools/distro/debian/dpkg/copyright /app/share/licenses/monocoque/copyright
+      # lua and glu ship no licence file in their tarballs -- Lua's MIT text
+      # lives in doc/readme.html, glu's SGI Free B only in source headers -- so
+      # checked-in copies are installed from here, where the repo is the build
+      # directory. (Doing it in their own modules fails: those build
+      # out-of-tree, so their source directory is not the working directory.)
+      - install -Dm644 packaging/licenses/lua-5.4-LICENSE.txt /app/share/licenses/lua5.4/LICENSE
+      - install -Dm644 packaging/licenses/glu-LICENSE.txt /app/share/licenses/glu/LICENSE
+      - install -Dm644 src/monocoque/mgui/nappgui_src/LICENSE /app/share/licenses/nappgui/LICENSE
+      - sh -c 'python3 tools/generate-third-party-notices.py flatpak/io.github.spacefreak18.monocoque.yml > /tmp/notices.md && install -Dm644 /tmp/notices.md /app/share/licenses/THIRD-PARTY-NOTICES.md'
+    # Confirmed via a failed local build that flatpak-builder's cmake-ninja
+    # buildsystem runs the automatic build+install step regardless of
+    # whether build-commands are also given -- these run in *addition*,
+    # not instead. So the fix for simlighttest (a stray, always-on scratch
+    # test executable that failed to link -lserialport, a pre-existing
+    # CMakeLists.txt bug unrelated to Flatpak) had to be commenting it out
+    # at the source, not overriding the build here. With that gone, the
+    # automatic build+install (using this repo's own new install() rules)
+    # already installs monocoque/gmonocoque correctly; these build-commands
+    # only need to add the extra files CMake doesn't know about.
+    build-commands:
+      - install -Dm644 io.github.spacefreak18.monocoque.desktop /app/share/applications/io.github.spacefreak18.monocoque.desktop
+      - install -Dm644 io.github.spacefreak18.monocoque.metainfo.xml /app/share/metainfo/io.github.spacefreak18.monocoque.metainfo.xml
+      - install -Dm644 tools/monocoque.svg /app/share/icons/hicolor/scalable/apps/io.github.spacefreak18.monocoque.svg

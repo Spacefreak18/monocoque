@@ -1,0 +1,38 @@
+name: release-please
+
+on:
+  push:
+    branches: [ master ]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # Builds and uploads the packages for the release that was just cut.
+  #
+  # This calls ci.yaml rather than relying on its `push: tags` trigger,
+  # because a tag pushed with the default GITHUB_TOKEN does not start a new
+  # workflow -- GitHub blocks that deliberately, to stop workflows triggering
+  # each other in a loop. Calling it keeps the whole release inside one run
+  # and avoids storing a personal access token on a public repository.
+  build-release:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    uses: ./.github/workflows/ci.yaml
+    with:
+      release_tag: ${{ needs.release-please.outputs.tag_name }}
+    permissions:
+      contents: write

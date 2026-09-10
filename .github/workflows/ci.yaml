@@ -3,31 +3,84 @@ name: Make Packages
 on:
   push:
     tags: [ "*" ]
+  workflow_dispatch: {}
+  # Called by release-please.yml once it has cut a release. A tag pushed by
+  # release-please carries the default GITHUB_TOKEN, and GitHub deliberately
+  # refuses to start a workflow from an event that token created -- so the
+  # `push: tags` trigger above never fires for a release-please tag. Being
+  # callable means the release build runs inside release-please's own run
+  # instead, with no personal access token to store on a public repo.
+  workflow_call:
+    inputs:
+      release_tag:
+        description: >-
+          Tag release-please just created. Supplies the package version and
+          names the release to upload to, both of which would otherwise come
+          from github.ref_name.
+        type: string
+        required: true
 
 jobs:
   build-monocoque-debs:
+    # Previously this matrix used `runs-on: ${{ matrix.os }}` with
+    # debian-latest/debian-stable as runner *labels*, which only resolve to
+    # self-hosted runners. With none online those two legs sat queued
+    # indefinitely (observed: four runs stuck 17-60min, only the
+    # ubuntu-latest leg ever completing) until cancelled by hand. Building
+    # each distro in a container on ordinary GitHub-hosted runners removes
+    # the self-hosted dependency entirely.
+    #
+    # matrix.os stays the distro *name* because it's load-bearing: it picks
+    # the per-distro control file under tools/distro/debian/dpkg/<os>/ and
+    # names the released .deb. matrix.image is what it actually builds in.
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, debian-latest, debian-stable]
-    runs-on: ${{ matrix.os }}
-
+        include:
+          - os: ubuntu-latest
+            image: ubuntu:latest
+          - os: debian-latest
+            image: debian:testing
+          - os: debian-stable
+            image: debian:stable-slim
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.image }}
 
     permissions:
       contents: write
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Checkout submodules
-      run: git submodule update --init --recursive
-    - name: Update apt
-      run: sudo apt update
-    - name: Install Dependencies
-      run: sudo apt install -y libgtk-3-dev libuv1-dev libargtable2-dev libserialport-dev libconfig-dev libhidapi-dev liblua5.4-dev libxdg-basedir-dev libxml2-dev libpulse-dev libproc2-dev libcurl4-openssl-dev libglu1-mesa-dev
+    # Must come before actions/checkout: these images are minimal and ship
+    # no git, so checkout would fall back to a tarball download and silently
+    # skip submodules -- simapi and nappgui_src are both required to build.
+    # No sudo either; container jobs already run as root.
+    - name: Install build dependencies
+      run: |
+        apt-get update
+        apt-get install -y --no-install-recommends \
+          ca-certificates curl git \
+          build-essential cmake pkg-config \
+          libgtk-3-dev libuv1-dev libargtable2-dev libserialport-dev \
+          libconfig-dev libhidapi-dev liblua5.4-dev libxdg-basedir-dev \
+          libxml2-dev libpulse-dev libproc2-dev libcurl4-openssl-dev \
+          libglu1-mesa-dev
+
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    # $GITHUB_WORKSPACE, not ${{ github.workspace }}: in a container job the
+    # expression still renders the *host* path (/home/runner/work/...) while
+    # the repo is actually mounted at /__w/... inside the container. Using
+    # the expression made cmake fail with `The source directory
+    # "/home/runner/work/monocoque/monocoque" does not exist`. The env var is
+    # set to the container-side path, so it's correct either way.
     - name: Set build dir
       id: strings
       shell: bash
       run: |
-        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+        echo "build-output-dir=$GITHUB_WORKSPACE/build" >> "$GITHUB_OUTPUT"
         github_sha_hash=${{ github.sha }}
         echo "github-sha-short=${github_sha_hash:0:7}" >> $GITHUB_OUTPUT
 
@@ -38,7 +91,7 @@ jobs:
         -DCMAKE_CXX_COMPILER=g++
         -DCMAKE_C_COMPILER=gcc
         -DCMAKE_BUILD_TYPE=Release
-        -S ${{ github.workspace }}
+        -S "$GITHUB_WORKSPACE"
 
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release
@@ -51,48 +104,380 @@ jobs:
         mkdir -p PKG_SOURCE/usr/share/applications
         mkdir -p PKG_SOURCE/usr/share/pixmaps
         mkdir -p PKG_SOURCE/usr/share/icons/hicolor/scalable/apps
+        mkdir -p PKG_SOURCE/usr/share/monocoque
     - name: Download xpm icon
       run: |
         curl -sSL https://repo.spacefreak18.xyz/monocoque/icons/monocoque.xpm -o PKG_SOURCE/usr/share/pixmaps/monocoque.xpm
     - name: Download svg icon
       run: |
         curl -sSL https://repo.spacefreak18.xyz/monocoque/icons/monocoque.svg -o PKG_SOURCE/usr/share/icons/hicolor/scalable/apps/monocoque.svg
+    - name: Determine package version
+      id: pkgver
+      shell: bash
+      env:
+        RELEASE_TAG: ${{ inputs.release_tag }}
+      run: |
+        # The control files carry a hardcoded `Version: 1` that nobody
+        # maintains, so every .deb ever released claims version 1 regardless
+        # of its tag. Take the version from the tag instead.
+        #
+        # Guarded rather than used blindly: a Debian version must start with a
+        # digit, so a branch build (workflow_dispatch) or a non-release tag
+        # like `pkgtest-5` would make dpkg-deb fail outright. Anything that
+        # doesn't look like a version falls back to 0.0.0.
+        v=""
+        # RELEASE_TAG is set only when release-please calls this workflow;
+        # its tag exists but the run itself is on a branch, so GITHUB_REF_*
+        # would report master and fall through to 0.0.0.
+        v="${RELEASE_TAG#v}"
+        [ -z "$v" ] && [ "$GITHUB_REF_TYPE" = tag ] && v="${GITHUB_REF_NAME#v}"
+        case "$v" in
+          [0-9]*) ;;
+          *) v="0.0.0" ;;
+        esac
+        echo "version=$v" >> "$GITHUB_OUTPUT"
+        echo "packaging as version $v"
+
     - name: Copy script files around to stop .github from being added to the package then build the package
       run: |
         cp ./tools/distro/debian/dpkg/${{ matrix.os }}/control ./PKG_SOURCE/DEBIAN/control
+        sed -i "s/^Version:.*/Version: ${{ steps.pkgver.outputs.version }}/" ./PKG_SOURCE/DEBIAN/control
         cp ./tools/distro/debian/dpkg/copyright ./PKG_SOURCE/DEBIAN/copyright
         cp ./build/monocoque ./PKG_SOURCE/usr/bin/monocoque
         cp ./build/gmonocoque ./PKG_SOURCE/usr/bin/gmonocoque
         cp ./tools/monocoque.desktop ./PKG_SOURCE/usr/share/applications/monocoque.desktop
         dpkg-deb --build PKG_SOURCE monocoque-${{ matrix.os }}.deb
+        echo "--- control as packaged ---"
+        dpkg-deb --field monocoque-${{ matrix.os }}.deb Package Version
 
     - name: Release the Package
+      # Only a tag can publish a release; without this a workflow_dispatch run
+      # builds everything correctly and then reports failure on a step that
+      # cannot work, which makes a green build look broken.
+      if: github.ref_type == 'tag' || inputs.release_tag != ''
       uses: softprops/action-gh-release@v1
       with:
+        tag_name: ${{ inputs.release_tag || github.ref_name }}
         files: monocoque-${{ matrix.os }}.deb
+        # release-please writes the release body from the changelog it just
+        # generated. Letting this action generate its own notes as well would
+        # overwrite them, so it only does so for a hand-pushed tag.
+        generate_release_notes: ${{ inputs.release_tag == '' }}
 
 
   build-monocoque-rpms:
+    # Same self-hosted-label problem as the deb jobs above (fedora-43 was a
+    # runner label with nothing online to claim it); now a container on an
+    # ordinary GitHub-hosted runner, with fedora-44 added alongside 43.
     strategy:
+      fail-fast: false
       matrix:
-        os: [fedora-43]
-    runs-on: ${{ matrix.os }}
+        include:
+          - os: fedora-43
+            image: fedora:43
+          - os: fedora-44
+            image: fedora:44
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.image }}
     permissions:
       contents: write
     steps:
+    # The -devel list is the one fedora.spec's own header comment documents,
+    # plus gtk3/libcurl/mesa-libGLU to match its `Requires:` line -- the spec
+    # configures with -DBUILD_GUI=on, so the GUI's deps are build deps too.
+    #
+    # Retried because this pulls openh264 from Fedora's third-party Cisco
+    # repo (ciscobinary.openh264.org), which is a single-mirror CDN outside
+    # Fedora's own infrastructure and has proven flaky: the fedora-43 leg of
+    # the first run died on `Curl error (7): Could not connect to server`
+    # for it while fedora-44 downloaded the very same package fine in the
+    # same run -- i.e. transient, not a dependency or package-name problem.
+    # Not disabling that repo outright: openh264 is still pulled in even
+    # with weak deps off, so something here requires it outright (which
+    # package wasn't traced) and dropping the repo would likely break
+    # dependency resolution rather than fix anything.
+    - name: Install build dependencies
+      run: |
+        for attempt in 1 2 3; do
+          dnf install -y --setopt=install_weak_deps=False \
+            rpm-build cmake gcc gcc-c++ make git curl \
+            pulseaudio-libs-devel argtable-devel libconfig-devel hidapi-devel \
+            libserialport-devel lua-devel libuv-devel libxdg-basedir-devel \
+            libxml2-devel procps-ng-devel gtk3-devel libcurl-devel \
+            mesa-libGLU-devel && exit 0
+          echo "dnf install failed (attempt $attempt), retrying in 15s..."
+          sleep 15
+        done
+        echo "dnf install failed after 3 attempts" >&2
+        exit 1
+
+    # submodules: recursive is new here. It didn't matter while %prep cloned
+    # upstream and ran `git submodule update` itself; now that the staged
+    # checkout is what gets built, an empty nappgui_src fails configure with
+    # "does not contain a CMakeLists.txt file". Missed by the local fedora:44
+    # rehearsal, which mounted a working tree that already had its submodules.
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
     - name: create rpmbuild dirs
       run: mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-    - name: get spec file
-      run: curl -o ~/fedora.spec https://raw.githubusercontent.com/Spacefreak18/monocoque/refs/heads/master/tools/distro/fedora/rpm/fedora.spec
+
+    # The spec's %prep used to `git clone` upstream master, so the rpm's
+    # contents tracked master rather than the tag being built -- an rpm built
+    # from a tag would quietly ship master's code. Staged here and copied by
+    # %prep instead, so a package's contents are the commit it was built from.
+    - name: Stage the checked-out tree as the rpm source
+      run: |
+        rm -rf ~/rpmbuild/SOURCES/monocoque
+        cp -r "$GITHUB_WORKSPACE" ~/rpmbuild/SOURCES/monocoque
+        rm -rf ~/rpmbuild/SOURCES/monocoque/.github
+
+    # Uses the spec from the checked-out tree instead of curl'ing it from
+    # upstream's master branch, so a tag builds the spec that tag contains.
+    #
+    # The spec's `Version: 0.0.5` is stale and hand-maintained -- real tags are
+    # well past it, so released rpms have been installing as monocoque-0.0.5.
+    # Stamped from the tag here rather than edited in the spec, so the file
+    # stays a working default for local rpmbuild while CI releases carry the
+    # real version. Same digit guard as the deb job: rpm versions can't start
+    # with a non-digit, and scratch tags / branch builds would break it.
+    #
+    # NOTE (pre-existing, deliberately not fixed here): the spec's own %prep
+    # still does a fresh `git clone` of upstream master for the *sources*,
+    # so the rpm's contents track master rather than the tag being built.
+    # Worth fixing separately -- it needs the spec parameterised, which is a
+    # bigger change than getting these jobs running again.
     - name: run spec file
-      run: rpmbuild -ba ~/fedora.spec
+      shell: bash
+      env:
+        RELEASE_TAG: ${{ inputs.release_tag }}
+      run: |
+        v=""
+        # RELEASE_TAG is set only when release-please calls this workflow;
+        # its tag exists but the run itself is on a branch, so GITHUB_REF_*
+        # would report master and fall through to 0.0.0.
+        v="${RELEASE_TAG#v}"
+        [ -z "$v" ] && [ "$GITHUB_REF_TYPE" = tag ] && v="${GITHUB_REF_NAME#v}"
+        case "$v" in
+          [0-9]*) ;;
+          *) v="0.0.0" ;;
+        esac
+        echo "packaging as version $v"
+        sed -i "s/^Version:.*/Version: $v/" tools/distro/fedora/rpm/fedora.spec
+        rpmbuild -ba tools/distro/fedora/rpm/fedora.spec
+
+    # Glob rather than a hardcoded monocoque-0.0.5-1.x86_64.rpm: the filename
+    # tracks the spec's Version/Release, which is now stamped per-tag above.
     - name: rename file
-      run: cp ~/rpmbuild/RPMS/x86_64/monocoque-0.0.5-1.x86_64.rpm $GITHUB_WORKSPACE/monocoque-${{ matrix.os }}.rpm
+      run: |
+        cp ~/rpmbuild/RPMS/x86_64/monocoque-*.rpm "$GITHUB_WORKSPACE/monocoque-${{ matrix.os }}.rpm"
+        echo "--- rpm identity as built ---"
+        rpm -qp --qf '%{NAME} %{VERSION}-%{RELEASE}\n' "$GITHUB_WORKSPACE/monocoque-${{ matrix.os }}.rpm"
+
     - name: Release the Package
+      # Only a tag can publish a release; without this a workflow_dispatch run
+      # builds everything correctly and then reports failure on a step that
+      # cannot work, which makes a green build look broken.
+      if: github.ref_type == 'tag' || inputs.release_tag != ''
       uses: softprops/action-gh-release@v1
       with:
+        tag_name: ${{ inputs.release_tag || github.ref_name }}
         files: monocoque-${{ matrix.os }}.rpm
+        # release-please writes the release body from the changelog it just
+        # generated. Letting this action generate its own notes as well would
+        # overwrite them, so it only does so for a hand-pushed tag.
+        generate_release_notes: ${{ inputs.release_tag == '' }}
+
+
+  build-monocoque-appimage:
+    # An AppImage only runs where glibc is at least as new as the one it
+    # linked against, so it wants the OLDEST base that can build the code --
+    # building on current Ubuntu silently excludes older distros and defeats
+    # the point of shipping one.
+    #
+    # That floor is set by the compiler, not by choice: simapi's F1 2018
+    # headers use C23 enum-with-fixed-underlying-type (`enum TrackID :
+    # uint8_t`), which GCC only implements from 13 onwards. ubuntu-22.04
+    # ships GCC 11 and fails outright with `expected identifier or '(' before
+    # ':' token` -- confirmed by a real run, and no -std= value rescues it
+    # (verified separately: the construct is gated on compiler version, not
+    # on the standard flag). ubuntu-24.04 / GCC 13 is therefore the oldest
+    # usable base, giving a glibc 2.39 floor.
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    # librsvg2-common and libgtk-3-bin are for linuxdeploy's gtk plugin, not
+    # the build itself -- it needs an svg pixbuf loader and
+    # gtk-update-icon-cache to assemble a self-contained GTK runtime.
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          build-essential cmake pkg-config \
+          libgtk-3-dev libuv1-dev libargtable2-dev libserialport-dev \
+          libconfig-dev libhidapi-dev liblua5.4-dev libxdg-basedir-dev \
+          libxml2-dev libpulse-dev libproc2-dev libcurl4-openssl-dev \
+          libglu1-mesa-dev \
+          desktop-file-utils file patchelf wget \
+          librsvg2-common libgtk-3-bin
+
+    # -std=gnu2x for the C23 enum syntax above: GCC 13 implements it but
+    # still defaults to gnu17, unlike GCC 15+ (which the container-based
+    # deb/rpm legs get, and which accept it without the flag). gnu2x rather
+    # than c2x so GNU extensions stay on -- simapi also relies on asprintf.
+    - name: Build
+      run: |
+        cmake -B build -DBUILD_GUI=on -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_C_FLAGS=-std=gnu2x -S .
+        cmake --build build --config Release
+
+    # Uses the install() rules rather than hand-copying binaries the way the
+    # deb job does -- that's what they were added for.
+    - name: Populate AppDir
+      run: |
+        DESTDIR="$PWD/AppDir" cmake --install build --prefix /usr
+        # Icon basename must match the desktop file's `Icon=monocoque`.
+        # tools/monocoque.svg is the square copy shared with the Flatpak
+        # build; the published 100x50 artwork is rejected by icon tooling.
+        install -Dm644 tools/monocoque.svg \
+          AppDir/usr/share/icons/hicolor/scalable/apps/monocoque.svg
+
+    # APPIMAGE_EXTRACT_AND_RUN=1 because these tools are themselves
+    # AppImages and there is no FUSE on the runner to mount them with.
+    - name: Build AppImage
+      env:
+        APPIMAGE_EXTRACT_AND_RUN: 1
+        RELEASE_TAG: ${{ inputs.release_tag }}
+      run: |
+        # An AppImage carries no package metadata, so its filename is the only
+        # place a version can live -- hence versioning the output name here
+        # rather than stamping a field as the deb/rpm jobs do. Same digit
+        # guard, so scratch tags and branch builds still produce a valid name.
+        v=""
+        # RELEASE_TAG is set only when release-please calls this workflow;
+        # its tag exists but the run itself is on a branch, so GITHUB_REF_*
+        # would report master and fall through to 0.0.0.
+        v="${RELEASE_TAG#v}"
+        [ -z "$v" ] && [ "$GITHUB_REF_TYPE" = tag ] && v="${GITHUB_REF_NAME#v}"
+        case "$v" in
+          [0-9]*) ;;
+          *) v="0.0.0" ;;
+        esac
+        export OUTPUT="monocoque-${v}-x86_64.AppImage"
+        echo "packaging as $OUTPUT"
+
+        wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+        wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-gtk/raw/master/linuxdeploy-plugin-gtk.sh
+        chmod +x linuxdeploy-x86_64.AppImage linuxdeploy-plugin-gtk.sh
+
+        # Deploy dependencies first, without packaging, so there is a populated
+        # AppDir to take licences from -- an AppImage distributes every library
+        # it bundles, so their copyright files have to travel with it. A .deb
+        # needs none of this because its dependencies stay separate packages.
+        PATH="$PWD:$PATH" ./linuxdeploy-x86_64.AppImage \
+          --appdir AppDir \
+          --plugin gtk \
+          --desktop-file AppDir/usr/share/applications/monocoque.desktop \
+          --icon-file tools/monocoque.svg
+
+        tools/appimage-collect-licenses.sh AppDir
+
+        # monocoque itself and its vendored components are built here rather
+        # than installed from packages, so dpkg cannot account for them.
+        install -Dm644 LICENSE.rst AppDir/usr/share/doc/monocoque/LICENSE.rst
+        install -Dm644 tools/distro/debian/dpkg/copyright AppDir/usr/share/doc/monocoque/copyright
+        install -Dm644 src/monocoque/mgui/nappgui_src/LICENSE AppDir/usr/share/doc/nappgui/LICENSE
+
+        # Now package the AppDir, licences included.
+        PATH="$PWD:$PATH" ./linuxdeploy-x86_64.AppImage \
+          --appdir AppDir \
+          --output appimage
+        ls -la monocoque*.AppImage
+        echo "--- licence files in the image ---"
+        find AppDir/usr/share/doc -name copyright | wc -l
+
+    - name: Upload the AppImage as a build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: monocoque-x86_64.AppImage
+        path: monocoque*.AppImage
+
+    - name: Release the Package
+      # Only a tag can publish a release; without this a workflow_dispatch run
+      # builds everything correctly and then reports failure on a step that
+      # cannot work, which makes a green build look broken.
+      if: github.ref_type == 'tag' || inputs.release_tag != ''
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ inputs.release_tag || github.ref_name }}
+        files: monocoque*.AppImage
+        # release-please writes the release body from the changelog it just
+        # generated. Letting this action generate its own notes as well would
+        # overwrite them, so it only does so for a hand-pushed tag.
+        generate_release_notes: ${{ inputs.release_tag == '' }}
+
+
+  build-monocoque-flatpak:
+    # Folded in from the standalone flatpak.yml so every artifact lands on
+    # one release. Kept as continue-on-error because it is the newest and
+    # least battle-tested leg: a Flatpak failure must never turn a release
+    # red or block the deb/rpm/AppImage artifacts, which are independent
+    # jobs and upload regardless.
+    runs-on: ubuntu-22.04
+    continue-on-error: true
+    permissions:
+      contents: write
+    steps:
+      # No submodules: recursive here -- the manifest fetches simapi and
+      # nappgui_src itself as explicit `type: git` sources (pinned commits,
+      # reproducible regardless of what's checked out on disk). Confirmed
+      # via a failed CI run: recursive submodule checkout populates those
+      # paths with real .git files first, which then collides with
+      # flatpak-builder's own git source trying to clone into the same spot
+      # ("cannot overwrite non-directory .git with directory").
+      - uses: actions/checkout@v4
+
+      # ppa:flatpak/stable, not Ubuntu's own package: 22.04's flatpak-builder
+      # predates freedesktop Sdk 25.08 dropping the legacy appstream-compose
+      # binary in favour of `appstreamcli compose`, and fails at the finish
+      # stage without that fallback.
+      - name: Install flatpak-builder + freedesktop runtime/SDK
+        run: |
+          sudo add-apt-repository -y ppa:flatpak/stable
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          sudo flatpak install -y --noninteractive flathub org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08
+
+      - name: Build .flatpak
+        working-directory: flatpak
+        run: |
+          flatpak-builder --force-clean --repo=repo build-dir io.github.spacefreak18.monocoque.yml
+          flatpak build-bundle repo monocoque.flatpak io.github.spacefreak18.monocoque
+
+      - name: Upload .flatpak as a build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: monocoque.flatpak
+          path: flatpak/monocoque.flatpak
+
+      - name: Release the Package
+        if: github.ref_type == 'tag' || inputs.release_tag != ''
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ inputs.release_tag || github.ref_name }}
+          files: flatpak/monocoque.flatpak
+          # release-please writes the release body from the changelog it just
+          # generated. Letting this action generate its own notes as well would
+          # overwrite them, so it only does so for a hand-pushed tag.
+          generate_release_notes: ${{ inputs.release_tag == '' }}
 
   #arch-build:
   #  runs-on: ubuntu-latest

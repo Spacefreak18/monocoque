@@ -245,6 +245,8 @@ DeviceSettings;
 
 int strtogame(const char* game, MonocoqueSettings* ms);
 
+int strtodevsubsubtype(const char* device_subsubtype, DeviceSettings* ds);
+
 int devsetup(const char* device_type, const char* device_subtype, const char* config_files, MonocoqueSettings* ms, DeviceSettings* ds, config_setting_t* device_settings);
 
 int settingsfree(DeviceSettings ds);

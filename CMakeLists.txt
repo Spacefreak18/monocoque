@@ -12,6 +12,7 @@ SET_SOURCE_FILES_PROPERTIES( src/monocoque.c PROPERTIES LANGUAGE C)
 
 option(BUILD_GUI "Build GUI support" OFF)
 option(BUILD_SHARED "Build monocoque shared library" OFF)
+option(ENABLE_TESTS "Build test suite" OFF)
 
 
 project(monocoque)
@@ -72,9 +73,15 @@ pkg_check_modules(LIBPROC2 libproc2)
 if (LIBPROCPS_FOUND)
     #add_compile_definitions(USE_OLD_PID_VAL=0)
 elseif (LIBPROC2_FOUND)
-    if (LIBPROC2_VERSION VERSION_GREATER_EQUAL "4.0.5")
-        #add_compile_definitions(USE_OLD_PID_VAL=0)
-    else()
+    # Some distro packagings (e.g. the freedesktop Flatpak SDK) ship a
+    # libproc2.pc with `Version: UNKNOWN` rather than a real version
+    # string. VERSION_GREATER_EQUAL against that always evaluates false,
+    # silently falling through to the old (pre-4.0.5) PIDS_VAL API and
+    # failing to compile against an actually-current libproc2 whose real
+    # header has already moved to the new 3-argument macro. Only take the
+    # old-API branch when the version string is genuinely parseable and
+    # actually old.
+    if (LIBPROC2_VERSION MATCHES "^[0-9]" AND LIBPROC2_VERSION VERSION_LESS "4.0.5")
         add_compile_definitions(USE_OLD_PID_VAL=1)
     endif()
 else()
@@ -105,57 +112,6 @@ if(BUILD_GUI)
 endif()
 
 
-
-
-#add_executable(listusb tests/testlibusb.c)
-#target_include_directories(listusb PUBLIC)
-#target_link_libraries(listusb portaudio hidapi-hidraw)
-#add_test(listusb list-usb-devices listusb)
-
-#add_executable(testrevburner tests/testrevburner.c)
-#target_include_directories(testrevburner PUBLIC)
-#target_link_libraries(testrevburner hidapi-hidraw)
-#add_test(testrevburner testrevburner)
-
-#add_executable(listsound tests/pa_devs.c)
-#target_include_directories(listsound PUBLIC)
-#target_link_libraries(listsound m portaudio)
-#add_test(list-sound-devices listsound)
-#
-#add_executable(longsine tests/patest_longsine.c)
-#target_include_directories(longsine PUBLIC ${LIBXML_INCLUDE_DIR})
-#target_link_libraries(longsine m portaudio)
-#add_test(longsine longsine)
-#
-#add_executable(parserevburnerxml tests/revburnerparsetest.c)
-#target_include_directories(parserevburnerxml PUBLIC ${LIBXML_INCLUDE_DIR})
-#target_link_libraries(parserevburnerxml portaudio xml2)
-#add_test(parserevburnerxml parserevburnerxml)
-#
-add_executable(setmem tests/setmem.c)
-target_include_directories(setmem PUBLIC)
-target_link_libraries(setmem)
-add_test(setmem setmem)
-
-add_executable(getmem tests/getmem.c)
-target_include_directories(getmem PUBLIC)
-target_link_libraries(getmem)
-add_test(getmem getmem)
-#
-#add_executable(setsimdata tests/setsimdata.c)
-#target_include_directories(setsimdata PUBLIC)
-#target_link_libraries(setsimdata)
-#add_test(setsimdata setsimdata)
-#
-#add_executable(hidtest tests/hidtest.c)
-#target_include_directories(hidtest PUBLIC)
-#target_link_libraries(hidtest hidapi-hidraw)
-#add_test(hidtest hidtest)
-#
-add_executable(simlighttest tests/simlighttest.c)
-target_include_directories(simlighttest PUBLIC)
-target_link_libraries(simlighttest serialport)
-add_test(simlighttest simlighttest)
 
 
 # used for enabling additional compiler options if supported
@@ -221,6 +177,12 @@ endif()
 # unit tests --only enable if requested AND we're not building as a sub-project
 if(ENABLE_TESTS AND NOT MONOCOQUE_SUBPROJECT)
     message(STATUS "[monocoque] Unit Tests Enabled")
-    add_subdirectory(tests)
     enable_testing()
+    add_subdirectory(tests)
 endif()
+
+install(TARGETS monocoque-cli RUNTIME DESTINATION bin)
+if(BUILD_GUI)
+    install(TARGETS monocoque-gui RUNTIME DESTINATION bin)
+endif()
+install(FILES tools/monocoque.desktop DESTINATION share/applications)
