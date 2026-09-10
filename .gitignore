@@ -9,3 +9,6 @@
 /flatpak/repo/
 /flatpak/build-dir/
 /flatpak/.flatpak-builder/
+# The bundle itself. Missing from this list once already, and a `git add -A`
+# duly committed a 6MB build artifact.
+*.flatpak
