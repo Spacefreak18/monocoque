@@ -441,13 +441,27 @@ prepare_sources() {
         MONOCOQUE_SRC="$INSTALL_DIR/monocoque"
     fi
 
-    if [ ! -f "$MONOCOQUE_SRC/src/monocoque/simulatorapi/simapi/simapi/simdata.h" ]; then
+    local simapi_submodule="$MONOCOQUE_SRC/src/monocoque/simulatorapi/simapi"
+    if [ ! -f "$simapi_submodule/simapi/simdata.h" ]; then
         log_error "simapi submodule is missing under $MONOCOQUE_SRC"
         log_info "Run: git submodule update --init --recursive"
         exit 1
     fi
+    if [ ! -f "$simapi_submodule/simd/CMakeLists.txt" ]; then
+        log_error "simapi submodule does not include simd ($simapi_submodule/simd)"
+        exit 1
+    fi
 
-    git_clone_or_update https://github.com/Spacefreak18/simapi.git "$INSTALL_DIR/simapi" 0
+    # simd must come from the same simapi tree monocoque compiles against so both
+    # share one SimData layout for /dev/shm/SIMAPI.DAT (do not clone simapi master).
+    log_info "Using pinned simapi submodule for simd"
+    rm -rf "$INSTALL_DIR/simapi"
+    mkdir -p "$INSTALL_DIR/simapi"
+    tar -C "$simapi_submodule" --exclude='./.git' --exclude='./build' --exclude='./simd/build' -cf - . \
+        | tar -C "$INSTALL_DIR/simapi" -xf -
+    if [ -e "$simapi_submodule/.git" ]; then
+        log_info "simapi pin: $(git -C "$simapi_submodule" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+    fi
     log_success "Sources ready"
 }
 
