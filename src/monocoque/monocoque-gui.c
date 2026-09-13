@@ -192,6 +192,10 @@ static void i_OnStart(App *app, Event *e)
     if(appstate == 0)
     {
         rc = monocoque_gameloop_start();
+        if (rc != 0)
+        {
+            app->is_running = FALSE;
+        }
     }
     else
     {
