@@ -42,23 +42,30 @@ print_header() {
 
 print_header
 
+YES=0
+if [ "${1:-}" = "--yes" ] || [ "${1:-}" = "-y" ] || ! [ -t 0 ]; then
+    YES=1
+fi
+
 log_warn "This will remove:"
 echo "  • Monocoque installation ($INSTALL_DIR)"
 echo "  • Configuration files ($CONFIG_DIR/monocoque, $CONFIG_DIR/simd)"
-echo "  • Launcher scripts ($BIN_DIR/start-*, test-monocoque)"
-    echo "  • systemd service files ($SYSTEMD_DIR/simd.service)"
-    echo "  • Log files ($CACHE_DIR/monocoque)"
-    echo ""
+echo "  • Launcher scripts ($BIN_DIR/start-*, test-monocoque, monocoque-manager)"
+echo "  • systemd service files ($SYSTEMD_DIR/simd.service)"
+echo "  • Log files ($CACHE_DIR/monocoque)"
+echo ""
 echo "This will NOT remove:"
 echo "  • System dependencies (yder, libuv, etc.)"
 echo "  • Compiled simapi library (/usr/local/lib/libsimapi.so)"
+echo "  • udev rules (/etc/udev/rules.d/69-monocoque.rules) — remove those by hand if you installed them"
 echo ""
 
-read -p "Continue with uninstallation? [y/N]: " confirm
-
-if [[ ! $confirm =~ ^[Yy]$ ]]; then
-    log_info "Uninstallation cancelled"
-    exit 0
+if [ "$YES" -ne 1 ]; then
+    read -r -p "Continue with uninstallation? [y/N]: " confirm
+    if [[ ! $confirm =~ ^[Yy]$ ]]; then
+        log_info "Uninstallation cancelled"
+        exit 0
+    fi
 fi
 
 echo ""
@@ -82,13 +89,18 @@ fi
 
 # Remove configuration (ask first)
 if [ -d "$CONFIG_DIR/monocoque" ] || [ -d "$CONFIG_DIR/simd" ]; then
-    read -p "Remove configuration files? [y/N]: " remove_config
-    if [[ $remove_config =~ ^[Yy]$ ]]; then
-        rm -rf "$CONFIG_DIR/monocoque" 2>/dev/null || true
-        rm -rf "$CONFIG_DIR/simd" 2>/dev/null || true
+    if [ "$YES" -eq 1 ]; then
+        rm -rf "$CONFIG_DIR/monocoque" "$CONFIG_DIR/simd"
         log_success "Configuration files removed"
     else
-        log_info "Keeping configuration files"
+        read -r -p "Remove configuration files? [y/N]: " remove_config
+        if [[ $remove_config =~ ^[Yy]$ ]]; then
+            rm -rf "$CONFIG_DIR/monocoque" 2>/dev/null || true
+            rm -rf "$CONFIG_DIR/simd" 2>/dev/null || true
+            log_success "Configuration files removed"
+        else
+            log_info "Keeping configuration files"
+        fi
     fi
 fi
 
@@ -108,12 +120,17 @@ fi
 
 # Remove logs
 if [ -d "$CACHE_DIR/monocoque" ]; then
-    read -p "Remove log files? [y/N]: " remove_logs
-    if [[ $remove_logs =~ ^[Yy]$ ]]; then
+    if [ "$YES" -eq 1 ]; then
         rm -rf "$CACHE_DIR/monocoque"
         log_success "Log files removed"
     else
-        log_info "Keeping log files"
+        read -r -p "Remove log files? [y/N]: " remove_logs
+        if [[ $remove_logs =~ ^[Yy]$ ]]; then
+            rm -rf "$CACHE_DIR/monocoque"
+            log_success "Log files removed"
+        else
+            log_info "Keeping log files"
+        fi
     fi
 fi
 
