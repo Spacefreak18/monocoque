@@ -19,7 +19,6 @@ except ImportError:
 MIN_TERMINAL_HEIGHT = 20
 MIN_TERMINAL_WIDTH = 60
 PROCESS_STOP_WAIT_TIME = 1  # seconds
-SIMD_START_DELAY = 2  # seconds
 
 
 class MonocoqueManager:
@@ -148,13 +147,22 @@ class MonocoqueManager:
         return cleaned_files
     
     def check_installation(self):
-        """Check if monocoque is installed"""
+        """Check if monocoque and simd are installed. Missing simd is the
+        only condition that needs a human: it is required and cannot be started."""
         simd_exists = (self.install_dir / "simapi/simd/build/simd").exists() or \
                       subprocess.run(['which', 'simd'], capture_output=True).returncode == 0
         monocoque_exists = (self.install_dir / "monocoque/build/monocoque").exists() or \
                           subprocess.run(['which', 'monocoque'], capture_output=True).returncode == 0
         
-        return simd_exists and monocoque_exists
+        if not simd_exists:
+            print("Error: simd is required but is not installed.")
+            print("Install simd (package simd / simd-git, or run ./install.sh) and try again.")
+            return False
+        if not monocoque_exists:
+            print("Error: monocoque does not appear to be installed.")
+            print("Install it with ./install.sh or your distro package, then try again.")
+            return False
+        return True
     
     def draw_header(self, stdscr):
         """Draw header"""
@@ -234,13 +242,12 @@ class MonocoqueManager:
         row += 1
         
         menu_items = [
-            ("1", "Start simd", not self.simd_running),
-            ("2", "Start monocoque", not self.monocoque_running and self.simd_running),
-            ("3", "Test configuration", True),
-            ("4", "Edit monocoque config", True),
-            ("5", "View logs", True),
-            ("6", "Restart services", self.simd_running or self.monocoque_running),
-            ("7", "Stop all", self.simd_running or self.monocoque_running),
+            ("1", "Start", not self.monocoque_running),
+            ("2", "Test configuration", True),
+            ("3", "Edit monocoque config", True),
+            ("4", "View logs", True),
+            ("5", "Restart services", self.simd_running or self.monocoque_running),
+            ("6", "Stop all", self.simd_running or self.monocoque_running),
             ("0", "Quit", True),
         ]
         
@@ -261,13 +268,12 @@ class MonocoqueManager:
     def get_enabled_menu_items(self):
         """Get list of currently enabled menu items with their indices"""
         menu_items = [
-            ("1", "Start simd", not self.simd_running),
-            ("2", "Start monocoque", not self.monocoque_running and self.simd_running),
-            ("3", "Test configuration", True),
-            ("4", "Edit monocoque config", True),
-            ("5", "View logs", True),
-            ("6", "Restart services", self.simd_running or self.monocoque_running),
-            ("7", "Stop all", self.simd_running or self.monocoque_running),
+            ("1", "Start", not self.monocoque_running),
+            ("2", "Test configuration", True),
+            ("3", "Edit monocoque config", True),
+            ("4", "View logs", True),
+            ("5", "Restart services", self.simd_running or self.monocoque_running),
+            ("6", "Stop all", self.simd_running or self.monocoque_running),
             ("0", "Quit", True),
         ]
         
@@ -313,24 +319,20 @@ class MonocoqueManager:
     
     def handle_action(self, action):
         """Handle menu action"""
-        if action == '1':  # Start simd
-            cmd = "start-simd || $HOME/.local/bin/start-simd; exec bash"
-            self.run_command(cmd)
-            
-        elif action == '2':  # Start monocoque
+        if action == '1':  # Start (monocoque starts simd if needed)
             cmd = "start-monocoque || $HOME/.local/bin/start-monocoque; exec bash"
             self.run_command(cmd)
             
-        elif action == '3':  # Test configuration
+        elif action == '2':  # Test configuration
             cmd = "test-monocoque || $HOME/.local/bin/test-monocoque; read -p 'Press Enter to close...'"
             self.run_command(cmd)
             
-        elif action == '4':  # Edit config
+        elif action == '3':  # Edit config
             editor = os.environ.get('EDITOR', 'nano')
             config_file = self.config_dir / "monocoque/monocoque.config"
             subprocess.run([editor, str(config_file)])
             
-        elif action == '5':  # View logs
+        elif action == '4':  # View logs
             xdg_cache = os.environ.get('XDG_CACHE_HOME', os.path.join(Path.home(), ".cache"))
             log_dir = Path(xdg_cache) / "monocoque"
             if log_dir.exists():
@@ -341,18 +343,16 @@ class MonocoqueManager:
                 cmd = f"echo 'No log directory found at {log_dir}'; echo 'Logs will appear here when monocoque runs'; read -p 'Press Enter to close...'"
                 self.run_command(cmd)
             
-        elif action == '6':  # Restart services
+        elif action == '5':  # Restart services
             stopped = self.stop_all_services()
             stopped_note = f"Stopped: {', '.join(stopped)}" if stopped else ""
-            # Wait a moment for processes to stop
             time.sleep(PROCESS_STOP_WAIT_TIME)
-            # Restart simd first
-            cmd = f"start-simd || $HOME/.local/bin/start-simd; sleep {SIMD_START_DELAY}; start-monocoque || $HOME/.local/bin/start-monocoque; exec bash"
+            cmd = "start-monocoque || $HOME/.local/bin/start-monocoque; exec bash"
             self.run_command(cmd)
-            restart_note = "Restarting services in terminal window..."
+            restart_note = "Restarting in terminal window..."
             self.action_message = f"{stopped_note}. {restart_note}" if stopped_note else restart_note
             
-        elif action == '7':  # Stop all
+        elif action == '6':  # Stop all
             stopped = self.stop_all_services()
             if stopped:
                 self.action_message = f"Stopped: {', '.join(stopped)}"
@@ -526,9 +526,6 @@ class MonocoqueManager:
             elif key == ord('6'):
                 self.handle_action('6')
                 stdscr.clear()  # Force refresh after action
-            elif key == ord('7'):
-                self.handle_action('7')
-                stdscr.clear()  # Force refresh after action
             elif key == ord('0'):
                 break
 
@@ -556,13 +553,12 @@ class MonocoqueManager:
             
             print("\nActions:")
             menu_items = [
-                ("1", "Start simd", not self.simd_running),
-                ("2", "Start monocoque", not self.monocoque_running and self.simd_running),
-                ("3", "Test configuration", True),
-                ("4", "Edit monocoque config", True),
-                ("5", "View logs", True),
-                ("6", "Restart services", self.simd_running or self.monocoque_running),
-                ("7", "Stop all", self.simd_running or self.monocoque_running),
+                ("1", "Start", not self.monocoque_running),
+                ("2", "Test configuration", True),
+                ("3", "Edit monocoque config", True),
+                ("4", "View logs", True),
+                ("5", "Restart services", self.simd_running or self.monocoque_running),
+                ("6", "Stop all", self.simd_running or self.monocoque_running),
                 ("0", "Quit", True),
             ]
             
@@ -576,14 +572,14 @@ class MonocoqueManager:
                 choice = input("\nEnter your choice: ").strip()
                 if choice == '0':
                     break
-                elif choice in ['1', '2', '3', '4', '5', '6', '7']:
+                elif choice in ['1', '2', '3', '4', '5', '6']:
                     # Check if action is enabled
                     for key, label, enabled in menu_items:
                         if key == choice and enabled:
                             self.handle_action(choice)
-                            if choice in ['4']:  # Actions that don't need terminal
+                            if choice in ['3']:  # Actions that don't need terminal
                                 print("Action completed.")
-                            elif choice in ['6', '7']:
+                            elif choice in ['5', '6']:
                                 pass  # Stop/restart notes print in the next status refresh
                             else:
                                 print("Command executed. Check the terminal output.")
@@ -603,8 +599,6 @@ def main():
     manager = MonocoqueManager()
     
     if not manager.check_installation():
-        print("Error: Monocoque does not appear to be installed")
-        print("Run the installer first: ./install.sh")
         sys.exit(1)
     
     # Check if we can use curses (proper terminal environment)
