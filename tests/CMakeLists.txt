@@ -9,3 +9,7 @@ add_executable(confighelper_test confighelper_test.c)
 # exercises strtodevsubsubtype.
 target_link_libraries(confighelper_test helper config slog xml2 simulatorapi m ${PROC_LIBS})
 add_test(NAME confighelper_test COMMAND confighelper_test)
+
+add_executable(ensure_simd_test ensure_simd_test.c)
+target_link_libraries(ensure_simd_test helper config slog xml2 simulatorapi m ${PROC_LIBS})
+add_test(NAME ensure_simd_test COMMAND ensure_simd_test)

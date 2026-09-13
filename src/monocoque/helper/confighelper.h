@@ -131,6 +131,7 @@ typedef enum
     MONOCOQUE_ERROR_NODATA                   = 4,
     MONOCOQUE_ERROR_UNKNOWN_DEV              = 5,
     MONOCOQUE_ERROR_UNSUPPORTED_SIM_FEATURE  = 6,
+    MONOCOQUE_ERROR_SIMD_REQUIRED            = 7,
 }
 MonocoqueError;
 
