@@ -59,7 +59,7 @@ Options: `--aur`, `--skip-bridges`, `--build-bridges`, `--deps-only`. See `./ins
 
 Installer CI (`.github/workflows/installer.yml`) runs these checks in containers: `bash tools/distro/test-install-containers.sh detect|mocks|immutable|full <distro>`.
 
-After install, start **simd first**, then the game, then monocoque (`start-simd` / `start-monocoque`, or `monocoque-manager`). Game and bridge setup: [simd usage](https://spacefreak18.github.io/simapi/simd_usage). Full docs: [spacefreak18.github.io/simapi](https://spacefreak18.github.io/simapi/).
+After install, use `start-simd` / `start-monocoque`, or `monocoque-manager`. Game and bridge setup: [simd usage](https://spacefreak18.github.io/simapi/simd_usage). Full docs: [spacefreak18.github.io/simapi](https://spacefreak18.github.io/simapi/).
 
 For a manual walkthrough, see [HOW-TO-USE.md](HOW-TO-USE.md).
 

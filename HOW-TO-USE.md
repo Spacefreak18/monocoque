@@ -49,15 +49,13 @@ Activate Shared Memory and set the protocol to Project CARS 2, then restart the 
 
 #### Assetto Corsa & Assetto Corsa Competizione (ACC)
 
-No extra in-game telemetry toggle. You still need simd running and the AC/ACC bridge EXE in the launch command.
+No extra in-game telemetry toggle. You still need the AC/ACC bridge EXE in the Steam launch command.
 
-## Run everything, in this order
+## Run
 
-1. Start **simd** (`start-simd`, or `systemctl --user start simd.service`). If the binary was installed under `/usr/local`, the launcher already sets `LD_LIBRARY_PATH`.
-2. Start the game from Steam.
-3. Start **monocoque** (`start-monocoque` or `monocoque play`).
+Launchers after a packaged or `./install.sh` install: `start-simd`, `start-monocoque`, `test-monocoque`, or `monocoque-manager`. Start the game from Steam as usual.
 
-Starting simd after the game is a common reason telemetry stays empty.
+Shared-memory titles still need the bridge EXE in the Steam launch command (`SIMD_BRIDGE_EXE=... %command%`). The installer can also enable `simd.service` so mapping is ready at login. If the simd binary was installed under `/usr/local`, the launcher already sets `LD_LIBRARY_PATH`.
 
 ## Troubleshooting
 
