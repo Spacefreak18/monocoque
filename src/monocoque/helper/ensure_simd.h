@@ -13,26 +13,15 @@ typedef enum
 }
 SimdEnsureStatus;
 
-/* True if a process whose name/cmdline matches simd is alive. */
 int simd_process_running(void);
 
-/*
- * Return the first executable path in a NULL-terminated candidate list.
- * Caller frees. Returns NULL if none are usable.
- */
+/* Caller frees. Returns NULL if none are usable. */
 char* simd_find_binary_from_candidates(const char* const* candidates);
 
-/*
- * Locate simd: $SIMD, PATH, then well-known install locations.
- * Caller frees. Returns NULL if simd is not installed.
- */
+/* Locate via $SIMD, PATH, then install locations. Caller frees. */
 char* simd_find_binary(void);
 
-/*
- * Closed startup for the telemetry daemon. If simd is already running this
- * is a no-op. Otherwise start it (user unit if present, else the binary).
- * The only expected human action is installing simd when it is missing.
- */
+/* No-op if already running; otherwise start via user unit or binary. */
 SimdEnsureStatus ensure_simd(void);
 
 #ifdef __cplusplus

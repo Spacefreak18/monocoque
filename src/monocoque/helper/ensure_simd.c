@@ -19,8 +19,12 @@
 #include <unistd.h>
 
 #define SIMD_PID_FILE "/tmp/simd.pid"
+#define SIMD_LOG_FILE "/tmp/simd.log"
 #define SIMD_START_TIMEOUT_MS 3000
 #define SIMD_POLL_MS 50
+
+static const char LD_LIBRARY_PATH_PREFIX[] = "LD_LIBRARY_PATH=";
+#define LD_LIBRARY_PATH_PREFIX_LEN (sizeof(LD_LIBRARY_PATH_PREFIX) - 1)
 
 extern char** environ;
 
@@ -269,9 +273,9 @@ static char** make_simd_env(void)
     int replaced = 0;
     for (size_t i = 0; i < count; i++)
     {
-        if (strncmp(environ[i], "LD_LIBRARY_PATH=", 16) == 0)
+        if (strncmp(environ[i], LD_LIBRARY_PATH_PREFIX, LD_LIBRARY_PATH_PREFIX_LEN) == 0)
         {
-            if (asprintf(&envp[j], "LD_LIBRARY_PATH=%s", ld) < 0)
+            if (asprintf(&envp[j], "%s%s", LD_LIBRARY_PATH_PREFIX, ld) < 0)
             {
                 envp[j] = NULL;
                 break;
@@ -286,7 +290,7 @@ static char** make_simd_env(void)
     }
     if (replaced == 0)
     {
-        if (asprintf(&envp[j], "LD_LIBRARY_PATH=%s", ld) < 0)
+        if (asprintf(&envp[j], "%s%s", LD_LIBRARY_PATH_PREFIX, ld) < 0)
         {
             envp[j] = NULL;
         }
@@ -307,7 +311,7 @@ static void free_simd_env(char** envp)
     }
     for (size_t i = 0; envp[i] != NULL; i++)
     {
-        if (strncmp(envp[i], "LD_LIBRARY_PATH=", 16) == 0)
+        if (strncmp(envp[i], LD_LIBRARY_PATH_PREFIX, LD_LIBRARY_PATH_PREFIX_LEN) == 0)
         {
             free(envp[i]);
         }
@@ -393,7 +397,7 @@ SimdEnsureStatus ensure_simd(void)
     if (spawn_simd(path) != 0)
     {
         free(path);
-        fprintf(stderr, "simd failed to start. See logs or /tmp/simd.log\n");
+        fprintf(stderr, "simd failed to start. See logs or %s\n", SIMD_LOG_FILE);
         sloge("simd failed to start");
         return SIMD_START_FAILED;
     }
@@ -401,7 +405,7 @@ SimdEnsureStatus ensure_simd(void)
 
     if (!wait_until_running())
     {
-        fprintf(stderr, "simd did not stay running after start. See /tmp/simd.log\n");
+        fprintf(stderr, "simd did not stay running after start. See %s\n", SIMD_LOG_FILE);
         sloge("simd did not stay running after start");
         return SIMD_START_FAILED;
     }
