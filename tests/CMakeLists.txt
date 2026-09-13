@@ -13,3 +13,11 @@ add_test(NAME confighelper_test COMMAND confighelper_test)
 add_executable(ensure_simd_test ensure_simd_test.c)
 target_link_libraries(ensure_simd_test helper config slog xml2 simulatorapi m ${PROC_LIBS})
 add_test(NAME ensure_simd_test COMMAND ensure_simd_test)
+
+find_program(BASH_PROGRAM bash)
+if (BASH_PROGRAM)
+    add_test(NAME startup_play_missing_simd
+        COMMAND ${BASH_PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/startup_play.sh missing $<TARGET_FILE:monocoque-cli>)
+    add_test(NAME startup_play_starts_simd
+        COMMAND ${BASH_PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/startup_play.sh starts $<TARGET_FILE:monocoque-cli>)
+endif()
