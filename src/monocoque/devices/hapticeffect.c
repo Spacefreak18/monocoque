@@ -18,6 +18,8 @@
 #define maxbrake     0
 #define maxthrottle  0
 #define maxXvelocity 0.001
+#define minYvelocity 0
+#define maxZvelocity 1
 
 
 bool hasTyreDiameter(SimData* simdata)
@@ -321,11 +323,11 @@ double slipeffect(SimData* simdata, HapticEffect* h, int useconfig, int* configc
         slogt("wheelslip values from sim are %f %f %f %f", wheelslip[0], wheelslip[1], wheelslip[2], wheelslip[3]);
     }
 
-    if(simdata->Yvelocity <= 0)
+    if(simdata->Yvelocity <= minYvelocity)
     {
         return 0;
     }
-    if(simdata->Zvelocity > 1 || simdata->Zvelocity < -1)
+    if(fabs(simdata->Zvelocity) > maxZvelocity)
     {
         return 0;
     }

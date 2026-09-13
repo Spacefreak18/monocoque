@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <math.h>
 #include <string.h>
 
@@ -130,7 +131,8 @@ int moza_ks_pro_wheel_init(SerialDevice* serialdevice, const char* portdev)
     p5[MOZA_COLOR_PAYLOAD_SIZE-1] = moza_checksum(p5, MOZA_COLOR_PAYLOAD_SIZE);
 
     unsigned char* payloads[] = {p1, p2, p3, p4, p5};
-    for (int i = 0; i < 5; i++) {
+    size_t payload_count = sizeof(payloads) / sizeof(payloads[0]);
+    for (size_t i = 0; i < payload_count; i++) {
         int result = monocoque_serial_write(serialdevice->id, payloads[i], MOZA_COLOR_PAYLOAD_SIZE, MOZA_TIMEOUT);
         if (result < 0) return result;
     }

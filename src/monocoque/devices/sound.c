@@ -35,7 +35,7 @@ int setupsound()
         return -1;
     }
 
-    // Wait for the context to be ready; bail out on failed/terminated states
+    // Wait for the context to be ready
     for(;;) {
         pa_context_state_t context_state = pa_context_get_state(context);
         if (context_state == PA_CONTEXT_READY) break;
