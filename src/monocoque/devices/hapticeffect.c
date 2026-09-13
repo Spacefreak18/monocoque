@@ -247,6 +247,7 @@ int initializeHapticEffect(HapticEffect* h, HapticEffectSettings* hs, MonocoqueS
     h->useconfig = ms->useconfig;
     h->configcheck = &ms->configcheck;
     h->tyrediameterconfig = ms->tyre_diameter_config;
+    return 0;
 }
 
 
@@ -262,10 +263,14 @@ double slipeffect(SimData* simdata, HapticEffect* h, int useconfig, int* configc
     wheelslip[2] = 0;
     wheelslip[3] = 0;
 
-    int sim_slip_ratio =0;
+    int sim_slip_ratio = 0;
     for (int i = 0; i < 4; i++)
     {
-        sim_slip_ratio = abs(simdata->tyreslipratio[i]);
+        if (fabs(simdata->tyreslipratio[i]) != 0.0)
+        {
+            sim_slip_ratio = 1;
+            break;
+        }
     }
 
     if(sim_slip_ratio == 0)
@@ -306,14 +311,6 @@ double slipeffect(SimData* simdata, HapticEffect* h, int useconfig, int* configc
             default:
                 slogw("Unknown effect type %i", effecttype);
         }
-        if(simdata->Yvelocity <= 0)
-        {
-            return 0;
-        }
-        if(simdata->Zvelocity > 1 || simdata->Zvelocity < -1)
-        {
-            return 0;
-        }
     }
     else
     {
@@ -322,6 +319,15 @@ double slipeffect(SimData* simdata, HapticEffect* h, int useconfig, int* configc
             wheelslip[i] = simdata->tyreslipratio[i];
         }
         slogt("wheelslip values from sim are %f %f %f %f", wheelslip[0], wheelslip[1], wheelslip[2], wheelslip[3]);
+    }
+
+    if(simdata->Yvelocity <= 0)
+    {
+        return 0;
+    }
+    if(simdata->Zvelocity > 1 || simdata->Zvelocity < -1)
+    {
+        return 0;
     }
 
 

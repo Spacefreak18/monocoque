@@ -29,12 +29,21 @@ int setupsound()
 
     // Start the mainloop
     pa_threaded_mainloop_start(mainloop);
-    pa_context_connect(context, NULL, 0, NULL);
+    if (pa_context_connect(context, NULL, 0, NULL) < 0) {
+        sloge("pulseaudio connect failed");
+        pa_threaded_mainloop_unlock(mainloop);
+        return -1;
+    }
 
-    // Wait for the context to be ready
+    // Wait for the context to be ready; bail out on failed/terminated states
     for(;;) {
         pa_context_state_t context_state = pa_context_get_state(context);
         if (context_state == PA_CONTEXT_READY) break;
+        if (!PA_CONTEXT_IS_GOOD(context_state)) {
+            sloge("pulseaudio context failed (state %i)", (int)context_state);
+            pa_threaded_mainloop_unlock(mainloop);
+            return -1;
+        }
         pa_threaded_mainloop_wait(mainloop);
     }
 

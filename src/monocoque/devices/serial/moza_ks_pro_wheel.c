@@ -113,8 +113,9 @@ int moza_ks_pro_wheel_update(SerialDevice* serialdevice, SimData* simData)
 
 int moza_ks_pro_wheel_init(SerialDevice* serialdevice, const char* portdev)
 {
-    serialdevice->id = monocoque_serial_open(serialdevice, portdev);
-    if (serialdevice->id == -1) return serialdevice->id;
+    int id = monocoque_serial_open(serialdevice, portdev);
+    if (id < 0) return id;
+    serialdevice->id = id;
 
     unsigned char p1[] = MOZA_RPM_COLOR_PAYLOAD_1;
     unsigned char p2[] = MOZA_RPM_COLOR_PAYLOAD_2;
@@ -128,15 +129,16 @@ int moza_ks_pro_wheel_init(SerialDevice* serialdevice, const char* portdev)
     p4[MOZA_COLOR_PAYLOAD_SIZE-1] = moza_checksum(p4, MOZA_COLOR_PAYLOAD_SIZE);
     p5[MOZA_COLOR_PAYLOAD_SIZE-1] = moza_checksum(p5, MOZA_COLOR_PAYLOAD_SIZE);
 
-    monocoque_serial_write(serialdevice->id, p1, MOZA_COLOR_PAYLOAD_SIZE, MOZA_TIMEOUT);
-    monocoque_serial_write(serialdevice->id, p2, MOZA_COLOR_PAYLOAD_SIZE, MOZA_TIMEOUT);
-    monocoque_serial_write(serialdevice->id, p3, MOZA_COLOR_PAYLOAD_SIZE, MOZA_TIMEOUT);
-    monocoque_serial_write(serialdevice->id, p4, MOZA_COLOR_PAYLOAD_SIZE, MOZA_TIMEOUT);
-    monocoque_serial_write(serialdevice->id, p5, MOZA_COLOR_PAYLOAD_SIZE, MOZA_TIMEOUT);
+    unsigned char* payloads[] = {p1, p2, p3, p4, p5};
+    for (int i = 0; i < 5; i++) {
+        int result = monocoque_serial_write(serialdevice->id, payloads[i], MOZA_COLOR_PAYLOAD_SIZE, MOZA_TIMEOUT);
+        if (result < 0) return result;
+    }
 
     unsigned char p6[] = MOZA_FLAG_COLOR_OFF_RIGHT;
     p6[MOZA_COLOR_PAYLOAD_SIZE-1] = moza_checksum(p6, MOZA_COLOR_PAYLOAD_SIZE);
-    monocoque_serial_write(serialdevice->id, p6, MOZA_COLOR_PAYLOAD_SIZE, MOZA_TIMEOUT);
+    int result = monocoque_serial_write(serialdevice->id, p6, MOZA_COLOR_PAYLOAD_SIZE, MOZA_TIMEOUT);
+    if (result < 0) return result;
 
-    return serialdevice->id;
+    return 0;
 }
