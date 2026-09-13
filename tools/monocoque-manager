@@ -34,6 +34,7 @@ class MonocoqueManager:
         self.simd_running = False
         self.monocoque_running = False
         self.last_cleaned_pid_files = []  # Track cleaned stale PID files
+        self.action_message = ""  # Feedback for stop/restart (shown in the TUI, not stdout)
         
     def check_processes(self):
         """Check if simd and monocoque are running using careful detection"""
@@ -196,17 +197,28 @@ class MonocoqueManager:
             stdscr.addstr("STOPPED")
             stdscr.attroff(curses.color_pair(3))
         
-        # Show notification about cleaned PID files
+        # Show one-shot notes (PID cleanup, stop/restart) inside curses, never via print()
         current_row = row + 3
+        width = stdscr.getmaxyx()[1]
+        notes = []
         if self.last_cleaned_pid_files:
-            cleaned_msg = f"● Cleaned stale PID files: {', '.join(self.last_cleaned_pid_files)}"
-            stdscr.attron(curses.color_pair(4))
-            stdscr.addstr(current_row, 4, cleaned_msg)
-            stdscr.attroff(curses.color_pair(4))
-            current_row += 1
-            # Clear the notification after showing it once
+            notes.append(f"Cleaned stale PID files: {', '.join(self.last_cleaned_pid_files)}")
             self.last_cleaned_pid_files = []
-        
+        if self.action_message:
+            notes.append(self.action_message)
+            self.action_message = ""
+        for note in notes:
+            text = f"● {note}"
+            if width > 6 and len(text) > width - 2:
+                text = text[: width - 5] + "..."
+            try:
+                stdscr.attron(curses.color_pair(4))
+                stdscr.addstr(current_row, 4, text)
+                stdscr.attroff(curses.color_pair(4))
+            except curses.error:
+                pass
+            current_row += 1
+
         return current_row
     
     def draw_menu(self, stdscr, row, selected):
@@ -331,21 +343,21 @@ class MonocoqueManager:
             
         elif action == '6':  # Restart services
             stopped = self.stop_all_services()
-            if stopped:
-                print(f"Stopped: {', '.join(stopped)}")
+            stopped_note = f"Stopped: {', '.join(stopped)}" if stopped else ""
             # Wait a moment for processes to stop
             time.sleep(PROCESS_STOP_WAIT_TIME)
             # Restart simd first
             cmd = f"start-simd || $HOME/.local/bin/start-simd; sleep {SIMD_START_DELAY}; start-monocoque || $HOME/.local/bin/start-monocoque; exec bash"
             self.run_command(cmd)
-            print("Restarting services in terminal window...")
+            restart_note = "Restarting services in terminal window..."
+            self.action_message = f"{stopped_note}. {restart_note}" if stopped_note else restart_note
             
         elif action == '7':  # Stop all
             stopped = self.stop_all_services()
             if stopped:
-                print(f"Stopped: {', '.join(stopped)}")
+                self.action_message = f"Stopped: {', '.join(stopped)}"
             else:
-                print("No running services found to stop")
+                self.action_message = "No running services found to stop"
     
     def stop_all_services(self):
         """Carefully stop simd and monocoque processes while preserving the manager"""
@@ -533,11 +545,14 @@ class MonocoqueManager:
             print(f"  simd:      {'RUNNING' if self.simd_running else 'STOPPED'}")
             print(f"  monocoque: {'RUNNING' if self.monocoque_running else 'STOPPED'}")
             
-            # Show notification about cleaned PID files
+            # Show notification about cleaned PID files and last action
             if self.last_cleaned_pid_files:
                 print(f"  Note: Cleaned stale PID files: {', '.join(self.last_cleaned_pid_files)}")
                 # Clear the notification after showing it once
                 self.last_cleaned_pid_files = []
+            if self.action_message:
+                print(f"  Note: {self.action_message}")
+                self.action_message = ""
             
             print("\nActions:")
             menu_items = [
@@ -568,8 +583,8 @@ class MonocoqueManager:
                             self.handle_action(choice)
                             if choice in ['4']:  # Actions that don't need terminal
                                 print("Action completed.")
-                            elif choice in ['6', '7']:  # Stop/restart actions provide their own feedback
-                                pass  # Feedback already provided by handle_action
+                            elif choice in ['6', '7']:
+                                pass  # Stop/restart notes print in the next status refresh
                             else:
                                 print("Command executed. Check the terminal output.")
                             break
