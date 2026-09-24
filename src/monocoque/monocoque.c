@@ -306,7 +306,7 @@ int main(int argc, char** argv)
                 settingsfree(ds[i]);
             }
             free(ds);
-            error = tester(simdevices, numdevices);
+            error = tester(ms, simdevices, numdevices);
             if (error == MONOCOQUE_ERROR_NONE)
             {
                 slogi("Test exited succesfully with error code: %i", error);

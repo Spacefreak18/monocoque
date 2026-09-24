@@ -24,10 +24,12 @@ typedef struct
     bool user_specified_config_file;
     bool user_specified_config_dir;
     bool user_specified_log_file;
+    bool user_specified_test_file;
 
     char* log_filename_str;
     char* log_fullfilename_str;
     char* log_dirname_str;
+    char* test_file_path_str;
 }
 Parameters;
 

@@ -12,6 +12,7 @@
 
 #include "gameloop.h"
 #include "loopdata.h"
+#include "testlooplua.h"
 #include "../helper/confighelper.h"
 #include "../devices/simdevice.h"
 #include "../devices/hapticeffect.h"
@@ -1021,75 +1022,24 @@ static void update_devices(SimDevice* devices, int numdevices, SimData* simdata,
     }
 }
 
-int tester(SimDevice* devices, int numdevices)
+static int static_test(SimDevice* devices, int numdevices, SimData* simdata, SimMap* testsimmap)
 {
 
-    slogi("preparing test with %i devices...", numdevices);
-    SimData* simdata = malloc(sizeof(SimData));
-    memset(simdata, 0, sizeof(SimData));
-    simdata->simon = true;
-    simdata->simstatus = SIMAPI_STATUS_ACTIVEPLAY;
+    fflush(stdout);
+    //// TODO: look into this, my serial leds make this hang
+    //for (int r = 0; r < 8000; r += 3)
+    //{
+    //    simdata->rpms = 1000 + r;
+    //    update_devices(devices, numdevices, simdata, testsimmap);
+    //    usleep(1000);
+    //}
 
-    SimMap* testsimmap = malloc(sizeof(SimMap));
-    memset(testsimmap, 0, sizeof(SimMap));
-    int shmerr = simapi_universalmap_open(testsimmap, simdata);
-    if (shmerr != SIMAPI_ERROR_NONE)
-    {
-        slog_warn("Could not open shared telemetry memory for test mode (error %i) - test sequence will still drive local devices, but external tools won't see it", shmerr);
-        free(testsimmap);
-        testsimmap = NULL;
-    }
-
-    struct termios newsettings, canonicalmode;
-    tcgetattr(0, &canonicalmode);
-    newsettings = canonicalmode;
-    newsettings.c_lflag &= (~ICANON & ~ECHO);
-    newsettings.c_cc[VMIN] = 1;
-    newsettings.c_cc[VTIME] = 0;
-    tcsetattr(0, TCSANOW, &newsettings);
-
-    fprintf(stdout, "\n");
-    simdata->car[0] = 'C';
-    simdata->car[1] = 'A';
-    simdata->car[2] = 'R';
-    simdata->car[3] = '\0';
-
-    simdata->gear = SIMAPI_GEAR_NEUTRAL;
-    simdata->gearc[0] = 0x4e;
-    simdata->gearc[1] = 0;
-    simdata->velocity = 16;
-    simdata->rpms = 100;
-    simdata->maxrpm = 8000;
-    simdata->abs = 0;
-    simdata->tyrediameter[0] = -1;
-    simdata->tyrediameter[1] = -1;
-    simdata->tyrediameter[2] = -1;
-    simdata->tyrediameter[3] = -1;
-    simdata->tyreslipratio[0] = 0;
-    simdata->tyreslipratio[1] = 0;
-    simdata->tyreslipratio[2] = 0;
-    simdata->tyreslipratio[3] = 0;
-    simdata->Xvelocity = 0;
-    simdata->Yvelocity = 100;
-    simdata->Zvelocity = 0;
-
-    sleep(1);
-
-    fprintf(stdout, "Revving rpm from 1000 to 8000 and back\n");
-    // TODO: look into this, my serial leds make this hang
-    for (int r = 0; r < 8000; r += 3)
-    {
-        simdata->rpms = 1000 + r;
-        update_devices(devices, numdevices, simdata, testsimmap);
-        usleep(1000);
-    }
-
-    for (int r = 0; r < 8000; r += 3)
-    {
-        simdata->rpms = 9000 - r;
-        update_devices(devices, numdevices, simdata, testsimmap);
-        usleep(1000);
-    }
+    //for (int r = 0; r < 8000; r += 3)
+    //{
+    //    simdata->rpms = 9000 - r;
+    //    update_devices(devices, numdevices, simdata, testsimmap);
+    //    usleep(1000);
+    //}
 
     fprintf(stdout, "Setting rpms to 1000\n");
     simdata->rpms = 1000;
@@ -1232,6 +1182,113 @@ int tester(SimDevice* devices, int numdevices)
     sleep(1);
 
     fflush(stdout);
+
+}
+
+int tester(MonocoqueSettings* ms, SimDevice* devices, int numdevices)
+{
+
+    slogi("preparing test with %i devices...", numdevices);
+    SimData* simdata = malloc(sizeof(SimData));
+    memset(simdata, 0, sizeof(SimData));
+    simdata->simon = true;
+    simdata->simstatus = SIMAPI_STATUS_ACTIVEPLAY;
+
+    SimMap* testsimmap = malloc(sizeof(SimMap));
+    memset(testsimmap, 0, sizeof(SimMap));
+    int shmerr = simapi_universalmap_open(testsimmap, simdata);
+    if (shmerr != SIMAPI_ERROR_NONE)
+    {
+        slog_warn("Could not open shared telemetry memory for test mode (error %i) - test sequence will still drive local devices, but external tools won't see it", shmerr);
+        free(testsimmap);
+        testsimmap = NULL;
+    }
+
+    struct termios newsettings, canonicalmode;
+    tcgetattr(0, &canonicalmode);
+    newsettings = canonicalmode;
+    newsettings.c_lflag &= (~ICANON & ~ECHO);
+    newsettings.c_cc[VMIN] = 1;
+    newsettings.c_cc[VTIME] = 0;
+    tcsetattr(0, TCSANOW, &newsettings);
+
+
+    fprintf(stdout, "\n");
+    simdata->car[0] = 'C';
+    simdata->car[1] = 'A';
+    simdata->car[2] = 'R';
+    simdata->car[3] = '\0';
+
+    simdata->gear = SIMAPI_GEAR_NEUTRAL;
+    simdata->gearc[0] = 0x4e;
+    simdata->gearc[1] = 0;
+    simdata->velocity = 16;
+    simdata->rpms = 100;
+    simdata->maxrpm = 8000;
+    simdata->abs = 0;
+    simdata->tyrediameter[0] = -1;
+    simdata->tyrediameter[1] = -1;
+    simdata->tyrediameter[2] = -1;
+    simdata->tyrediameter[3] = -1;
+    simdata->tyreslipratio[0] = 0;
+    simdata->tyreslipratio[1] = 0;
+    simdata->tyreslipratio[2] = 0;
+    simdata->tyreslipratio[3] = 0;
+    simdata->Xvelocity = 0;
+    simdata->Yvelocity = 100;
+    simdata->Zvelocity = 0;
+
+    if(ms->lua_test == true)
+    {
+        lua_State *L = luaL_newstate();
+        luaL_openlibs(L);
+        
+        slogi("Using file %s", ms->test_lua_file_str);
+        
+        int top = lua_gettop(L);
+        int status = luaL_loadfile(L, ms->test_lua_file_str);
+
+        if (status)
+        {
+            /* If something went wrong, error message is at the top of the stack*/
+            fprintf(stderr, "Couldn't load file: %s\n", lua_tostring(L, -1));
+        }
+        else
+        {
+            lua_setglobal(L,"myFunc");
+
+            lua_pushstring(L, "simdata");
+            lua_pushlightuserdata(L, simdata);
+            lua_settable(L, LUA_REGISTRYINDEX);
+            lua_pushstring(L, "simdevices");
+            lua_pushlightuserdata(L, devices);
+            lua_settable(L, LUA_REGISTRYINDEX);
+            lua_pushstring(L, "testsimmap");
+            lua_pushlightuserdata(L, testsimmap);
+            lua_settable(L, LUA_REGISTRYINDEX);
+            lua_pushstring(L, "numdevices");
+            lua_pushinteger(L, numdevices);
+            lua_settable(L, LUA_REGISTRYINDEX);
+
+            lua_register(L, "update_devices", monocoque_test_update_devices);
+            lua_register(L, "sleep", monocoque_test_sleep);
+            lua_register(L, "set_rpms", monocoque_test_set_rpms);
+            lua_register(L, "set_max_rpms", monocoque_test_set_max_rpms);
+
+
+            lua_getglobal(L,"myFunc");
+            if (lua_pcall(L, 0, 0, 0) != LUA_OK)
+            {
+                fprintf(stderr, "Error calling Lua script: %s\n", lua_tostring(L, -1));
+            }
+        }
+        lua_close(L);
+    }
+    else 
+    {
+        static_test(devices, numdevices, simdata, testsimmap);
+    }
+
     tcsetattr(0, TCSANOW, &canonicalmode);
 
     // Not shm_unlink()'d - the segment itself stays behind, the same way a

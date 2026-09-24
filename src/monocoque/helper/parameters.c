@@ -32,6 +32,10 @@ int freeparams(Parameters* p)
     {
         free(p->log_dirname_str);
     }
+    if(p->test_file_path_str != NULL)
+    {
+        free(p->test_file_path_str);
+    }
     return 0;
 }
 
@@ -52,6 +56,7 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
     p->user_specified_config_file = false;
     p->user_specified_log_file = false;
     p->user_specified_config_dir = false;
+    p->user_specified_test_file = false;
 
     // setup argument handling structures
     const char* progname = "monocoque";
@@ -60,6 +65,7 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
     struct arg_lit* arg_verbosity2   = arg_litn("v","verbose", 0, 2, "increase logging verbosity");
     struct arg_lit* arg_verbosity3   = arg_litn("v","verbose", 0, 2, "increase logging verbosity");
 
+    // specifiy "play" command
     struct arg_rex* cmd1             = arg_rex1(NULL, NULL, "play", NULL, REG_ICASE, NULL);
     struct arg_lit* arg_udp          = arg_lit0("d", "udp", "force udp mode for sims which support it");
     struct arg_lit* arg_audio1       = arg_lit0("a", "disable_audio", "force disable of audio devices");
@@ -73,6 +79,7 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
     void* argtable1[]                = {cmd1,arg_log,arg_conf,arg_fps,arg_udp,arg_audio1,arg_verbosity1,help1,vers,end1};
     int nerrors1;
 
+    // specifiy "config" command
     struct arg_rex* cmd2a            = arg_rex1(NULL, NULL, "config", NULL, REG_ICASE, NULL);
     struct arg_rex* cmd2b            = arg_rex1(NULL, NULL, "tachometer", NULL, REG_ICASE, NULL);
     struct arg_int* arg_max_revs     = arg_int1("m", "max_revs",NULL,"specify max revs of tachometer");
@@ -84,12 +91,14 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
     void* argtable2[]                = {cmd2a,cmd2b,arg_max_revs,arg_granularity,arg_save,arg_verbosity2,help2,vers2,end2};
     int nerrors2;
 
+    // specifiy "test" command
     struct arg_rex* cmd3             = arg_rex1(NULL, NULL, "test", NULL, REG_ICASE, NULL);
     struct arg_lit* arg_audio2       = arg_lit0("a", "disable_audio", "force disable of audio devices");
+    struct arg_file* arg_test_file   = arg_file0("f", "test_script", "<test script lua file>", NULL);
     struct arg_lit* help3            = arg_litn(NULL,"help", 0, 1, "print this help and exit");
     struct arg_lit* vers3            = arg_litn(NULL,"version", 0, 1, "print version information and exit");
     struct arg_end* end3             = arg_end(20);
-    void* argtable3[]                = {cmd3,arg_verbosity3,arg_audio2,help3,vers3,end3};
+    void* argtable3[]                = {cmd3,arg_verbosity3,arg_test_file,arg_audio2,help3,vers3,end3};
     int nerrors3;
 
     struct arg_lit*  help0           = arg_lit0(NULL,"help",     "print this help and exit");
@@ -198,6 +207,11 @@ ConfigError getParameters(int argc, char** argv, Parameters* p)
         if (arg_audio2->count > 0)
         {
             p->disable_audio = true;
+        }
+        if(arg_test_file->count > 0)
+        {
+            p->test_file_path_str = strdup(arg_test_file->filename[0]);
+            p->user_specified_test_file = true;
         }
         exitcode = E_SUCCESS_AND_DO;
     }

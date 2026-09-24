@@ -156,10 +156,12 @@ typedef struct
     int fps;
     bool  force_udp_mode;
     bool  disable_audio;
+    bool lua_test;
     char* tyre_diameter_config;
     char* config_str;
     char* log_filename_str;
     char* log_dirname_str;
+    char* test_lua_file_str;
     config_t* cfg;
 }
 MonocoqueSettings;

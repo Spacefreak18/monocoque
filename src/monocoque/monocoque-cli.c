@@ -58,6 +58,17 @@ void SetSettingsFromParameters(Parameters* p, MonocoqueSettings* ms, char* confi
         ms->log_filename_str = strdup("monocoque.log");
     }
 
+    ms->lua_test = false;
+    if(p->user_specified_test_file == true && does_file_exist(p->test_file_path_str))
+    {
+        ms->test_lua_file_str = strdup(p->test_file_path_str);
+        ms->lua_test = true;
+    }
+    else
+    {
+        fprintf(stderr, "Invalid or non existent lua test file, falling back to static test procedure\n");
+    }
+
     ms->fps = p->fps;
 
     ms->verbosity_count = p->verbosity_count;
@@ -310,7 +321,7 @@ int main(int argc, char** argv)
                 settingsfree(ds[i]);
             }
             free(ds);
-            error = tester(simdevices, numdevices);
+            error = tester(ms, simdevices, numdevices);
             if (error == MONOCOQUE_ERROR_NONE)
             {
                 slogi("Test exited succesfully with error code: %i", error);
