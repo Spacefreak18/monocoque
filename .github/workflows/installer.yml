@@ -1,0 +1,80 @@
+name: installer
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - install.sh
+      - tools/uninstall.sh
+      - tools/monocoque-manager
+      - tools/distro/**
+      - README.md
+      - HOW-TO-USE.md
+      - udev/**
+      - conf/monocoque.config
+      - .github/workflows/installer.yml
+  push:
+    paths:
+      - install.sh
+      - tools/uninstall.sh
+      - tools/monocoque-manager
+      - tools/distro/**
+      - README.md
+      - HOW-TO-USE.md
+      - udev/**
+      - conf/monocoque.config
+      - .github/workflows/installer.yml
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shell syntax
+        run: bash tools/distro/test-install-containers.sh syntax
+
+  detect:
+    needs: syntax
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [archlinux, fedora, ubuntu, debian]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Distro family detection
+        run: bash tools/distro/test-install-containers.sh detect ${{ matrix.name }}
+
+  detect-edge:
+    needs: syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Nobara / Mint / Bazzite os-release mocks
+        run: bash tools/distro/test-install-containers.sh mocks
+      - name: Immutable distros refuse host install
+        run: bash tools/distro/test-install-containers.sh immutable
+
+  install:
+    needs: syntax
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [archlinux, fedora, ubuntu]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Full source install (${{ matrix.name }})
+        run: bash tools/distro/test-install-containers.sh full ${{ matrix.name }}
+      - name: Installer log on failure
+        if: failure()
+        run: |
+          log="${TMPDIR:-/tmp}/monocoque-install-tests/${{ matrix.name }}.full.log"
+          if [ -f "$log" ]; then
+            tail -n 120 "$log"
+          fi
