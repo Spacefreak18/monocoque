@@ -5,6 +5,8 @@ set(helper_source_files
   dirhelper.h
   confighelper.c
   confighelper.h
+  ensure_simd.c
+  ensure_simd.h
 )
 
 set(LIBXML_INCLUDE_DIR /usr/include/libxml2)
