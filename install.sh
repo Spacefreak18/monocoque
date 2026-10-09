@@ -471,9 +471,16 @@ WantedBy=default.target
 EOF
     
     log_success "systemd services created"
-    log_info "To enable auto-start on boot:"
-    echo "    systemctl --user enable simd.service"
-    echo "    systemctl --user start simd.service"
+    if command -v systemctl >/dev/null 2>&1; then
+        systemctl --user daemon-reload 2>/dev/null || true
+        if systemctl --user enable --now simd.service 2>/dev/null; then
+            log_success "Enabled simd.service (starts at login)"
+        else
+            log_warn "Could not enable simd.service; monocoque will start simd when you run it"
+            echo "    systemctl --user enable simd.service"
+            echo "    systemctl --user start simd.service"
+        fi
+    fi
 }
 
 # Print next steps
@@ -494,12 +501,9 @@ print_next_steps() {
     echo "1️⃣  Configure your games (REQUIRED!)"
     echo "   See: https://github.com/Spacefreak18/monocoque/blob/master/HOW-TO-USE.md"
     echo ""
-    echo "2️⃣  Start the services:"
-    echo "   Terminal 1: start-simd"
-    echo "   Terminal 2: start-monocoque"
-    echo ""
-    echo "   OR enable auto-start:"
-    echo "   systemctl --user enable --now simd.service"
+    echo "2️⃣  Start:"
+    echo "   start-monocoque   (starts simd if needed)"
+    echo "   or: monocoque-manager"
     echo ""
     echo "3️⃣  Configure your devices:"
     echo "   Edit: $CONFIG_DIR/monocoque/monocoque.config"

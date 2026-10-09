@@ -17,3 +17,6 @@ a.out
 *.flatpak
 
 /stage
+
+__pycache__/
+*.py[cod]

@@ -24,11 +24,13 @@
 #### Assetto Corsa & Assetto Corsa Competizione (ACC)
 * Assetto Corsa & ACC do not need any additional settings and should work out of the box
 
-## Run everything, but in the right order
-* first start `simd` like `~/simapi/simd/build/simd --no-daemon -vv`
-    * this will likely fail, so you'll need to add `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib` or `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64` in front of the command like `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64 ~/simapi/simd/build/simd --no-daemon -vv`
-* now start `monocoque` like `~/monocoque/build/monocoque play`
-* finally start the Game you want to play from Steam
+* Assetto Corsa & ACC do not need any additional settings and should work out of the box
+
+## Run
+
+Start a session with `start-monocoque`, `monocoque play`, or `monocoque-manager`. Monocoque starts simd itself when it is not already running. Launch the game from Steam as usual.
+
+If simd is not installed, that is the one case that needs a human: install simd and try again.
 
 ## Troubleshooting
 

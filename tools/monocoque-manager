@@ -19,7 +19,15 @@ except ImportError:
 MIN_TERMINAL_HEIGHT = 20
 MIN_TERMINAL_WIDTH = 60
 PROCESS_STOP_WAIT_TIME = 1  # seconds
-SIMD_START_DELAY = 2  # seconds
+SIMD_PID_FILE = '/tmp/simd.pid'
+MONOCOQUE_PID_FILE = '/tmp/monocoque.pid'
+ACTION_START = '1'
+ACTION_TEST = '2'
+ACTION_EDIT_CONFIG = '3'
+ACTION_VIEW_LOGS = '4'
+ACTION_RESTART = '5'
+ACTION_STOP = '6'
+ACTION_QUIT = '0'
 
 
 class MonocoqueManager:
@@ -34,6 +42,7 @@ class MonocoqueManager:
         self.simd_running = False
         self.monocoque_running = False
         self.last_cleaned_pid_files = []  # Track cleaned stale PID files
+        self.action_message = ""  # Feedback for stop/restart (shown in the TUI, not stdout)
         
     def check_processes(self):
         """Check if simd and monocoque are running using careful detection"""
@@ -94,66 +103,75 @@ class MonocoqueManager:
     def cleanup_stale_pid_files(self):
         """Clean up stale PID files when processes aren't actually running"""
         pid_files = [
-            ('/tmp/simd.pid', self.simd_running),
-            ('/tmp/monocoque.pid', self.monocoque_running),
+            (SIMD_PID_FILE, self.simd_running),
+            (MONOCOQUE_PID_FILE, self.monocoque_running),
         ]
-        
+
         cleaned_files = []
-        
         for pid_file_path, process_running in pid_files:
-            if os.path.exists(pid_file_path) and not process_running:
-                try:
-                    # Read the PID and check if that process exists
-                    with open(pid_file_path, 'r') as f:
-                        pid_str = f.read().strip()
-                    
-                    if pid_str.isdigit():
-                        pid = int(pid_str)
-                        # Check if this PID actually exists and is the right process
-                        try:
-                            ps_result = subprocess.run(['ps', '-p', str(pid), '-o', 'comm='], 
-                                                     capture_output=True, text=True)
-                            if ps_result.returncode != 0:
-                                # Process doesn't exist, PID file is stale
-                                os.remove(pid_file_path)
-                                cleaned_files.append(os.path.basename(pid_file_path))
-                            else:
-                                # Process exists, check if it's actually simd/monocoque
-                                comm = ps_result.stdout.strip()
-                                service_name = os.path.basename(pid_file_path).replace('.pid', '')
-                                if service_name not in comm:
-                                    # Wrong process, PID file is stale
-                                    os.remove(pid_file_path)
-                                    cleaned_files.append(os.path.basename(pid_file_path))
-                        except:
-                            # Error checking process, assume stale and remove
-                            os.remove(pid_file_path)
-                            cleaned_files.append(os.path.basename(pid_file_path))
-                    else:
-                        # Invalid PID format, remove stale file
-                        os.remove(pid_file_path)
-                        cleaned_files.append(os.path.basename(pid_file_path))
-                        
-                except Exception:
-                    # Error reading/processing PID file, try to remove it
-                    try:
-                        os.remove(pid_file_path)
-                        cleaned_files.append(os.path.basename(pid_file_path))
-                    except:
-                        pass
-        
-        # Store cleaned files for potential user feedback
+            if self._try_remove_stale_pid_file(pid_file_path, process_running):
+                cleaned_files.append(os.path.basename(pid_file_path))
+
         self.last_cleaned_pid_files = cleaned_files
         return cleaned_files
-    
+
+    def _try_remove_stale_pid_file(self, pid_file_path, process_running):
+        if process_running or not os.path.exists(pid_file_path):
+            return False
+
+        try:
+            with open(pid_file_path, 'r') as f:
+                pid_str = f.read().strip()
+        except OSError:
+            return self._remove_pid_file(pid_file_path)
+
+        if not pid_str.isdigit():
+            return self._remove_pid_file(pid_file_path)
+
+        if self._pid_matches_service(int(pid_str), pid_file_path):
+            return False
+        return self._remove_pid_file(pid_file_path)
+
+    def _pid_matches_service(self, pid, pid_file_path):
+        try:
+            ps_result = subprocess.run(
+                ['ps', '-p', str(pid), '-o', 'comm='],
+                capture_output=True,
+                text=True,
+            )
+        except OSError:
+            return False
+
+        if ps_result.returncode != 0:
+            return False
+
+        service_name = os.path.basename(pid_file_path).replace('.pid', '')
+        return service_name in ps_result.stdout.strip()
+
+    def _remove_pid_file(self, pid_file_path):
+        try:
+            os.remove(pid_file_path)
+            return True
+        except OSError:
+            return False
+
     def check_installation(self):
-        """Check if monocoque is installed"""
+        """Check if monocoque and simd are installed. Missing simd is the
+        only condition that needs a human: it is required and cannot be started."""
         simd_exists = (self.install_dir / "simapi/simd/build/simd").exists() or \
                       subprocess.run(['which', 'simd'], capture_output=True).returncode == 0
         monocoque_exists = (self.install_dir / "monocoque/build/monocoque").exists() or \
                           subprocess.run(['which', 'monocoque'], capture_output=True).returncode == 0
         
-        return simd_exists and monocoque_exists
+        if not simd_exists:
+            print("Error: simd is required but is not installed.")
+            print("Install simd (package simd / simd-git, or run ./install.sh) and try again.")
+            return False
+        if not monocoque_exists:
+            print("Error: monocoque does not appear to be installed.")
+            print("Install it with ./install.sh or your distro package, then try again.")
+            return False
+        return True
     
     def draw_header(self, stdscr):
         """Draw header"""
@@ -196,19 +214,41 @@ class MonocoqueManager:
             stdscr.addstr("STOPPED")
             stdscr.attroff(curses.color_pair(3))
         
-        # Show notification about cleaned PID files
+        # Show one-shot notes (PID cleanup, stop/restart) inside curses, never via print()
         current_row = row + 3
+        width = stdscr.getmaxyx()[1]
+        notes = []
         if self.last_cleaned_pid_files:
-            cleaned_msg = f"● Cleaned stale PID files: {', '.join(self.last_cleaned_pid_files)}"
-            stdscr.attron(curses.color_pair(4))
-            stdscr.addstr(current_row, 4, cleaned_msg)
-            stdscr.attroff(curses.color_pair(4))
-            current_row += 1
-            # Clear the notification after showing it once
+            notes.append(f"Cleaned stale PID files: {', '.join(self.last_cleaned_pid_files)}")
             self.last_cleaned_pid_files = []
-        
+        if self.action_message:
+            notes.append(self.action_message)
+            self.action_message = ""
+        for note in notes:
+            text = f"● {note}"
+            if width > 6 and len(text) > width - 2:
+                text = text[: width - 5] + "..."
+            try:
+                stdscr.attron(curses.color_pair(4))
+                stdscr.addstr(current_row, 4, text)
+                stdscr.attroff(curses.color_pair(4))
+            except curses.error:
+                pass
+            current_row += 1
+
         return current_row
     
+    def get_menu_items(self):
+        return [
+            (ACTION_START, "Start", not self.monocoque_running),
+            (ACTION_TEST, "Test configuration", True),
+            (ACTION_EDIT_CONFIG, "Edit monocoque config", True),
+            (ACTION_VIEW_LOGS, "View logs", True),
+            (ACTION_RESTART, "Restart services", self.simd_running or self.monocoque_running),
+            (ACTION_STOP, "Stop all", self.simd_running or self.monocoque_running),
+            (ACTION_QUIT, "Quit", True),
+        ]
+
     def draw_menu(self, stdscr, row, selected):
         """Draw menu options"""
         height, width = stdscr.getmaxyx()
@@ -221,16 +261,7 @@ class MonocoqueManager:
         stdscr.attroff(curses.A_BOLD)
         row += 1
         
-        menu_items = [
-            ("1", "Start simd", not self.simd_running),
-            ("2", "Start monocoque", not self.monocoque_running and self.simd_running),
-            ("3", "Test configuration", True),
-            ("4", "Edit monocoque config", True),
-            ("5", "View logs", True),
-            ("6", "Restart services", self.simd_running or self.monocoque_running),
-            ("7", "Stop all", self.simd_running or self.monocoque_running),
-            ("0", "Quit", True),
-        ]
+        menu_items = self.get_menu_items()
         
         for i, (key, label, enabled) in enumerate(menu_items):
             if enabled:
@@ -248,19 +279,8 @@ class MonocoqueManager:
     
     def get_enabled_menu_items(self):
         """Get list of currently enabled menu items with their indices"""
-        menu_items = [
-            ("1", "Start simd", not self.simd_running),
-            ("2", "Start monocoque", not self.monocoque_running and self.simd_running),
-            ("3", "Test configuration", True),
-            ("4", "Edit monocoque config", True),
-            ("5", "View logs", True),
-            ("6", "Restart services", self.simd_running or self.monocoque_running),
-            ("7", "Stop all", self.simd_running or self.monocoque_running),
-            ("0", "Quit", True),
-        ]
-        
         enabled_items = []
-        for i, (key, label, enabled) in enumerate(menu_items):
+        for i, (key, label, enabled) in enumerate(self.get_menu_items()):
             if enabled:
                 enabled_items.append((i, key))
         return enabled_items
@@ -301,24 +321,20 @@ class MonocoqueManager:
     
     def handle_action(self, action):
         """Handle menu action"""
-        if action == '1':  # Start simd
-            cmd = "start-simd || $HOME/.local/bin/start-simd; exec bash"
-            self.run_command(cmd)
-            
-        elif action == '2':  # Start monocoque
+        if action == ACTION_START:  # Start (monocoque starts simd if needed)
             cmd = "start-monocoque || $HOME/.local/bin/start-monocoque; exec bash"
             self.run_command(cmd)
             
-        elif action == '3':  # Test configuration
+        elif action == ACTION_TEST:  # Test configuration
             cmd = "test-monocoque || $HOME/.local/bin/test-monocoque; read -p 'Press Enter to close...'"
             self.run_command(cmd)
             
-        elif action == '4':  # Edit config
+        elif action == ACTION_EDIT_CONFIG:  # Edit config
             editor = os.environ.get('EDITOR', 'nano')
             config_file = self.config_dir / "monocoque/monocoque.config"
             subprocess.run([editor, str(config_file)])
             
-        elif action == '5':  # View logs
+        elif action == ACTION_VIEW_LOGS:  # View logs
             xdg_cache = os.environ.get('XDG_CACHE_HOME', os.path.join(Path.home(), ".cache"))
             log_dir = Path(xdg_cache) / "monocoque"
             if log_dir.exists():
@@ -329,23 +345,21 @@ class MonocoqueManager:
                 cmd = f"echo 'No log directory found at {log_dir}'; echo 'Logs will appear here when monocoque runs'; read -p 'Press Enter to close...'"
                 self.run_command(cmd)
             
-        elif action == '6':  # Restart services
+        elif action == ACTION_RESTART:  # Restart services
             stopped = self.stop_all_services()
-            if stopped:
-                print(f"Stopped: {', '.join(stopped)}")
-            # Wait a moment for processes to stop
+            stopped_note = f"Stopped: {', '.join(stopped)}" if stopped else ""
             time.sleep(PROCESS_STOP_WAIT_TIME)
-            # Restart simd first
-            cmd = f"start-simd || $HOME/.local/bin/start-simd; sleep {SIMD_START_DELAY}; start-monocoque || $HOME/.local/bin/start-monocoque; exec bash"
+            cmd = "start-monocoque || $HOME/.local/bin/start-monocoque; exec bash"
             self.run_command(cmd)
-            print("Restarting services in terminal window...")
+            restart_note = "Restarting in terminal window..."
+            self.action_message = f"{stopped_note}. {restart_note}" if stopped_note else restart_note
             
-        elif action == '7':  # Stop all
+        elif action == ACTION_STOP:  # Stop all
             stopped = self.stop_all_services()
             if stopped:
-                print(f"Stopped: {', '.join(stopped)}")
+                self.action_message = f"Stopped: {', '.join(stopped)}"
             else:
-                print("No running services found to stop")
+                self.action_message = "No running services found to stop"
     
     def stop_all_services(self):
         """Carefully stop simd and monocoque processes while preserving the manager"""
@@ -488,7 +502,7 @@ class MonocoqueManager:
                     if idx == selected:
                         action_key = key_char
                         break
-                if action_key and action_key == '0':
+                if action_key and action_key == ACTION_QUIT:
                     break
                 elif action_key:
                     self.handle_action(action_key)
@@ -496,28 +510,25 @@ class MonocoqueManager:
                     stdscr.clear()
             elif key in [ord('q'), ord('Q'), 27]:  # q/Q or ESC
                 break
-            elif key == ord('1'):
-                self.handle_action('1')
-                stdscr.clear()  # Force refresh after action
-            elif key == ord('2'):
-                self.handle_action('2')
-                stdscr.clear()  # Force refresh after action
-            elif key == ord('3'):
-                self.handle_action('3')
-                stdscr.clear()  # Force refresh after action
-            elif key == ord('4'):
-                self.handle_action('4')
-                stdscr.clear()  # Force refresh after action
-            elif key == ord('5'):
-                self.handle_action('5')
-                stdscr.clear()  # Force refresh after action
-            elif key == ord('6'):
-                self.handle_action('6')
-                stdscr.clear()  # Force refresh after action
-            elif key == ord('7'):
-                self.handle_action('7')
-                stdscr.clear()  # Force refresh after action
-            elif key == ord('0'):
+            elif key == ord(ACTION_START):
+                self.handle_action(ACTION_START)
+                stdscr.clear()
+            elif key == ord(ACTION_TEST):
+                self.handle_action(ACTION_TEST)
+                stdscr.clear()
+            elif key == ord(ACTION_EDIT_CONFIG):
+                self.handle_action(ACTION_EDIT_CONFIG)
+                stdscr.clear()
+            elif key == ord(ACTION_VIEW_LOGS):
+                self.handle_action(ACTION_VIEW_LOGS)
+                stdscr.clear()
+            elif key == ord(ACTION_RESTART):
+                self.handle_action(ACTION_RESTART)
+                stdscr.clear()
+            elif key == ord(ACTION_STOP):
+                self.handle_action(ACTION_STOP)
+                stdscr.clear()
+            elif key == ord(ACTION_QUIT):
                 break
 
 
@@ -533,23 +544,17 @@ class MonocoqueManager:
             print(f"  simd:      {'RUNNING' if self.simd_running else 'STOPPED'}")
             print(f"  monocoque: {'RUNNING' if self.monocoque_running else 'STOPPED'}")
             
-            # Show notification about cleaned PID files
+            # Show notification about cleaned PID files and last action
             if self.last_cleaned_pid_files:
                 print(f"  Note: Cleaned stale PID files: {', '.join(self.last_cleaned_pid_files)}")
                 # Clear the notification after showing it once
                 self.last_cleaned_pid_files = []
+            if self.action_message:
+                print(f"  Note: {self.action_message}")
+                self.action_message = ""
             
             print("\nActions:")
-            menu_items = [
-                ("1", "Start simd", not self.simd_running),
-                ("2", "Start monocoque", not self.monocoque_running and self.simd_running),
-                ("3", "Test configuration", True),
-                ("4", "Edit monocoque config", True),
-                ("5", "View logs", True),
-                ("6", "Restart services", self.simd_running or self.monocoque_running),
-                ("7", "Stop all", self.simd_running or self.monocoque_running),
-                ("0", "Quit", True),
-            ]
+            menu_items = self.get_menu_items()
             
             for key, label, enabled in menu_items:
                 if enabled:
@@ -559,17 +564,16 @@ class MonocoqueManager:
             
             try:
                 choice = input("\nEnter your choice: ").strip()
-                if choice == '0':
+                if choice == ACTION_QUIT:
                     break
-                elif choice in ['1', '2', '3', '4', '5', '6', '7']:
-                    # Check if action is enabled
+                elif choice in [key for key, _, _ in menu_items if key != ACTION_QUIT]:
                     for key, label, enabled in menu_items:
                         if key == choice and enabled:
                             self.handle_action(choice)
-                            if choice in ['4']:  # Actions that don't need terminal
+                            if choice == ACTION_EDIT_CONFIG:
                                 print("Action completed.")
-                            elif choice in ['6', '7']:  # Stop/restart actions provide their own feedback
-                                pass  # Feedback already provided by handle_action
+                            elif choice in (ACTION_RESTART, ACTION_STOP):
+                                pass
                             else:
                                 print("Command executed. Check the terminal output.")
                             break
@@ -588,8 +592,6 @@ def main():
     manager = MonocoqueManager()
     
     if not manager.check_installation():
-        print("Error: Monocoque does not appear to be installed")
-        print("Run the installer first: ./install.sh")
         sys.exit(1)
     
     # Check if we can use curses (proper terminal environment)
