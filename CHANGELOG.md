@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/Spacefreak18/monocoque/compare/0.4.0...0.4.1) (2026-10-09)
+
+
+### Bug Fixes
+
+* fail closed on serial and PulseAudio init ([#56](https://github.com/Spacefreak18/monocoque/issues/56)) ([0c7cd6f](https://github.com/Spacefreak18/monocoque/commit/0c7cd6f751635e35e0cad2b3eff5e089b10ebb51))
+
 ## [0.4.0](https://github.com/Spacefreak18/monocoque/compare/0.3.6...0.4.0) (2026-09-24)
 
 
