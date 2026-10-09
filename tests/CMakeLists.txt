@@ -7,5 +7,5 @@ add_executable(confighelper_test confighelper_test.c)
 # symbols elsewhere in the same translation unit — static libs resolve per
 # object file, so all of these are needed even though this test only
 # exercises strtodevsubsubtype.
-target_link_libraries(confighelper_test helper config slog xml2 simulatorapi m proc2)
+target_link_libraries(confighelper_test helper config slog xml2 simulatorapi m ${PROC_LIBS})
 add_test(NAME confighelper_test COMMAND confighelper_test)
