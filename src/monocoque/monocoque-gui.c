@@ -178,7 +178,7 @@ int monocoque_initialize(int argc, char** argv)
 
 int monocoque_gameloop_start()
 {
-    start_loop(&ms);
+    return start_loop(&ms);
 }
 
 /*---------------------------------------------------------------------------*/

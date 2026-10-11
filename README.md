@@ -61,6 +61,8 @@ After installation, use the interactive manager:
 monocoque-manager
 ```
 
+After install, run `start-monocoque` or `monocoque-manager`. simd is started automatically if it is not already running; you will only be asked to act if simd is not installed.
+
 **Supported Games**
 [Supported Sims](https://spacefreak18.github.io/simapi/supportedsims)
 ***please note on Linux some titles will require a compatibility exe from simshmbridge to be setup. Please follow the linked Documentation
