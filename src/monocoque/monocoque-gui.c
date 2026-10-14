@@ -242,7 +242,7 @@ static void i_OnDelete(App* app, Event *e)
 
     listbox_clear(app->listbox_devices);
     combo_clear(app->combo_configurations);
-    populate_device_list(app->listbox_devices, ms.cfg);
+    populate_device_list(app->listbox_devices, ms.cfg, ms.force_config);
     populate_combo_box(app->combo_configurations, ms.cfg);
 }
 /*---------------------------------------------------------------------------*/
@@ -275,7 +275,7 @@ static void i_OnAddEdit(App* app, Event *e, enum device_action device_action)
 
     listbox_clear(app->listbox_devices);
     combo_clear(app->combo_configurations);
-    populate_device_list(app->listbox_devices, ms.cfg);
+    populate_device_list(app->listbox_devices, ms.cfg, ms.force_config);
     populate_combo_box(app->combo_configurations, ms.cfg);
 }
 /*---------------------------------------------------------------------------*/
@@ -302,6 +302,13 @@ static void set_bottom_label_status(Label* label)
 }
 /*---------------------------------------------------------------------------*/
 
+static void edit_int(Edit *edit, int value)
+{
+    char text[32];
+    snprintf(text, sizeof(text), "%d", value);
+    edit_text(edit, text);
+}
+
 static Panel *i_panel(App *app, MonocoqueSettings* ms)
 {
     app->main_panel = panel_create();
@@ -317,23 +324,28 @@ static Panel *i_panel(App *app, MonocoqueSettings* ms)
     label_text(app->label_configurations, "Configuration: ");
     app->label_game_status = label_create();
     app->label_autostart = label_create();
+    app->label_forceconfig = label_create();
     label_text(app->label_autostart, "AutoStart");
+    label_text(app->label_forceconfig, "Force Config");
 
     app->button_autostart = button_check();
+    app->edit_forceconfig = edit_create();
     app->button_startstop = button_push();
     app->button_add = button_push();
     app->button_edit = button_push();
     app->button_del = button_push();
 
-    app->layout1 = layout_create(8,2);
-    app->layout2 = layout_create(8,1);
+    app->layout1 = layout_create(8,1);
+    app->layout1a = layout_create(3,1);
+    app->layout2 = layout_create(4,1);
     app->layout3 = layout_create(1,1);
     app->layout4 = layout_create(1,2);
 
     layout_layout(app->layout, app->layout1, 0, 0);
-    layout_layout(app->layout, app->layout2, 0, 1);
-    layout_layout(app->layout, app->layout3, 0, 2);
-    layout_layout(app->layout, app->layout4, 0, 3);
+    layout_layout(app->layout, app->layout1a, 0, 1);
+    layout_layout(app->layout, app->layout2, 0, 2);
+    //layout_layout(app->layout, app->layout3, 0, 3);
+    layout_layout(app->layout, app->layout4, 0, 4);
 
     appstate = 0;
     bool auto_start = mono_config_auto_start(ms->cfg, ms);
@@ -344,11 +356,13 @@ static Panel *i_panel(App *app, MonocoqueSettings* ms)
         monocoque_gameloop_start();
     }
 
+    int forced_config = mono_config_force_config(ms->cfg, ms);
     set_bottom_label_status(app->label_game_status);
-    populate_device_list(app->listbox_devices, ms->cfg);
+    populate_device_list(app->listbox_devices, ms->cfg, ms->force_config);
     listbox_select(app->listbox_devices, 0, true);
     populate_combo_box(app->combo_configurations, ms->cfg);
-
+    
+    edit_int(app->edit_forceconfig, ms->force_config);
     button_text(app->button_startstop, "Start");
     button_text(app->button_add, "Add Device");
     button_text(app->button_del, "Delete Device");
@@ -362,12 +376,14 @@ static Panel *i_panel(App *app, MonocoqueSettings* ms)
     layout_label(app->layout1, app->label_configurations, 0, 0);
     layout_combo(app->layout1, app->combo_configurations, 1, 0);
     
-    layout_label(app->layout1, app->label_autostart, 0, 1);
-    layout_button(app->layout1, app->button_autostart, 1, 1);
+    layout_label(app->layout2, app->label_autostart, 0, 0);
+    layout_button(app->layout2, app->button_autostart, 1, 0);
+    layout_label(app->layout2, app->label_forceconfig, 2, 0);
+    layout_edit(app->layout2, app->edit_forceconfig, 3, 0);
     
-    layout_button(app->layout2, app->button_add, 3, 0);
-    layout_button(app->layout2, app->button_edit, 4, 0);
-    layout_button(app->layout2, app->button_del, 5, 0);
+    layout_button(app->layout1a, app->button_add, 0, 0);
+    layout_button(app->layout1a, app->button_edit, 1, 0);
+    layout_button(app->layout1a, app->button_del, 2, 0);
 
     layout_listbox(app->layout3, app->listbox_devices, 0, 0);
 
@@ -375,12 +391,17 @@ static Panel *i_panel(App *app, MonocoqueSettings* ms)
     layout_label(app->layout4, app->label_game_status, 0, 1);
 
     panel_layout(app->subpanel, app->layout3);
-    layout_panel(app->layout, app->subpanel, 0, 2);
+    layout_panel(app->layout, app->subpanel, 0, 3);
     
     panel_layout(app->main_panel, app->layout);
 
 
-    app->devices_subpanel = layout_cell(app->layout, 0, 2);
+    app->devices_subpanel = layout_cell(app->layout, 0, 3);
+    app->cell_config_dropdown = layout_cell(app->layout, 0, 0);
+    if(ms->force_config >= 0)
+    {
+        cell_enabled(app->cell_config_dropdown, false);
+    }
 
     // spacing
 
@@ -393,8 +414,7 @@ static Panel *i_panel(App *app, MonocoqueSettings* ms)
     layout_hexpand(app->layout, 0);
     layout_hexpand(app->layout4, 0);
 
-    layout_vexpand(app->layout, 0);
-    layout_vexpand(app->layout, 2);
+    layout_vexpand(app->layout, 3);
     layout_vexpand(app->layout4, 0);
 
     button_vpadding(app->button_startstop, 0);

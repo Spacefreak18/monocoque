@@ -940,6 +940,14 @@ bool mono_config_auto_start(config_t* cfg, MonocoqueSettings* ms)
     return auto_start;
 }
 
+int mono_config_force_config(config_t* cfg, MonocoqueSettings* ms)
+{
+    int force_config = -1;
+    config_lookup_int(cfg, "force_config", &force_config);
+    ms->force_config = force_config;
+    return force_config;
+}
+
 int uiloadconfig(const char* config_file_str, int confignum, int configureddevices, MonocoqueSettings* ms, DeviceSettings* ds)
 {
     int numdevices = 0;

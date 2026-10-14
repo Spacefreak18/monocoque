@@ -127,9 +127,8 @@ void populate_combo_box(Combo* combo, config_t* cfg)
 
 }
 
-void populate_device_list(ListBox *listbox, config_t* cfg)
+void populate_device_list(ListBox *listbox, config_t* cfg, int config_force)
 {
-    int count;
     config_setting_t* devices;
     devices = config_lookup(cfg, "configs");
     if (devices == NULL)
@@ -147,6 +146,11 @@ void populate_device_list(ListBox *listbox, config_t* cfg)
         // No entry claims to be the default one: list the first, which is what
         // a single-entry config means anyway, rather than nothing.
         config_num = 0;
+    }
+    int count = config_setting_length(config);
+    if( config_force < count && config_force >= 0)
+    {
+        config_num = config_force;
     }
 
     config_setting_t* selectedconfig = config_setting_get_elem(config, config_num);

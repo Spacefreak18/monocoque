@@ -16,6 +16,7 @@ struct _app_t
 
 
     Layout *layout1;
+    Layout *layout1a;
     Layout *layout2;
     Layout *layout3;
     Layout *layout4;
@@ -29,6 +30,7 @@ struct _app_t
 
     Combo* combo_configurations;
     Button* button_autostart;
+    Edit* edit_forceconfig;
     ListBox* listbox_devices;
 
     Button *button_startstop;
@@ -38,9 +40,11 @@ struct _app_t
     Button *button_test;
 
     Label *label_autostart;
+    Label *label_forceconfig;
     Label *label_configurations;
     Label *label_game_status;
     Label *label_simd_status;
 
     Cell* devices_subpanel;
+    Cell* cell_config_dropdown;
 };

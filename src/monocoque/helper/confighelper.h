@@ -158,6 +158,7 @@ typedef struct
     bool  disable_audio;
     bool lua_test;
     bool auto_start;
+    int force_config;
     char* tyre_diameter_config;
     char* config_str;
     char* log_filename_str;
@@ -276,5 +277,6 @@ int getsingledevice(const char* config_file_str, int confignum, int devicenum, M
 int getNumberOfConfigs(const char* config_file_str);
 
 bool mono_config_auto_start(config_t* cfg, MonocoqueSettings* ms);
+int mono_config_force_config(config_t* cfg, MonocoqueSettings* ms);
 
 #endif
