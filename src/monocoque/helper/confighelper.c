@@ -932,6 +932,14 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
     return error;
 }
 
+bool mono_config_auto_start(config_t* cfg, MonocoqueSettings* ms)
+{
+    int auto_start = 0;
+    config_lookup_bool(cfg, "auto_start", &auto_start);
+    ms->auto_start = auto_start;
+    return auto_start;
+}
+
 int uiloadconfig(const char* config_file_str, int confignum, int configureddevices, MonocoqueSettings* ms, DeviceSettings* ds)
 {
     int numdevices = 0;

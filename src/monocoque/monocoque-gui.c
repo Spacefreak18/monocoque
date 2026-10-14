@@ -186,7 +186,7 @@ int monocoque_gameloop_start()
 static void i_OnStart(App *app, Event *e)
 {
     unref(e);
-    app->is_running = TRUE;
+
   
     int rc = 0;
     if(appstate == 0)
@@ -307,7 +307,7 @@ static Panel *i_panel(App *app, MonocoqueSettings* ms)
     app->main_panel = panel_create();
     app->subpanel = panel_scroll(FALSE, TRUE);
 
-    app->layout = layout_create(8,5);
+    app->layout = layout_create(8,6);
 
 
     app->listbox_devices = listbox_create();
@@ -316,13 +316,16 @@ static Panel *i_panel(App *app, MonocoqueSettings* ms)
     app->label_configurations = label_create();
     label_text(app->label_configurations, "Configuration: ");
     app->label_game_status = label_create();
+    app->label_autostart = label_create();
+    label_text(app->label_autostart, "AutoStart");
 
+    app->button_autostart = button_check();
     app->button_startstop = button_push();
     app->button_add = button_push();
     app->button_edit = button_push();
     app->button_del = button_push();
 
-    app->layout1 = layout_create(8,1);
+    app->layout1 = layout_create(8,2);
     app->layout2 = layout_create(8,1);
     app->layout3 = layout_create(1,1);
     app->layout4 = layout_create(1,2);
@@ -333,12 +336,18 @@ static Panel *i_panel(App *app, MonocoqueSettings* ms)
     layout_layout(app->layout, app->layout4, 0, 3);
 
     appstate = 0;
+    bool auto_start = mono_config_auto_start(ms->cfg, ms);
+    if( ms->auto_start == true )
+    {
+        button_state(app->button_autostart, true);
+        appstate = 1;
+        monocoque_gameloop_start();
+    }
 
     set_bottom_label_status(app->label_game_status);
     populate_device_list(app->listbox_devices, ms->cfg);
     listbox_select(app->listbox_devices, 0, true);
     populate_combo_box(app->combo_configurations, ms->cfg);
-
 
     button_text(app->button_startstop, "Start");
     button_text(app->button_add, "Add Device");
@@ -352,6 +361,9 @@ static Panel *i_panel(App *app, MonocoqueSettings* ms)
 
     layout_label(app->layout1, app->label_configurations, 0, 0);
     layout_combo(app->layout1, app->combo_configurations, 1, 0);
+    
+    layout_label(app->layout1, app->label_autostart, 0, 1);
+    layout_button(app->layout1, app->button_autostart, 1, 1);
     
     layout_button(app->layout2, app->button_add, 3, 0);
     layout_button(app->layout2, app->button_edit, 4, 0);
@@ -515,8 +527,6 @@ static void i_destroy(App **app)
 
 static void i_update(App *app, const real64_t prtime, const real64_t ctime)
 {
-    if (app->is_running == TRUE)
-    {
         if(appstate == 2)
         {
             button_text(app->button_startstop, "Playing... Press to Stop");
@@ -533,7 +543,6 @@ static void i_update(App *app, const real64_t prtime, const real64_t ctime)
             cell_enabled(app->devices_subpanel, true);
         }
         set_bottom_label_status(app->label_game_status);
-    }
 
 }
 

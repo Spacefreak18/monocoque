@@ -28,6 +28,7 @@ struct _app_t
     Layout* layout;
 
     Combo* combo_configurations;
+    Button* button_autostart;
     ListBox* listbox_devices;
 
     Button *button_startstop;
@@ -35,7 +36,8 @@ struct _app_t
     Button *button_edit;
     Button *button_del;
     Button *button_test;
-    
+
+    Label *label_autostart;
     Label *label_configurations;
     Label *label_game_status;
     Label *label_simd_status;

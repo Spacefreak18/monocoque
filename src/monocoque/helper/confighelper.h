@@ -157,6 +157,7 @@ typedef struct
     bool  force_udp_mode;
     bool  disable_audio;
     bool lua_test;
+    bool auto_start;
     char* tyre_diameter_config;
     char* config_str;
     char* log_filename_str;
@@ -273,4 +274,7 @@ int uiloadconfig(const char* config_file_str, int confignum, int configureddevic
 int getsingledevice(const char* config_file_str, int confignum, int devicenum, MonocoqueSettings* ms, DeviceSettings* ds);
 
 int getNumberOfConfigs(const char* config_file_str);
+
+bool mono_config_auto_start(config_t* cfg, MonocoqueSettings* ms);
+
 #endif
