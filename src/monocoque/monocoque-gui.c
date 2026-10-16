@@ -242,8 +242,8 @@ static void i_OnDelete(App* app, Event *e)
 
     listbox_clear(app->listbox_devices);
     combo_clear(app->combo_configurations);
+    populate_combo_box(app->combo_configurations, ms.cfg, ms.force_config);
     populate_device_list(app->listbox_devices, ms.cfg, ms.force_config);
-    populate_combo_box(app->combo_configurations, ms.cfg);
 }
 /*---------------------------------------------------------------------------*/
 
@@ -275,8 +275,8 @@ static void i_OnAddEdit(App* app, Event *e, enum device_action device_action)
 
     listbox_clear(app->listbox_devices);
     combo_clear(app->combo_configurations);
+    populate_combo_box(app->combo_configurations, ms.cfg, ms.force_config);
     populate_device_list(app->listbox_devices, ms.cfg, ms.force_config);
-    populate_combo_box(app->combo_configurations, ms.cfg);
 }
 /*---------------------------------------------------------------------------*/
 
@@ -358,9 +358,9 @@ static Panel *i_panel(App *app, MonocoqueSettings* ms)
 
     int forced_config = mono_config_force_config(ms->cfg, ms);
     set_bottom_label_status(app->label_game_status);
+    populate_combo_box(app->combo_configurations, ms->cfg, ms->force_config);
     populate_device_list(app->listbox_devices, ms->cfg, ms->force_config);
     listbox_select(app->listbox_devices, 0, true);
-    populate_combo_box(app->combo_configurations, ms->cfg);
     
     edit_int(app->edit_forceconfig, ms->force_config);
     button_text(app->button_startstop, "Start");

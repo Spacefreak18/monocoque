@@ -279,6 +279,7 @@ int main(int argc, char** argv)
                 setupsound();
             }
             //error = looper(devices, numdevices, p);
+            ms->cfg = open_monocoque_config(ms->config_str);
             error = monocoque_mainloop(ms);
             if (error == MONOCOQUE_ERROR_NONE)
             {
@@ -304,7 +305,8 @@ int main(int argc, char** argv)
             ms->useconfig = 0;
 
             int configs = getNumberOfConfigs(ms->config_str);
-            int confignum = getconfigtouse(ms->config_str, "default", configs-1);
+            int confignum = 0;
+            confignum = getconfigtouse(ms->config_str, "default", 0, 0);
             int configureddevices;
             configcheck(ms->config_str, confignum, &configureddevices);
 

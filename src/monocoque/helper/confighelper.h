@@ -258,10 +258,7 @@ int settingsfree(DeviceSettings ds);
 int monocoquesettingsfree(MonocoqueSettings* ms);
 
 int strcicmp(char const *a, char const *b);
-
-int getconfigtouse2(const char* config_file_str, char* car, int sim);
-int getconfigtouse1(const char* config_file_str, char* car, int sim);
-int getconfigtouse(const char* config_file_str, char* car, int sim);
+int getconfigtouse(const char* config_file_str, const char* car, int simexe, int simapi);
 
 config_t *open_monocoque_config(const char *filename);
 void close_monocoque_config(config_t *cfg);
@@ -275,6 +272,8 @@ int uiloadconfig(const char* config_file_str, int confignum, int configureddevic
 int getsingledevice(const char* config_file_str, int confignum, int devicenum, MonocoqueSettings* ms, DeviceSettings* ds);
 
 int getNumberOfConfigs(const char* config_file_str);
+
+int find_default_config(config_setting_t *configs);
 
 bool mono_config_auto_start(config_t* cfg, MonocoqueSettings* ms);
 int mono_config_force_config(config_t* cfg, MonocoqueSettings* ms);

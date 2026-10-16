@@ -290,18 +290,18 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
 {
     if (doui == true)
     {
-        slogi("looking for ui config %s pass 1 simapi %i", ms->config_str, f->siminfo.simulatorapi);
-        int confignum = getconfigtouse2(ms->config_str, simdata->car, f->siminfo.simulatorapi);
-        slogi("first pass finished");
-        if(confignum == -1)
+        int confignum = -1;
+        int forced_config = mono_config_force_config(ms->cfg, ms);
+        if(forced_config >= 0)
         {
-            slogi("looking for ui config %s pass 2", ms->config_str);
-            confignum = getconfigtouse1(ms->config_str, simdata->car, f->siminfo.simulatorapi);
+            confignum = ms->force_config;
+            slogi("Configuration force configuration %i");
         }
-        if(confignum == -1)
+        else 
         {
-            slogi("looking for ui config %s pass 3", ms->config_str);
-            confignum = getconfigtouse(ms->config_str, simdata->car, f->siminfo.simulatorapi);
+            slogi("Attempting to resolve best config for sim %i car %s and simapi %i", f->siminfo.simulatorexe, simdata->car, f->siminfo.simulatorapi);
+            confignum = getconfigtouse(ms->config_str, simdata->car, f->siminfo.simulatorexe, f->siminfo.simulatorapi);
+            slogd("Selected config num %i", confignum);
         }
 
         int configureddevices;
@@ -951,10 +951,14 @@ int monocoque_mainloop(MonocoqueSettings* ms)
 
 void set_basic_simdata(SimData* simdata)
 {
-    simdata->car[0] = 'C';
-    simdata->car[1] = 'A';
-    simdata->car[2] = 'R';
-    simdata->car[3] = '\0';
+    simdata->car[0] = 'D';
+    simdata->car[1] = 'E';
+    simdata->car[2] = 'F';
+    simdata->car[3] = 'A';
+    simdata->car[4] = 'U';
+    simdata->car[5] = 'L';
+    simdata->car[6] = 'T';
+    simdata->car[7] = '\0';
     simdata->gear = SIMAPI_GEAR_NEUTRAL;
     simdata->gearc[0] = 0x4e;
     simdata->gearc[1] = 0;
@@ -1214,10 +1218,14 @@ int tester(MonocoqueSettings* ms, SimDevice* devices, int numdevices)
 
 
     fprintf(stdout, "\n");
-    simdata->car[0] = 'C';
-    simdata->car[1] = 'A';
-    simdata->car[2] = 'R';
-    simdata->car[3] = '\0';
+    simdata->car[0] = 'D';
+    simdata->car[1] = 'E';
+    simdata->car[2] = 'F';
+    simdata->car[3] = 'A';
+    simdata->car[4] = 'U';
+    simdata->car[5] = 'L';
+    simdata->car[6] = 'T';
+    simdata->car[7] = '\0';
 
     simdata->gear = SIMAPI_GEAR_NEUTRAL;
     simdata->gearc[0] = 0x4e;

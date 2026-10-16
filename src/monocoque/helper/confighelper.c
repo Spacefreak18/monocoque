@@ -287,216 +287,186 @@ int getNumberOfConfigs(const char* config_file_str)
     return configs;
 }
 
-int getconfigtouse2(const char* config_file_str, char* car, int sim)
+static int config_lookup_sim(config_setting_t* entry, const char* key)
 {
-    slogt("inside first pass");
-    config_t cfg;
-    config_init(&cfg);
-    if (!config_read_file(&cfg, config_file_str))
-    {
-        sloge("config read error on pass 1");
-        fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
-        config_destroy(&cfg);
-        return -1;
-    }
+    config_setting_t* setting = config_setting_get_member(entry, key);
 
-    slogt("config validates");
-    config_setting_t* config = NULL;
-    config_setting_t* config_widgets = NULL;
-    config = config_lookup(&cfg, "configs");
-    int configs = config_setting_length(config);
-
-    const char* temp;
-    config_setting_t* config_config = NULL;
-    int j = 0;
-    if ( configs == 1 )
-    {
-        config_destroy(&cfg);
-        return -1;
-    }
-    int confignum = -1;
-    slogt("Multiple configs found");
-    for (j = 0; j < configs; j++)
-    {
-        config_config = config_setting_get_elem(config, j);
-
-        int found = 0;
-        int csim = 0;
-        slogt("sim is %i", sim);
-        csim = getsimfromconfig(config_config);
-        if (csim != sim)
-        {
-            slogt("rejected config %i", j);
-            continue;
-        }
-
-        slogt("checking if car is matched %i", j);
-        temp = NULL;
-        found = config_setting_lookup_string(config_config, "car", &temp);
-        slogt("config car is %s found is %i", temp, found);
-        if(temp != NULL && found > 0 && car > 0 && car != NULL)
-        {
-            slogt("checking against sim car of %s", car);
-            if(strcicmp(temp, car) == 0)
-            {
-                confignum = j;
-            }
-        }
-        if(confignum>=0)
-        {
-            break;
-        }
-    }
-
-    config_destroy(&cfg);
-    return confignum;
-}
-
-int getconfigtouse1(const char* config_file_str, char* car, int sim)
-{
-    config_t cfg;
-    config_init(&cfg);
-    if (!config_read_file(&cfg, config_file_str))
-    {
-        fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
-        config_destroy(&cfg);
-        return -1;
-    }
-    config_setting_t* config = NULL;
-    config_setting_t* config_widgets = NULL;
-    config = config_lookup(&cfg, "configs");
-    int configs = config_setting_length(config);
-
-    const char* temp;
-    config_setting_t* config_config = NULL;
-    int j = 0;
-    if ( configs == 1 )
-    {
-        config_destroy(&cfg);
-        return -1;
-    }
-    int confignum = -1;
-    slogt("Multiple configs found");
-    for (j = 0; j < configs; j++)
-    {
-        config_config = config_setting_get_elem(config, j);
-
-        int found = 0;
-        int csim = 0;
-        slogt("sim is %i", sim);
-        csim = getsimfromconfig(config_config);
-        if (csim != sim)
-        {
-            slogt("rejected config %i", j);
-            continue;
-        }
-
-        slogt("checking if car is matched %i", j);
-        temp = NULL;
-        found = config_setting_lookup_string(config_config, "car", &temp);
-        slogt("config car is %s found is %i", temp, found);
-        if(temp != NULL && found > 0 && car > 0 && car != NULL)
-        {
-            slogt("checking against sim car of %s", car);
-            if(strcicmp(temp, car) == 0)
-            {
-                confignum = j;
-            }
-            if(strcicmp("default", temp) == 0)
-            {
-                slogt("matched default car");
-                confignum = j;
-            }
-        }
-        else
-        {
-            slogt("assuming default car");
-            confignum = j;
-        }
-        slogt("bomb");
-        if(confignum>=0)
-        {
-            break;
-        }
-    }
-
-    config_destroy(&cfg);
-    return confignum;
-}
-
-int getconfigtouse(const char* config_file_str, char* car, int sim)
-{
-    config_t cfg;
-    config_init(&cfg);
-    if (!config_read_file(&cfg, config_file_str))
-    {
-        fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
-        config_destroy(&cfg);
-        return -1;
-    }
-
-    config_setting_t* config = NULL;
-    config_setting_t* config_widgets = NULL;
-    config = config_lookup(&cfg, "configs");
-    int configs = config_setting_length(config);
-
-    const char* temp;
-    config_setting_t* config_config = NULL;
-    int j = 0;
-    if ( configs == 1 )
-    {
-        config_destroy(&cfg);
+    if (setting == NULL)
         return 0;
-    }
-    int confignum = 0;
-    slogt("Multiple configs found");
-    for (j = 0; j < configs; j++)
+
+    if (config_setting_type(setting) == CONFIG_TYPE_INT)
+        return config_setting_get_int(setting);
+
+    if (config_setting_type(setting) == CONFIG_TYPE_STRING)
     {
-        config_config = config_setting_get_elem(config, j);
+        const char* value = config_setting_get_string(setting);
 
-        int found = 0;
-        int csim = 0;
-        slogt("sim is %i", sim);
-        csim = getsimfromconfig(config_config);
-        if (csim != sim && csim != 0)
+        if (value != NULL && strcicmp(value, "default") == 0)
+            return 0;
+    }
+
+    return 0;
+}
+
+int find_default_config(config_setting_t *configs)
+{
+    if (configs == NULL || config_setting_length(configs) <= 0)
+        return -1;
+
+    int count = config_setting_length(configs);
+    int global_config = -1;
+
+    for (int i = 0; i < count; i++)
+    {
+        config_setting_t *entry = config_setting_get_elem(configs, i);
+
+        if (entry == NULL)
+            return -1;
+
+        int is_default = 0;
+        config_setting_lookup_bool(entry, "default", &is_default);
+
+        /* Explicit default always wins */
+        if (is_default)
+            return i;
+
+        int global = 1;
+
+        const char *keys[] = { "simexe", "simapi" };
+
+        for (int j = 0; j < 2; j++)
         {
-            slogt("rejected config %i", j);
-            continue;
+            config_setting_t *setting =
+                config_setting_get_member(entry, keys[j]);
+
+            if (setting == NULL)
+                continue;
+
+            if (config_setting_type(setting) == CONFIG_TYPE_INT)
+            {
+                if (config_setting_get_int(setting) != 0)
+                    global = 0;
+            }
+            else if (config_setting_type(setting) == CONFIG_TYPE_STRING)
+            {
+                const char *value = config_setting_get_string(setting);
+
+                if (value == NULL || strcicmp(value, "default") != 0)
+                    global = 0;
+            }
+            else
+            {
+                global = 0;
+            }
         }
 
-        slogt("checking if car is matched %i", j);
-        temp = NULL;
-        found = config_setting_lookup_string(config_config, "car", &temp);
-        slogt("config car is %s found is %i", temp, found);
-        if(temp != NULL && found > 0 && car > 0 && car != NULL)
+        const char *car = NULL;
+
+        if (config_setting_lookup_string(entry, "car", &car))
         {
-            slogt("checking against sim car of %s", car);
-            if(strcicmp(temp, car) == 0)
-            {
-                confignum = j;
-            }
-            if(strcicmp("default", temp) == 0)
-            {
-                slogt("matched default car");
-                confignum = j;
-            }
+            if (car == NULL || strcicmp(car, "default") != 0)
+                global = 0;
         }
-        else
+        else if (config_setting_get_member(entry, "car") != NULL)
         {
-            slogt("assuming default car");
-            confignum = j;
+            global = 0;
         }
-        slogt("bomb");
-        if(confignum<configs-1)
+
+        /* Remember first global config, but keep looking
+         * for an explicit default = true.
+         */
+        if (global && global_config == -1)
+            global_config = i;
+    }
+
+    return global_config >= 0 ? global_config : 0;
+}
+
+int getconfigtouse(const char* config_file_str, const char* car, int simexe, int simapi)
+{
+    config_t cfg;
+    config_init(&cfg);
+
+    if (!config_read_file(&cfg, config_file_str))
+    {
+        sloge("%s:%d - %s",
+              config_error_file(&cfg),
+              config_error_line(&cfg),
+              config_error_text(&cfg));
+
+        config_destroy(&cfg);
+        return -1;
+    }
+
+    config_setting_t* configs = config_lookup(&cfg, "configs");
+
+    if (configs == NULL || config_setting_length(configs) == 0)
+    {
+        config_destroy(&cfg);
+        return -1;
+    }
+
+    int best_config = 0;
+    int best_priority = 0;
+    int count = config_setting_length(configs);
+
+    for (int i = 0; i < count; i++)
+    {
+        config_setting_t* entry = config_setting_get_elem(configs, i);
+
+        const char* config_car = NULL;
+        int is_default = 0;
+
+        config_setting_lookup_string(entry, "car", &config_car);
+        config_setting_lookup_bool(entry, "default", &is_default);
+
+        int config_simexe = config_lookup_sim(entry, "sim");
+        int config_simapi = config_lookup_sim(entry, "api");
+
+        int priority = is_default ? 1 : 0;
+
+        /* Zero means global/wildcard */
+        int simexe_matches = (config_simexe == 0 ||
+                              config_simexe == simexe);
+
+        int simapi_matches = (config_simapi == 0 ||
+                              config_simapi == simapi);
+
+        int car_specific = (config_car != NULL &&
+                            strcicmp(config_car, "default") != 0);
+
+        int car_matches = (!car_specific ||
+                           (car != NULL &&
+                            strcicmp(config_car, car) == 0));
+
+        if (simexe_matches && simapi_matches && car_matches)
         {
+            if (car_specific)
+                priority = 4;
+            else if (config_simexe != 0 && config_simexe == simexe)
+                priority = 3;
+            else if (config_simapi != 0 && config_simapi == simapi)
+                priority = 2;
+        }
+
+        slogt("Config %d priority %d", i, priority);
+
+        if (priority > best_priority)
+        {
+            best_priority = priority;
+            best_config = i;
+        }
+
+        if (best_priority == 4)
             break;
-        }
     }
 
     config_destroy(&cfg);
-    return confignum;
-}
 
+    slogt("Selected config %d (priority %d)", best_config, best_priority);
+
+    return best_config;
+}
 
 int loadtachconfig(char* config_file, DeviceSettings* ds)
 {
@@ -968,7 +938,6 @@ int uiloadconfig(const char* config_file_str, int confignum, int configureddevic
         config_devices = config_setting_lookup(selectedconfig, "devices");
 
         int i = 0;
-
         int error = MONOCOQUE_ERROR_NONE;
         while (i<configureddevices)
         {

@@ -12,6 +12,7 @@
 #include <libserialport.h>
 #include <libconfig.h>
 
+#include "../simulatorapi/simapi/simapi/simmapper.h"
 #include "../helper/confighelper.h"
 
 typedef struct pa_devicelist {
@@ -20,41 +21,6 @@ typedef struct pa_devicelist {
 	uint32_t index;
 	char description[256];
 } pa_devicelist_t;
-
-static int matches_any(const char *value)
-{
-    return strcmp(value, "default") == 0 || strcmp(value, "all") == 0;
-}
-
-int find_default_config(config_setting_t *configs)
-{
-    int count = config_setting_length(configs);
-
-    for (int i = 0; i < count; i++)
-    {
-        config_setting_t *entry = config_setting_get_elem(configs, i);
-
-        // A key that isn't in the entry doesn't constrain the match. This used
-        // to require all three, which no real config has: conf/monocoque.config
-        // -- the example the README points at -- sets sim and car and never
-        // mentions api, so every entry was skipped, -1 came back, and the
-        // caller dereferenced the NULL that produced.
-        const char *sim = "default";
-        const char *api = "default";
-        const char *car = "default";
-
-        config_setting_lookup_string(entry, "sim", &sim);
-        config_setting_lookup_string(entry, "api", &api);
-        config_setting_lookup_string(entry, "car", &car);
-
-        if (matches_any(sim) && matches_any(api) && matches_any(car))
-        {
-            return i;
-        }
-    }
-
-    return -1;
-}
 
 int add_serial_devices_to_combo(Combo *combo)
 {
@@ -94,35 +60,109 @@ int add_serial_devices_to_combo(Combo *combo)
     return 0;
 }
 
-void populate_combo_box(Combo* combo, config_t* cfg)
+void populate_combo_box(Combo* combo, config_t* cfg, int config_force)
 {
-    config_setting_t *configs;
-    int count;
-    int i;
-    
-    configs = config_lookup(cfg, "configs");
+    config_setting_t* configs = config_lookup(cfg, "configs");
+
     if (configs == NULL || !config_setting_is_list(configs))
         return;
-    
-    count = config_setting_length(configs);
-    
-    for (i = 0; i < count; i++)
+
+    int count = config_setting_length(configs);
+
+    for (int i = 0; i < count; i++)
     {
-        config_setting_t *cfg_entry;
-        const char *sim = "";
-        const char *car = "";
-        const char *api = "";
+        config_setting_t* entry = config_setting_get_elem(configs, i);
+
+        const char* sim = "Default";
+        const char* car = "Default";
+        const char* api = "Default";
+
+        config_setting_t* setting;
         char text[256];
-    
-        cfg_entry = config_setting_get_elem(configs, i);
-    
-        config_setting_lookup_string(cfg_entry, "sim", &sim);
-        config_setting_lookup_string(cfg_entry, "car", &car);
-        config_setting_lookup_string(cfg_entry, "api", &api);
-    
+
+        /* Simulator */
+        setting = config_setting_get_member(entry, "sim");
+
+        if (setting != NULL)
+        {
+            if (config_setting_type(setting) == CONFIG_TYPE_INT)
+            {
+                int value = config_setting_get_int(setting);
+
+                if (value != 0)
+                {
+                    const char* name =
+                        simapi_gametofullstr((SimulatorEXE)value);
+
+                    if (name != NULL)
+                        sim = name;
+                }
+            }
+            else if (config_setting_type(setting) == CONFIG_TYPE_STRING)
+            {
+                const char* value = config_setting_get_string(setting);
+
+                if (value != NULL && strcicmp(value, "default") != 0)
+                    sim = value;
+            }
+        }
+
+        /* Car */
+        const char* config_car = NULL;
+
+        if (config_setting_lookup_string(entry, "car", &config_car))
+        {
+            if (config_car != NULL && config_car[0] != '\0')
+                car = config_car;
+        }
+
+        /* API */
+        setting = config_setting_get_member(entry, "api");
+
+        if (setting != NULL)
+        {
+            if (config_setting_type(setting) == CONFIG_TYPE_INT)
+            {
+                int value = config_setting_get_int(setting);
+
+                if (value != 0)
+                {
+                    /* No API-to-string conversion function provided */
+                    static char api_buffers[1][32];
+
+                    snprintf(api_buffers[0], sizeof(api_buffers[0]),
+                             "%d", value);
+
+                    api = api_buffers[0];
+                }
+            }
+            else if (config_setting_type(setting) == CONFIG_TYPE_STRING)
+            {
+                const char* value = config_setting_get_string(setting);
+
+                if (value != NULL && strcicmp(value, "default") != 0)
+                    api = value;
+            }
+        }
+
         snprintf(text, sizeof(text), "%s / %s / %s", sim, car, api);
-    
+
         combo_add_elem(combo, text, NULL);
+    }
+
+    if(config_force >= 0)
+    {
+        combo_selected(combo, (uint32_t)config_force);
+    }
+    else
+    {
+        /* Select the default configuration */
+        int default_config = find_default_config(configs);
+
+        if (default_config >= 0)
+        {
+            combo_selected(combo, (uint32_t)default_config);
+        }
     }
 
 }
