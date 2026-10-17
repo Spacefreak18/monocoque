@@ -277,5 +277,10 @@ int monocoque_serial_open(SerialDevice* serialdevice, const char* portdev)
         slogd("Successfully setup monocoque serial device...");
     }
 
+    if (serial_device_num >= 0)
+    {
+        serialdevice->port = monocoque_serial_devices[serial_device_num].port;
+    }
+
     return serial_device_num;
 }
