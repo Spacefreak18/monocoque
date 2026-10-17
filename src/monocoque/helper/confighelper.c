@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include <libxml/parser.h>
 #include <libxml/xmlreader.h>
@@ -654,6 +655,7 @@ int configcheck(const char* config_file_str, int confignum, int* devices)
     return 0;
     //return cfg;
 }
+
 static int config_get_device(const config_setting_t *entry, DeviceSettings *ds)
 {
     const char *value = NULL;
@@ -1455,6 +1457,17 @@ config_t *open_monocoque_config(const char *filename)
 {
     config_t *cfg;
 
+    static const char *default_config =
+        "auto_start = true;\n"
+        "//force_config = 0;\n"
+        "configs = (\n"
+        "  {\n"
+        "    api = 0;\n"
+        "    sim = 0;\n"
+        "    car = \"default\";\n"
+        "    devices = ( );\n"
+        "  } );\n";
+
     if (filename == NULL)
         return NULL;
 
@@ -1466,19 +1479,44 @@ config_t *open_monocoque_config(const char *filename)
 
     if (!config_read_file(cfg, filename))
     {
-        fprintf(stderr,
-                "Failed to read config file '%s' (line %d): %s\n",
-                filename,
-                config_error_line(cfg),
-                config_error_text(cfg));
+        int saved_errno = errno;
 
-        config_destroy(cfg);
-        free(cfg);
+        if (config_error_type(cfg) == CONFIG_ERR_FILE_IO && saved_errno == ENOENT)
+        {
+            FILE *fp = fopen(filename, "wx");
 
-        return NULL;
+            if (fp == NULL)
+                goto error;
+
+            if (fputs(default_config, fp) == EOF)
+            {
+                fclose(fp);
+                goto error;
+            }
+
+            if (fclose(fp) != 0)
+                goto error;
+
+            /* Reload the newly created configuration. */
+            if (config_read_file(cfg, filename))
+                return cfg;
+        }
+
+        fprintf(stderr, "Failed to read config file '%s' (line %d): %s\n", filename, config_error_line(cfg), config_error_text(cfg));
+
+        goto cleanup;
     }
 
     return cfg;
+
+error:
+    fprintf(stderr, "Failed to create config file '%s': %s\n", filename, strerror(errno));
+
+cleanup:
+    config_destroy(cfg);
+    free(cfg);
+
+    return NULL;
 }
 
 void close_monocoque_config(config_t* cfg)
