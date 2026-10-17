@@ -272,7 +272,7 @@ void tyrediametercheckcallback(uv_timer_t* handle)
         int a = loadtyreconfig(simdata, f->ms->tyre_diameter_config, false);
         if(a < 0)
         {
-            slogi("saving new tyre diameter config for car %s");
+            slogi("saving new tyre diameter config for car %s", simdata->car);
             savetyreconfig(simdata, f->ms->tyre_diameter_config);
         }
         uv_timer_stop(handle);
@@ -290,7 +290,7 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
         if(forced_config >= 0)
         {
             confignum = ms->force_config;
-            slogi("Configuration force configuration %i");
+            slogi("Configuration force configuration %i", ms->force_config);
         }
         else 
         {
