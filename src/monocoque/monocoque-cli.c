@@ -191,23 +191,17 @@ int main(int argc, char** argv)
 
     slogi("Testing monocoque config file: %s", ms->config_str);
     slogd("using diameters file %s %i", ms->tyre_diameter_config, ms->configcheck);
-    config_t cfg;
-    config_init(&cfg);
-    config_setting_t* config_devices = NULL;
-    if (!config_read_file(&cfg, ms->config_str))
+    config_t *cfg = open_monocoque_config(ms->config_str);
+    if (cfg == NULL)
     {
-        sloge("Issue with monocoque config file: %s:%d - %s", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
-        fprintf(stderr, "Issue with monocoque config file: %s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
-        config_destroy(&cfg);
+        sloge("Issue with monocoque config file: %s", ms->config_str);
+        fprintf(stderr, "Issue with monocoque config file: %s\n", ms->config_str);
         slog_destroy();
         goto cleanup_final;
     }
-    else
-    {
-        slogi("Opened and validated monocoque configuration file");
-    }
-    config_destroy(&cfg);
-
+    slogi("Opened and validated monocoque configuration file");
+    config_destroy(cfg);
+    free(cfg);
 
 
     if (ms->program_action == A_CONFIG_TACH)
