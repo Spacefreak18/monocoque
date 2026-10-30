@@ -151,13 +151,13 @@ typedef struct
     ProgramAction program_action;
     SimulatorAPI sim_name;
     int configcheck;
-    int useconfig;
     int verbosity_count;
     int fps;
     bool  force_udp_mode;
     bool  disable_audio;
     bool lua_test;
     bool auto_start;
+    bool usetyreconfig;
     int force_config;
     char* tyre_diameter_config;
     char* config_str;

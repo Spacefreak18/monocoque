@@ -246,14 +246,11 @@ int initializeHapticEffect(HapticEffect* h, HapticEffectSettings* hs, MonocoqueS
     slogt("haptic base amplitude: %i", h->baseamplitude);
     slogt("haptic motorposition: %i", h->motorposition);
 
-    h->useconfig = ms->useconfig;
-    h->configcheck = &ms->configcheck;
-    h->tyrediameterconfig = ms->tyre_diameter_config;
     return 0;
 }
 
 
-double slipeffect(SimData* simdata, HapticEffect* h, int useconfig, int* configcheck, char* configfile)
+double slipeffect(SimData* simdata, HapticEffect* h)
 {
     int effecttype = h->effecttype;
     int tyre = h->tyre;

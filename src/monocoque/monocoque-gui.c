@@ -62,6 +62,7 @@ void SetSettingsFromParameters(Parameters* p, MonocoqueSettings* ms, char* confi
         ms->log_filename_str = strdup("monocoque.log");
     }
 
+    asprintf(&ms->tyre_diameter_config, "%s%s", cachedir_str, "diameters.config");
     ms->fps = p->fps;
 
     ms->verbosity_count = p->verbosity_count;
@@ -165,8 +166,6 @@ int monocoque_initialize(int argc, char** argv)
         slog_disable(SLOG_DEBUG);
     }
     xdgWipeHandle(&xdg);
-
-
 
 
     if(ms.disable_audio == false)

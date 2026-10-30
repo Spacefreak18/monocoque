@@ -144,7 +144,7 @@ int arduino_simhaptic_update(SimDevice* this, SimData* simdata)
     serialdevice->u.simhapticdata.motor3 = 0;
     serialdevice->u.simhapticdata.motor4 = 0;
 
-    double play = slipeffect(simdata, &this->hapticeffect, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
+    double play = slipeffect(simdata, &this->hapticeffect);
 
     double rplay = play;
     play = play * serialdevice->ampfactor;
@@ -391,9 +391,6 @@ SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms, SimIn
         this->m.hapticeffect.effecttype = ds->hapticsettings.effect_type;
         slogt("Haptic effect: %i %i", this->m.hapticeffect.effecttype, ds->hapticsettings.effect_type);
         this->m.hapticeffect.tyre = ds->hapticsettings.tyre;
-        this->m.hapticeffect.useconfig = ms->useconfig;
-        this->m.hapticeffect.configcheck = &ms->configcheck;
-        this->m.hapticeffect.tyrediameterconfig = ms->tyre_diameter_config;
     }
 
     if(error == 0)

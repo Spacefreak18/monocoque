@@ -58,6 +58,8 @@ void SetSettingsFromParameters(Parameters* p, MonocoqueSettings* ms, char* confi
         ms->log_filename_str = strdup("monocoque.log");
     }
 
+    asprintf(&ms->tyre_diameter_config, "%s%s", cachedir_str, "diameters.config");
+
     ms->lua_test = false;
     if(p->user_specified_test_file == true && does_file_exist(p->test_file_path_str))
     {
@@ -179,18 +181,9 @@ int main(int argc, char** argv)
     }
     xdgWipeHandle(&xdg);
 
-    slogi("checking for diameters config");
-    char* diameters_file_str;
-    asprintf(&diameters_file_str, "%s/.config/monocoque/diameters.config", home_dir_str);
-    ms->tyre_diameter_config = strdup(diameters_file_str);
-    free(diameters_file_str);
-
-    ms->useconfig = 0;
-    ms->configcheck = 0;
-
 
     slogi("Testing monocoque config file: %s", ms->config_str);
-    slogd("using diameters file %s %i", ms->tyre_diameter_config, ms->configcheck);
+    slogd("using diameters file %s", ms->tyre_diameter_config);
     config_t *cfg = open_monocoque_config(ms->config_str);
     if (cfg == NULL)
     {
@@ -261,7 +254,7 @@ int main(int argc, char** argv)
 
         if (ms->program_action == A_PLAY)
         {
-            ms->useconfig = 1;
+            ms->usetyreconfig = true;
             slogi("running monocoque in gameloop mode..");
 //#ifdef USE_PULSEAUDIO
             //pa_threaded_mainloop_unlock(mainloop);
@@ -296,7 +289,7 @@ int main(int argc, char** argv)
             {
                 setupsound();
             }
-            ms->useconfig = 0;
+            ms->usetyreconfig = false;
 
             int configs = getNumberOfConfigs(ms->config_str);
             int confignum = 0;

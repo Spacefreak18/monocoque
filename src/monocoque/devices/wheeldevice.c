@@ -23,7 +23,7 @@ int wheelhapticdev_update(SimDevice* this, SimData* simdata)
     USBDevice* usbdevice = (void *) this->derived;
     WheelDevice* wheeldevice = &usbdevice->u.wheeldevice;
 
-    double play = slipeffect(simdata, &this->hapticeffect, this->hapticeffect.useconfig, this->hapticeffect.configcheck, this->hapticeffect.tyrediameterconfig);
+    double play = slipeffect(simdata, &this->hapticeffect);
 
     if (play != usbdevice->hapticstate)
     {

@@ -16,6 +16,7 @@ typedef struct device_loop_data
     SimDevice* simdevice;
     MonocoqueSettings* ms;
     SimInfo siminfo;
+    bool tyre_data_checked;
 } device_loop_data;
 
 typedef struct loop_data

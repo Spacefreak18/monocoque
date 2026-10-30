@@ -258,19 +258,15 @@ void tyrediametercheckcallback(uv_timer_t* handle)
         // use config check variable to track if the config check has been performed
         // avoid many opens of the same file
         int error = 0;
-        if(hasTyreDiameter(simdata)==false && f->ms->configcheck == 0)
+        if(hasTyreDiameter(simdata)==false && f->tyre_data_checked == false)
         {
             slogi("attempting load of tyre diameter config");
             error = loadtyreconfig(simdata, f->ms->tyre_diameter_config, true);
-            f->ms->configcheck = 1;
-        }
-
-        if(hasTyreDiameter(simdata)==false)
-        {
-            slogt("could not find tyre diameter in config file, attempting to calculate new");
-            getTyreDiameter(simdata);
-            // if this successfully calculates data the diameters will be saved to the file after the
-            // sim stops actively mapping data
+            f->tyre_data_checked = true;
+            if(hasTyreDiameter(simdata)==false)
+            {
+                slogt("could not find tyre diameter in config file, attempting to calculate new");
+            }
         }
     }
     if(hasTyreDiameter(simdata)==true)
@@ -283,6 +279,7 @@ void tyrediametercheckcallback(uv_timer_t* handle)
         }
         uv_timer_stop(handle);
     }
+    getTyreDiameter(simdata);
 
 }
 
@@ -309,16 +306,9 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
         DeviceSettings* ds = malloc(configureddevices * sizeof(DeviceSettings));
         slogd("loading confignum %i, with %i devices.", confignum, configureddevices);
         f->numdevices = uiloadconfig(ms->config_str, confignum, configureddevices, ms, ds);
-
-        if(ms->useconfig == 1)
-        {
-            ms->configcheck = 0;
-        }
-
         f->simdevices = malloc(f->numdevices * sizeof(SimDevice));
         int initdevices = devinit(f->simdevices, &f->siminfo, configureddevices, ds, ms);
         slogi("initialized %i devices", initdevices);
-
         for( int i = 0; i < configureddevices; i++)
         {
             settingsfree(ds[i]);
@@ -348,21 +338,26 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
                 SimInfo siminfo = f->siminfo;
                 if(f->started_tyre_calc_thread == false)
                 {
-                        if(devices[x].hapticeffect.effecttype == EFFECT_TYRELOCK || devices[x].hapticeffect.effecttype == EFFECT_TYRESLIP || devices[x].hapticeffect.effecttype == EFFECT_ABSBRAKES)
+                    if(devices[x].hapticeffect.effecttype == EFFECT_TYRELOCK || devices[x].hapticeffect.effecttype == EFFECT_TYRESLIP || devices[x].hapticeffect.effecttype == EFFECT_ABSBRAKES)
+                    {
+                        dld->tyre_data_checked = false;
+                        if(ms->usetyreconfig == true)
                         {
-                            if(siminfo.SimCalculatesTyreDiameter == false && siminfo.SimSupportsHapticEffects == true && siminfo.SimCalculatesSlipRatio == false && f->ms->useconfig == 1 && f->ms->tyre_diameter_config != NULL)
-                            {
-                                slogi("Starting thread to calculate tyre diameters and save to config file");
-                                f->started_tyre_calc_thread = true;
-
-                                f->tyrebaton = (device_loop_data*) malloc(sizeof(device_loop_data));
-                                f->tyrebaton->simdata = simdata;
-                                f->tyrebaton->ms = f->ms;
-
-                                uv_handle_set_data((uv_handle_t*) &tyrediametertimer, (void*) f->tyrebaton);
-                                uv_timer_start(&tyrediametertimer, tyrediametercheckcallback, 0, 1000);
-                            }
+                            dld->tyre_data_checked = false;
                         }
+                        if(siminfo.SimCalculatesTyreDiameter == false && siminfo.SimSupportsHapticEffects == true && siminfo.SimCalculatesSlipRatio == false)
+                        {
+                            slogi("Starting thread to calculate tyre diameters and save to config file");
+                            f->started_tyre_calc_thread = true;
+
+                            f->tyrebaton = (device_loop_data*) malloc(sizeof(device_loop_data));
+                            f->tyrebaton->simdata = simdata;
+                            f->tyrebaton->ms = f->ms;
+
+                            uv_handle_set_data((uv_handle_t*) &tyrediametertimer, (void*) f->tyrebaton);
+                            uv_timer_start(&tyrediametertimer, tyrediametercheckcallback, 0, 1000);
+                        }
+                    }
                 }
             }
         }
