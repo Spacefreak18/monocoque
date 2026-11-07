@@ -22,7 +22,7 @@ int check(enum sp_return result)
     switch (result)
     {
         case SP_ERR_ARG:
-            return 1;
+            return result;
         case SP_ERR_FAIL:
             error_message = sp_last_error_message();
             sloge("error: serial write failed: %s", error_message);
@@ -74,6 +74,7 @@ int monocoque_serial_free(SerialDevice* serialdevice)
         }
 
     }
+    return 0;
 }
 
 

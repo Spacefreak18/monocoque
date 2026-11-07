@@ -18,11 +18,18 @@
 #include "../simulatorapi/simapi/simapi/simdata.h"
 #include "../slog/slog.h"
 
+/* HID writes return byte counts; device updates return status codes. */
+static int usb_update_status(int result)
+{
+    return result < 0 ? result : 0;
+}
+
 int wheelhapticdev_update(SimDevice* this, SimData* simdata)
 {
     USBDevice* usbdevice = (void *) this->derived;
     WheelDevice* wheeldevice = &usbdevice->u.wheeldevice;
 
+    int result = 0;
     double play = slipeffect(simdata, &this->hapticeffect);
 
     if (play != usbdevice->hapticstate)
@@ -34,13 +41,13 @@ int wheelhapticdev_update(SimDevice* this, SimData* simdata)
             switch ( wheeldevice->type )
             {
                 case WHEELDEV_CSLELITEV3PEDALS:
-                    cslelitev3_update(usbdevice, this->hapticeffect.effecttype, rplay);
+                    result = cslelitev3_update(usbdevice, this->hapticeffect.effecttype, rplay);
                     break;
                 case WHEELDEV_SIMAGICP1000PEDALS:
-                    simagicp1000_update(usbdevice, this->hapticeffect.effecttype, rplay);
+                    result = simagicp1000_update(usbdevice, this->hapticeffect.effecttype, rplay);
                     break;
                 case WHEELDEV_SIMNETPEDALS:
-                    simnetpedals_update(usbdevice, this->hapticeffect.effecttype, rplay, this->hapticeffect.motorposition, this->hapticeffect.basefrequency, this->hapticeffect.baseamplitude);
+                    result = simnetpedals_update(usbdevice, this->hapticeffect.effecttype, rplay, this->hapticeffect.motorposition, this->hapticeffect.basefrequency, this->hapticeffect.baseamplitude);
                     break;
             }
         }
@@ -49,19 +56,19 @@ int wheelhapticdev_update(SimDevice* this, SimData* simdata)
             switch ( wheeldevice->type )
             {
                 case WHEELDEV_CSLELITEV3PEDALS:
-                    cslelitev3_update(usbdevice, this->hapticeffect.effecttype, rplay);
+                    result = cslelitev3_update(usbdevice, this->hapticeffect.effecttype, rplay);
                     break;
                 case WHEELDEV_SIMAGICP1000PEDALS:
-                    simagicp1000_update(usbdevice, this->hapticeffect.effecttype, rplay);
+                    result = simagicp1000_update(usbdevice, this->hapticeffect.effecttype, rplay);
                     break;
                 case WHEELDEV_SIMNETPEDALS:
-                    simnetpedals_update(usbdevice, this->hapticeffect.effecttype, rplay, this->hapticeffect.motorposition, 0, 0);
+                    result = simnetpedals_update(usbdevice, this->hapticeffect.effecttype, rplay, this->hapticeffect.motorposition, 0, 0);
                     break;
             }
         }
         usbdevice->hapticstate = play;
     }
-    return 0;
+    return usb_update_status(result);
 }
 
 int wheeldev_update(SimDevice* this, SimData* simdata)
@@ -69,29 +76,30 @@ int wheeldev_update(SimDevice* this, SimData* simdata)
     USBDevice* usbdevice = (void *) this->derived;
     WheelDevice* wheeldevice = &usbdevice->u.wheeldevice;
 
+    int result = 0;
     switch ( wheeldevice->type )
     {
         case WHEELDEV_UNKNOWN :
         case WHEELDEV_CAMMUSC5 :
-            cammusc5_update(usbdevice, simdata->maxrpm, simdata->rpms, simdata->gear, simdata->velocity);
+            result = cammusc5_update(usbdevice, simdata->maxrpm, simdata->rpms, simdata->gear, simdata->velocity);
             break;
         case WHEELDEV_LOGITECHG29 :
-            logitechg29_update(usbdevice, simdata->maxrpm, simdata->rpms, simdata->gear, simdata->velocity);
+            result = logitechg29_update(usbdevice, simdata->maxrpm, simdata->rpms, simdata->gear, simdata->velocity);
             break;
         case WHEELDEV_CAMMUSC12 :
             if(usbdevice->u.wheeldevice.useLua == true)
             {
-                cammusc12_customled_update(usbdevice, simdata);
+                result = cammusc12_customled_update(usbdevice, simdata);
             }
             else
             {
-                cammusc12_update(usbdevice, simdata->maxrpm, simdata->rpms, simdata->gear, simdata->velocity);
+                result = cammusc12_update(usbdevice, simdata->maxrpm, simdata->rpms, simdata->gear, simdata->velocity);
             }
             break;
         case WHEELDEV_SIMAGICGTNEO :
             if(usbdevice->u.wheeldevice.useLua == true)
             {
-                simagic_gtneo_customled_update(usbdevice, simdata);
+                result = simagic_gtneo_customled_update(usbdevice, simdata);
             }
             else
             {
@@ -100,7 +108,7 @@ int wheeldev_update(SimDevice* this, SimData* simdata)
             break;    
     }
 
-    return 0;
+    return usb_update_status(result);
 }
 
 int wheeldev_free(USBDevice* usbdevice)

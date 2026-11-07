@@ -18,67 +18,66 @@
 
 #define KPHTOMPH .621317
 
+/* libserialport writes return byte counts; device updates return status. */
+static int serial_update_status(int result)
+{
+    return result < 0 ? result : 0;
+}
+
 int serial_wheel_update(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
 
+    int result = 0;
     switch (serialdevice->devicetype) {
       case SIMDEVSUBTYPE_MOZA_NEW:
-        moza_new_update(serialdevice, simdata);
+        result = moza_new_update(serialdevice, simdata);
         break;
 
       case SERIALDEV__MOZA_KS_PRO_WHEEL:
-        moza_ks_pro_wheel_update(serialdevice, simdata);
+        result = moza_ks_pro_wheel_update(serialdevice, simdata);
         break;
 
       case SIMDEVSUBTYPE_MOZAR5:
       default:
-        moza_update(serialdevice, simdata->rpms, simdata->maxrpm);
+        result = moza_update(serialdevice, simdata->rpms, simdata->maxrpm);
         break;
     }
 
-    return 0;
+    return serial_update_status(result);
 }
 
 int serialdev_update(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
 
-    arduino_update(serialdevice, simdata, sizeof(SimData));
-
-    return 0;
+    return serial_update_status(arduino_update(serialdevice, simdata, sizeof(SimData)));
 }
 
 int arduino_custom_updater(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
 
-    arduino_custom_update(serialdevice, simdata);
-
-    return 0;
+    return serial_update_status(arduino_custom_update(serialdevice, simdata));
 }
 
 int arduino_customled_updater(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
-    arduino_customled_update(serialdevice, simdata);
-
-    return 0;
+    return serial_update_status(arduino_customled_update(serialdevice, simdata));
 }
 
 int arduino_simled_updater(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
 
-    arduino_simled_update(serialdevice, simdata);
-
-    return 0;
+    return serial_update_status(arduino_simled_update(serialdevice, simdata));
 }
 
 int arduino_shiftlights_update(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
-    int result = 1;
+    int result = 0;
 
 
     int num_avail_leds = serialdevice->numlights;
@@ -107,7 +106,7 @@ int arduino_shiftlights_update(SimDevice* this, SimData* simdata)
     // i can move the size to the initialization since it should not change
     size_t size = sizeof(ShiftLightsData);
 
-    arduino_update(serialdevice, &serialdevice->u.shiftlightsdata, size);
+    result = serial_update_status(arduino_update(serialdevice, &serialdevice->u.shiftlightsdata, size));
     return result;
 }
 
@@ -116,7 +115,7 @@ int arduino_shiftlights_update(SimDevice* this, SimData* simdata)
 int arduino_simwind_update(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
-    int result = 1;
+    int result = 0;
 
     // sending over as mph, when you consider 255mph to be a reasonable upper limit
     serialdevice->u.simwinddata.velocity = ceil(simdata->velocity*KPHTOMPH);
@@ -127,7 +126,7 @@ int arduino_simwind_update(SimDevice* this, SimData* simdata)
     slogt("Sending fanpower: %i (from config: %f)", serialdevice->u.simwinddata.fanpower, serialdevice->fanpower);
     size_t size = sizeof(SimWindData);
 
-    arduino_update(serialdevice, &serialdevice->u.simwinddata, size);
+    result = serial_update_status(arduino_update(serialdevice, &serialdevice->u.simwinddata, size));
 
     return result;
 }
@@ -136,7 +135,7 @@ int arduino_simhaptic_update(SimDevice* this, SimData* simdata)
 {
     SerialDevice* serialdevice = (void *) this->derived;
 
-    int result = 1;
+    int result = 0;
 
     slogt("arduino haptic device updating");
     serialdevice->u.simhapticdata.motor1 = 0;
@@ -177,7 +176,7 @@ int arduino_simhaptic_update(SimDevice* this, SimData* simdata)
 
     size_t size = sizeof(SimHapticData);
 
-    arduino_update(serialdevice, &serialdevice->u.simhapticdata, size);
+    result = serial_update_status(arduino_update(serialdevice, &serialdevice->u.simhapticdata, size));
     return result;
 }
 

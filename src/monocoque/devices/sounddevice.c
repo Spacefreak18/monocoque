@@ -29,6 +29,7 @@ int gear_sound_set(SimDevice* this, SimData* simdata)
     sounddevice->sounddata.last_gear = simdata->gear;
 
     slogt("set gear frequency to %f", sounddevice->sounddata.curr_frequency);
+    return 0;
 }
 
 
@@ -69,6 +70,7 @@ int sounddev_engine_update(SimDevice* this, SimData* simdata)
     double effect = ((double)simdata->rpms/60)/((double)simdata->maxrpm/60);
     slogt("Set base effect of %f from rpms of %i", effect, simdata->rpms);
     modulate(this, effect, this->hapticeffect.modulationType);
+    return 0;
 }
 
 int sounddev_tyreslip_update(SimDevice* this, SimData* simdata)
@@ -89,6 +91,7 @@ int sounddev_tyreslip_update(SimDevice* this, SimData* simdata)
         sounddevice->sounddata.curr_duration = 0;
     }
 
+    return 0;
 }
 
 int sounddev_tyrelock_update(SimDevice* this, SimData* simdata)
@@ -108,6 +111,7 @@ int sounddev_tyrelock_update(SimDevice* this, SimData* simdata)
         sounddevice->sounddata.curr_amplitude = 0;
         sounddevice->sounddata.curr_duration = 0;
     }
+    return 0;
 }
 
 int sounddev_absbrakes_update(SimDevice* this, SimData* simdata)
@@ -126,6 +130,7 @@ int sounddev_absbrakes_update(SimDevice* this, SimData* simdata)
         sounddevice->sounddata.curr_amplitude = 0;
         sounddevice->sounddata.curr_duration = 0;
     }
+    return 0;
 }
 
 int sounddev_suspension_update(SimDevice* this, SimData* simdata)
@@ -147,11 +152,12 @@ int sounddev_suspension_update(SimDevice* this, SimData* simdata)
         sounddevice->sounddata.curr_duration = 0;
     }
 
+    return 0;
 }
 
 int sounddev_gearshift_update(SimDevice* this, SimData* simdata)
 {
-    gear_sound_set(this, simdata);
+    return gear_sound_set(this, simdata);
 }
 
 

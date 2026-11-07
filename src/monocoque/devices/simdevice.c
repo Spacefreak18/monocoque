@@ -10,12 +10,12 @@
 
 int update(SimDevice* this, SimData* simdata)
 {
-    ((vtable*)this->vtable)->update(this, simdata);
+    return ((vtable*)this->vtable)->update(this, simdata);
 }
 
 int simdevfree(SimDevice* this)
 {
-    ((vtable*)this->vtable)->free(this);
+    return ((vtable*)this->vtable)->free(this);
 }
 
 int devupdate(SimDevice* this, SimData* simdata)

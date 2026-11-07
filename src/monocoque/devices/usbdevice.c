@@ -17,8 +17,7 @@ int usbdev_update(SimDevice* this, SimData* simdata)
     {
         case USBDEV_UNKNOWN :
         case USBDEV_TACHOMETER :
-            tachdev_update(usbdevice, simdata);
-            break;
+            return tachdev_update(usbdevice, simdata);
         case USBDEV_WHEEL_OR_PEDALS :
             // this should be directed via vtable to wheeldevice.c
             //wheeldev_update(usbdevice, simdata);
@@ -66,7 +65,7 @@ int usbdev_init(USBDevice* usbdevice, DeviceSettings* ds, SimInfo* siminfo)
             break;
     }
 
-    return error;
+    return error > 0 ? -error : error;
 }
 
 

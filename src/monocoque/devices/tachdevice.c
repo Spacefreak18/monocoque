@@ -45,7 +45,8 @@ int tachdev_update(USBDevice* usbdevice, SimData* simdata)
                 }
             }
             slogt("Settings tachometer pulses to %i", pulses);
-            revburner_update(usbdevice, pulses);
+            int result = revburner_update(usbdevice, pulses);
+            return result < 0 ? result : 0;
             break;
     }
 

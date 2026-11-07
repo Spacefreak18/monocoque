@@ -139,6 +139,7 @@ int arduino_init(SerialDevice* serialdevice, const char* portdev)
 int arduino_custom_init(SerialDevice* serialdevice, const char* portdev, const char* luafile, bool uselights)
 {
     int error = arduino_init(serialdevice, portdev);
+    if (error < 0) return error;
 
     int numlights = 0;
 
@@ -152,7 +153,7 @@ int arduino_custom_init(SerialDevice* serialdevice, const char* portdev, const c
 
     if(luafile == NULL)
     {
-        return serialdevice->id;
+        return error < 0 ? error : 0;
     }
 
 
