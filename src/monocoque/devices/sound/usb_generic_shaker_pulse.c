@@ -28,11 +28,16 @@ static double apply_noise(double base_freq, double noise_amount) {
 void gear_sound_stream(pa_stream *s, size_t length, void *userdata) {
 
     SoundData* data = (SoundData*)userdata;
+    // the buffer interleaves all the stream's channels: time advances once per frame, not per
+    // value, else every channel plays `channels` times the frequency (8x on a 7.1 card)
+    const pa_sample_spec *spec = pa_stream_get_sample_spec(s);
+    size_t channels = spec->channels;
     size_t num_samples = length / sizeof(int16_t);
+    size_t num_frames = length / pa_frame_size(spec);
     int16_t buffer[num_samples];
 
 
-    for (size_t i = 0; i < num_samples; i++) {
+    for (size_t i = 0; i < num_frames; i++) {
 
         double sample = 0;
 
@@ -69,7 +74,9 @@ void gear_sound_stream(pa_stream *s, size_t length, void *userdata) {
 
         }
 
-        buffer[i] = (int16_t)sample;
+        for (size_t c = 0; c < channels; c++) {
+            buffer[i * channels + c] = (int16_t)sample;
+        }
 
     }
     pa_stream_write(s, buffer, length, NULL, 0LL, PA_SEEK_RELATIVE);
@@ -79,19 +86,25 @@ void engine_sound_stream(pa_stream *s, size_t length, void *userdata) {
 
     SoundData* data = (SoundData*)userdata;
 
+    // one time step per frame of interleaved channels (see gear_sound_stream)
+    const pa_sample_spec *spec = pa_stream_get_sample_spec(s);
+    size_t channels = spec->channels;
     size_t num_samples = length / sizeof(int16_t);
+    size_t num_frames = length / pa_frame_size(spec);
 
     //size_t num_samples = (size_t) (DURATION * SAMPLE_RATE);
     int16_t buffer[num_samples];
 
     //double t = 0;
-    for (size_t i = 0; i < num_samples; i++) {
+    for (size_t i = 0; i < num_frames; i++) {
 
         double t = data->phase;
 
         double sample = ((double)data->curr_amplitude/100) * 32767.0 * sin( 2.0 * M_PI * t );
 
-        buffer[i] = (int16_t)sample;
+        for (size_t c = 0; c < channels; c++) {
+            buffer[i * channels + c] = (int16_t)sample;
+        }
 
         double f = apply_noise(data->curr_frequency, data->noise);
 
