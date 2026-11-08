@@ -8,6 +8,26 @@
 #include <pulse/pulseaudio.h>
 #include "../../../src/monocoque/devices/simdevice.h"
 extern void gear_sound_stream(pa_stream *s, size_t length, void *userdata);
+/* Fixed 16-bit stereo format for deterministic, hardware-free tests. */
+static const pa_sample_spec mock_sample_spec = {
+    .format = PA_SAMPLE_S16LE,
+    .rate = 44100,
+    .channels = 2
+};
+
+const pa_sample_spec *pa_stream_get_sample_spec(pa_stream *s)
+{
+    (void)s;
+    return &mock_sample_spec;
+}
+
+size_t pa_frame_size(const pa_sample_spec *spec)
+{
+    assert_non_null(spec);
+    assert_int_equal(spec->format, PA_SAMPLE_S16LE);
+    return (size_t)spec->channels * sizeof(int16_t);
+}
+
 static int writes;
 static int16_t captured[64];
 int pa_stream_write(pa_stream *s, const void *data, size_t length,
