@@ -6,7 +6,7 @@
 #include "cslelitev3.h"
 
 #include "../../helper/confighelper.h"
-#include "../slog/slog.h"
+#include "../../slog/slog.h"
 
 const char* SYSFSRUMBLEPATH = "/sys/module/hid_fanatec/drivers/hid:f*/0003:0EB7:183B.*/rumble";
 

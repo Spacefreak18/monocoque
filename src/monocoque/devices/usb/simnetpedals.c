@@ -6,7 +6,7 @@
 #include "simnetpedals.h"
 
 #include "../../helper/confighelper.h"
-#include "../slog/slog.h"
+#include "../../slog/slog.h"
 
 #define SIMNETPEDALS_BUFSIZE 64
 

@@ -13,9 +13,25 @@ SET_SOURCE_FILES_PROPERTIES( src/monocoque.c PROPERTIES LANGUAGE C)
 option(BUILD_GUI "Build GUI support" OFF)
 option(BUILD_SHARED "Build monocoque shared library" OFF)
 option(ENABLE_TESTS "Build test suite" OFF)
+option(ENABLE_COVERAGE "Instrument C code for gcov/gcovr coverage" OFF)
 
 
 project(monocoque)
+
+# Must be configured before add_library()/add_executable()/add_subdirectory()
+# so coverage instrumentation reaches the device libraries and test binaries.
+if(ENABLE_COVERAGE)
+    if(NOT CMAKE_C_COMPILER_ID STREQUAL "GNU")
+        message(FATAL_ERROR "ENABLE_COVERAGE requires GCC (gcov instrumentation)")
+    endif()
+    if(NOT ENABLE_TESTS)
+        message(FATAL_ERROR "ENABLE_COVERAGE requires -DENABLE_TESTS=ON")
+    endif()
+
+    message(STATUS "[monocoque] GCC coverage instrumentation enabled")
+    add_compile_options($<$<COMPILE_LANGUAGE:C>:--coverage> $<$<COMPILE_LANGUAGE:C>:-O0>)
+    add_link_options(--coverage)
+endif()
 
 set(CMAKE_EXE_LINKER_FLAGS "-Wl,--no-as-needed -ldl")
 set(LIBUSB_INCLUDE_DIR /usr/include/libusb-1.0)

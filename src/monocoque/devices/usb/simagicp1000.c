@@ -6,7 +6,7 @@
 #include "simagicp1000.h"
 
 #include "../../helper/confighelper.h"
-#include "../slog/slog.h"
+#include "../../slog/slog.h"
 
 #define SIMAGIC_VENDOR_ID          0x0483
 #define SIMAGIC_PRODUCT_ID_P1000   0x0525
