@@ -1,19 +1,9 @@
+#include "monocoque.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
 #include <basedir_fs.h>
-#include <libconfig.h>
-
-#include "gameloop/gameloop.h"
-#include "gameloop/tachconfig.h"
-#include "devices/simdevice.h"
-#include "devices/sound.h"
-#include "helper/parameters.h"
-#include "helper/dirhelper.h"
-#include "helper/confighelper.h"
-#include "simulatorapi/simapi/simapi/simdata.h"
-#include "slog/slog.h"
 
 #define PROGRAM_NAME "monocoque"
 

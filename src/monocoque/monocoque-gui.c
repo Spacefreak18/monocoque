@@ -1,24 +1,13 @@
+#include "monocoque.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
 #include <basedir_fs.h>
-#include <libconfig.h>
 
 #include "mgui/uiconfighelper.h"
 #include "mgui/addeditaction.h"
 #include "mgui/mainwindow.h"
-
-#include "gameloop/gameloop.h"
-#include "gameloop/loopdata.h"
-#include "gameloop/tachconfig.h"
-#include "devices/simdevice.h"
-#include "devices/sound.h"
-#include "helper/parameters.h"
-#include "helper/dirhelper.h"
-#include "helper/confighelper.h"
-#include "simulatorapi/simapi/simapi/simdata.h"
-#include "slog/slog.h"
 
 #include <nappgui.h>
 #include <gui/guiall.h>
@@ -379,10 +368,13 @@ static Panel *i_panel(App *app, MonocoqueSettings* ms)
     layout_button(app->layout2, app->button_autostart, 1, 0);
     layout_label(app->layout2, app->label_forceconfig, 2, 0);
     layout_edit(app->layout2, app->edit_forceconfig, 3, 0);
+
     
     layout_button(app->layout1a, app->button_add, 0, 0);
     layout_button(app->layout1a, app->button_edit, 1, 0);
     layout_button(app->layout1a, app->button_del, 2, 0);
+    app->buttons_cell = layout_cell(app->layout, 0, 1);
+    cell_enabled(app->buttons_cell, false);
 
     layout_listbox(app->layout3, app->listbox_devices, 0, 0);
 
@@ -550,16 +542,19 @@ static void i_update(App *app, const real64_t prtime, const real64_t ctime)
         {
             button_text(app->button_startstop, "Playing... Press to Stop");
             cell_enabled(app->devices_subpanel, false);
+            cell_enabled(app->buttons_cell, false);
         }
         if(appstate == 1)
         {
             button_text(app->button_startstop, "Searching for data... Press to Stop");
             cell_enabled(app->devices_subpanel, false);
+            cell_enabled(app->buttons_cell, false);
         }
         if(appstate <= 0)
         {
             button_text(app->button_startstop, "Start");
             cell_enabled(app->devices_subpanel, true);
+            cell_enabled(app->buttons_cell, true);
         }
         set_bottom_label_status(app->label_game_status);
 
