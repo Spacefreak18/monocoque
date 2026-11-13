@@ -718,7 +718,7 @@ void* monocoque_testloop_start(void* arg)
 
     DeviceSettings ds;
     //int numdevices = getsingledevice(args->ms->config_str, args->confignum, args->devicenum, args->ms, &ds);
-    test_simdevice = malloc(1 * sizeof(SimDevice));
+    test_simdevice = calloc(1, sizeof(SimDevice));
     test_siminfo = malloc(sizeof(SimInfo));
     simapi_set_faux_siminfo(test_siminfo);
     int initdevices = devinit(test_simdevice, test_siminfo, 1, args->ds, args->ms);
@@ -735,7 +735,14 @@ void* monocoque_testloop_start(void* arg)
 
     uv_timer_init(loop, &testdevicetimer);
     uv_handle_set_data((uv_handle_t*) &testdevicetimer, (void*) test_baton);
-    uv_timer_start(&testdevicetimer, devicetimercallback, 1000, 16);
+    if (initdevices > 0 && test_simdevice->initialized && test_simdevice->update != NULL)
+    {
+        uv_timer_start(&testdevicetimer, devicetimercallback, 1000, 16);
+    }
+    else
+    {
+        slogw("Device test skipped: device initialization failed");
+    }
 
     uv_run(loop, UV_RUN_DEFAULT);
 
@@ -757,7 +764,12 @@ int monocoque_testloop_stop()
 
     slogi("All threads stopped...");
 
-    test_simdevice->free(test_simdevice);
+    if (test_simdevice != NULL && test_simdevice->initialized && test_simdevice->free != NULL)
+    {
+        test_simdevice->free(test_simdevice);
+    }
+    free(test_simdevice);
+    test_simdevice = NULL;
     free(loop);
     free(test_baton);
     //free(simdata);

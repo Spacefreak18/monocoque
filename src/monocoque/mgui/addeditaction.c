@@ -325,30 +325,32 @@ static void i_OnSaveDevice(AddDeviceData *data, Event *e)
 {
     update_device_data_from_controls(data);
     slogd("Attempting save of device class %i device type %i device %s", data->ds->dev_type, data->ds->dev_subtype, data->ds->dev);
+    if(data->ds->has_haptic_effects == true) {
+        fprintf(stderr, "it does\n");
+}
     save_device_config(data->ms->cfg, data->ms->config_str, data->confignum, data->devicenum, data->ds);
+
+
+    window_stop_modal(data->parent, 0);
 }
 
-static void i_OnDeviceSubtypeSelect(AddDeviceData *data, Event *e)
+static void populateUSBTachometerTypesCombo(Combo* combo)
 {
-    const EvButton *p = event_params(e, EvButton);
-    cell_visible(data->cell_led_device_layout, false);
-    cell_visible(data->cell_haptic_effect_layout, false);
-    data->ds->has_led_effects = false;
-    data->ds->has_haptic_effects = false;
-    uint32_t selected = combo_get_selected(data->combo_select_device_subtype);
-    const char_t *text = combo_get_text(data->combo_select_device_subtype, selected);
-    
-    if (text != NULL && strcmp(text, "SIMLED") == 0)
-    {
-        cell_visible(data->cell_led_device_layout, true);
-        data->ds->has_led_effects = true;
-    }
-    if (text != NULL && strcmp(text, "SOUNDHAPTIC") == 0)
-    {
-        cell_visible(data->cell_haptic_effect_layout, true);
-        data->ds->has_haptic_effects = true;
-    }
-    panel_update(data->panel);
+    combo_add_elem(combo, "RevBurner", NULL);
+}
+
+static void populateUSBWheelTypesCombo(Combo* combo)
+{
+    combo_add_elem(combo, "CammusC5", NULL);
+    combo_add_elem(combo, "CammusC12", NULL);
+    combo_add_elem(combo, "MozaR5", NULL);
+    combo_add_elem(combo, "CSLEliteV3Pedals", NULL);
+    combo_add_elem(combo, "SimMagicP1000Pedals", NULL);
+    combo_add_elem(combo, "SimMagicGTNEO", NULL);
+    combo_add_elem(combo, "Moza_New", NULL);
+    combo_add_elem(combo, "LogitechG29", NULL);
+    combo_add_elem(combo, "Moza_KS_PRO_Wheel", NULL);
+    combo_add_elem(combo, "SimNetPedals", NULL);
 }
 
 static void populateSerialSubTypesCombo(Combo* combo)
@@ -361,9 +363,59 @@ static void populateSerialSubTypesCombo(Combo* combo)
     combo_add_elem(combo, "Custom", NULL);
 }
 
+static void populateUSBSubTypesCombo(Combo* combo)
+{
+    combo_add_elem(combo, "Tachometer", NULL);
+    combo_add_elem(combo, "Haptic", NULL);
+    combo_add_elem(combo, "Wheel", NULL);
+}
+
+static void i_OnDeviceSubtypeSelect(AddDeviceData *data, Event *e)
+{
+    const EvButton *p = event_params(e, EvButton);
+    cell_visible(data->cell_led_device_layout, false);
+    cell_visible(data->cell_haptic_effect_layout, false);
+    data->ds->has_led_effects = false;
+    data->ds->has_haptic_effects = false;
+
+    uint32_t class_selected = combo_get_selected(data->combo_select_device_class);
+    const char_t *device_class = combo_get_text(data->combo_select_device_class, class_selected);
+    uint32_t selected = combo_get_selected(data->combo_select_device_subtype);
+    const char_t *text = combo_get_text(data->combo_select_device_subtype, selected);
+    
+    if (text != NULL && strcicmp(text, "SIMLED") == 0)
+    {
+        cell_visible(data->cell_led_device_layout, true);
+        data->ds->has_led_effects = true;
+    }
+    if (text != NULL && strcicmp(text, "HAPTIC") == 0)
+    {
+        cell_visible(data->cell_haptic_effect_layout, true);
+        data->ds->has_haptic_effects = true;
+    }
+    if(device_class != NULL && strcicmp(device_class, "USB") == 0)
+    {
+        combo_clear(data->combo_select_device);
+        combo_text(data->combo_select_device, "");
+        if (text != NULL && (strcicmp(text, "WHEEL") == 0 || strcicmp(text, "USBWHEEL") == 0) )
+        {
+            populateUSBWheelTypesCombo(data->combo_select_device);
+        }
+        if (text != NULL && (strcicmp(text, "TACHOMETER") == 0 || strcicmp(text, "USBTACHOMETER") == 0) )
+        {
+            populateUSBTachometerTypesCombo(data->combo_select_device);
+        }
+    }
+    panel_update(data->panel);
+}
+
+
 
 static void i_OnDeviceClassSelect(AddDeviceData *data, Event *e)
 {
+    data->ds->has_led_effects = false;
+    data->ds->has_haptic_effects = false;
+
     const EvButton *p = event_params(e, EvButton);
 
     panel_visible_layout(data->device_specific_panel, 0);
@@ -376,7 +428,7 @@ static void i_OnDeviceClassSelect(AddDeviceData *data, Event *e)
     combo_text(data->combo_select_device_subtype, "");
     uint32_t selected = combo_get_selected(data->combo_select_device_class);
     const char_t *text = combo_get_text(data->combo_select_device_class, selected);
-    if (text != NULL && strcmp(text, "Serial") == 0)
+    if (text != NULL && strcicmp(text, "SERIAL") == 0)
     {
         add_serial_devices_to_combo(data->combo_select_device);
         populateSerialSubTypesCombo(data->combo_select_device_subtype);
@@ -385,7 +437,7 @@ static void i_OnDeviceClassSelect(AddDeviceData *data, Event *e)
         cell_visible(data->cell_led_device_layout, true);
         data->ds->has_led_effects = true;
     }
-    if (text != NULL && strcmp(text, "Sound") == 0)
+    if (text != NULL && strcicmp(text, "SOUND") == 0)
     {
         add_sound_devices_to_combo(data->combo_select_device);
         combo_add_elem(data->combo_select_device_subtype, "Haptic", NULL);
@@ -393,6 +445,12 @@ static void i_OnDeviceClassSelect(AddDeviceData *data, Event *e)
         // since HAPTIC will be selected we will show haptic settings
         cell_visible(data->cell_haptic_effect_layout, true);
         data->ds->has_haptic_effects = true;
+    }
+    if (text != NULL && strcicmp(text, "USB") == 0)
+    {
+        //TODO: eventually add device detection or a different approach, this drop down will become untenable
+        populateUSBSubTypesCombo(data->combo_select_device_subtype);
+        populateUSBTachometerTypesCombo(data->combo_select_device);
     }
     combo_selected(data->combo_select_device, 0);
     combo_selected(data->combo_select_device_subtype, 0);
@@ -492,8 +550,6 @@ static Layout *i_modal_layout(AddDeviceData *data, App* app, MonocoqueSettings* 
     subwindow->cell_haptic_effect_layout = layout_cell(subwindow->main_outer_layout, 0, 4);
     cell_visible(subwindow->cell_led_device_layout, false);
     cell_visible(subwindow->cell_haptic_effect_layout, false);
-
-
     
 
     if(dev_action == DEVICE_ACTION_ADD)
@@ -506,6 +562,13 @@ static Layout *i_modal_layout(AddDeviceData *data, App* app, MonocoqueSettings* 
         combo_OnSelect(subwindow->combo_select_device_class, listener(data, i_OnDeviceClassSelect, AddDeviceData));
         combo_OnSelect(subwindow->combo_select_device_subtype, listener(data, i_OnDeviceSubtypeSelect, AddDeviceData));
 
+        combo_selected(data->combo_select_device_class, 1);
+        add_sound_devices_to_combo(data->combo_select_device);
+        combo_add_elem(data->combo_select_device_subtype, "Haptic", NULL);
+        data->ds->has_haptic_effects = true;
+        combo_selected(subwindow->combo_select_device_subtype, data->ds->dev_subtype);
+        panel_visible_layout(data->device_specific_panel, 2);
+        cell_visible(data->cell_haptic_effect_layout, true);
 
         return subwindow->main_outer_layout;
     }
@@ -537,8 +600,11 @@ static Layout *i_modal_layout(AddDeviceData *data, App* app, MonocoqueSettings* 
     }
     if(data->ds->dev_type == SIMDEV_USB)
     {
+        populateUSBSubTypesCombo(data->combo_select_device_subtype);
+        populateUSBTachometerTypesCombo(data->combo_select_device);
+        //TODO: eventually add device detection or a different approach, this drop down will become untenable
         combo_selected(subwindow->combo_select_device_subtype, data->ds->dev_subtype - USBDevicesOffset);
-        panel_visible_layout(data->device_specific_panel, 2);
+        //panel_visible_layout(data->device_specific_panel, 2);
     }
 
     if(data->ds->dev_subtype == SIMDEVTYPE_SIMLED) {
@@ -577,10 +643,10 @@ Panel *adddevice_window(Window *parent, App* app, MonocoqueSettings* ms, enum de
     data->ds->sounddevsettings.pan = 0;
     data->ds->sounddevsettings.volume = 50;
     data->ds->sounddevsettings.noise = 0;
-    data->ds->hapticsettings.frequency = 32;
+    data->ds->hapticsettings.frequency = 440;
     data->ds->hapticsettings.amplitude = 50;
-    data->ds->hapticsettings.frequencyMax = 0;
-    data->ds->hapticsettings.amplitudeMax = 0;
+    data->ds->hapticsettings.frequencyMax = 440;
+    data->ds->hapticsettings.amplitudeMax = 50;
     data->ds->hapticsettings.motorposition = 0;
     data->ds->hapticsettings.threshold = 0.0;
     data->ds->hapticsettings.duration = 0.0;

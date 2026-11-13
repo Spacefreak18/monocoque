@@ -47,4 +47,5 @@ struct _app_t
 
     Cell* devices_subpanel;
     Cell* cell_config_dropdown;
+    Cell* buttons_cell;
 };

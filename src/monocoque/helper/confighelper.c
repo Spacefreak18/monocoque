@@ -165,7 +165,7 @@ int strtodevsubtype(const char* device_subtype, DeviceSettings* ds, int simdev)
 
     switch (simdev) {
         case SIMDEV_USB:
-            if (strcicmp(device_subtype, "Tachometer") == 0)
+            if (strcicmp(device_subtype, "Tachometer") == 0 || strcicmp(device_subtype, "UsbTachometer") == 0)
             {
                 ds->dev_subtype = SIMDEVTYPE_TACHOMETER;
                 break;
@@ -1235,7 +1235,7 @@ static const char *device_subtype_to_string(DeviceSubType device_subtype)
         case SIMDEVTYPE_SOUNDHAPTIC:
             return "SoundHaptic";
         case SIMDEVTYPE_TACHOMETER:
-            return "Tachometer";
+            return "UsbTachometer";
         case SIMDEVTYPE_USBHAPTIC:
             return "UsbHaptic";
         case SIMDEVTYPE_USBWHEEL:
@@ -1430,9 +1430,9 @@ int save_device_config(config_t *cfg, const char* configfile, int confignum, int
         set_float(device_entry, "duration", hs->duration);
 
         set_string(device_entry, "effect", haptic_effect_to_string(hs->effect_type));
-         
+
         set_string(device_entry, "tyre", tyre_to_string(hs->tyre));
-         
+
         set_string(device_entry, "modulation", modulation_to_string(hs->modulation));
     }
 
