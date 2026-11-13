@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.5.0](https://github.com/Spacefreak18/monocoque/compare/0.4.0...0.5.0) (2026-11-13)
+
+
+### Features
+
+* Add auto_start setting ([a2484ba](https://github.com/Spacefreak18/monocoque/commit/a2484baa2d5aec878a26e6eed4ebeaf96054362a))
+* Add force config setting. Cleanup UI slightly. ([806b38e](https://github.com/Spacefreak18/monocoque/commit/806b38e3c2f90504dabde8978c89dc781744cbad))
+* add umbrella header ([a51db67](https://github.com/Spacefreak18/monocoque/commit/a51db67b2537ca43803abb5ce5a0986b5f3f8844))
+* harden the installer for real distros ([#57](https://github.com/Spacefreak18/monocoque/issues/57)) ([a44f73b](https://github.com/Spacefreak18/monocoque/commit/a44f73b2a3e2556be82f4a751aebcdc2d230328d))
+* improve useage of config_force and configuration resolution. refactor: config resolution ([ef43146](https://github.com/Spacefreak18/monocoque/commit/ef431462200943ede022bfd0eb3ecd6037e5fac6))
+
+
+### Bug Fixes
+
+* Allow cli to open without a config file and create a config if none exists. But still error if config is invalid ([2512135](https://github.com/Spacefreak18/monocoque/commit/25121358e8b82e5f2c1d11649a903e6037f6e1eb))
+* Allow gui to open without a config file and create a config if none exists. But still error if config is invalid ([47d0c50](https://github.com/Spacefreak18/monocoque/commit/47d0c50d6402b740905fab08f4ba1d3beb8ccd5e))
+* effects playing at faster than specified frequency and gear pulsing too short. Issue 62. ([3f673af](https://github.com/Spacefreak18/monocoque/commit/3f673af986cfce7e0ca1be00966d77909e221b32))
+* fail closed on serial and PulseAudio init ([#56](https://github.com/Spacefreak18/monocoque/issues/56)) ([0c7cd6f](https://github.com/Spacefreak18/monocoque/commit/0c7cd6f751635e35e0cad2b3eff5e089b10ebb51))
+* various issues with gui ([1750a4b](https://github.com/Spacefreak18/monocoque/commit/1750a4b413acf2d1403e579751de65a2f22456f7))
+
 ## [0.4.0](https://github.com/Spacefreak18/monocoque/compare/0.3.6...0.4.0) (2026-09-24)
 
 
