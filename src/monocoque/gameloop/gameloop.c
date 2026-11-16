@@ -23,20 +23,19 @@
 
 #define DEFAULT_UPDATE_RATE      240.0
 #define SIM_CHECK_RATE           1.0
-bool go = false;
-bool go2 = false;
+
 struct sigaction act;
 static pthread_t loop_thread;
 static uv_loop_t *loop = NULL;
 
 SimData* simdata;
 SimMap* simmap;
-loop_data* baton;
 
+loop_data* baton;
 device_loop_data* test_baton;
+
 SimDevice* test_simdevice;
 SimInfo* test_siminfo;
-
 
 uv_idle_t idler;
 uv_timer_t datachecktimer;
@@ -47,7 +46,6 @@ uv_timer_t testdevicetimer;
 uv_udp_t recv_socket;
 
 bool doui = false;
-
 
 void shmdatamapcallback(uv_timer_t* handle);
 void showstatscallback(uv_timer_t* handle);
@@ -339,12 +337,12 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
                 dld->simdevice = &devices[x];
                 dld->simdata = simdata;
                 uv_timer_t* dt = &f->device_timers[x];
-                uv_timer_init(uv_default_loop(), dt);
+                uv_timer_init(uv_handle_get_loop((uv_handle_t *)&datachecktimer), dt);
                 uv_handle_set_data((uv_handle_t*) dt, (void*) dld);
                 int interval = 1000/devices[x].fps;
                 uv_timer_start(dt, devicetimercallback, 0, interval);
                 slogi("starting device type %i at id at %i fps: %i (%i ms ticks)", devices[x].type, x, devices[x].fps, interval);
-               
+
                 SimInfo siminfo = f->siminfo;
                 if(f->started_tyre_calc_thread == false)
                 {
@@ -389,6 +387,59 @@ void showstatscallback(uv_timer_t* handle)
     }
 }
 
+/* Device timer arrays stay allocated until their uv_close callbacks run. */
+typedef struct device_timer_cleanup {
+    uv_timer_t *timers;
+    device_loop_data *batons;
+    int pending;
+} device_timer_cleanup;
+
+static void device_timer_closed(uv_handle_t *handle)
+{
+    device_timer_cleanup *owner = handle->data;
+    if (--owner->pending == 0)
+    {
+        free(owner->timers);
+        free(owner->batons);
+        free(owner);
+    }
+}
+
+static void close_device_timers(loop_data *f)
+{
+    int count = 0;
+    for (int x = 0; x < f->numdevices; ++x)
+        if (f->simdevices[x].initialized)
+            ++count;
+
+    if (count == 0)
+    {
+        free(f->device_timers);
+        free(f->device_batons);
+    }
+    else
+    {
+        device_timer_cleanup *owner = malloc(sizeof(*owner));
+        if (owner != NULL)
+            *owner = (device_timer_cleanup){f->device_timers, f->device_batons, count};
+
+        /* If allocation fails, leak arrays instead of freeing live handles. */
+        for (int x = 0; x < f->numdevices; ++x)
+        {
+            if (!f->simdevices[x].initialized)
+                continue;
+            uv_timer_t *dt = &f->device_timers[x];
+            uv_timer_stop(dt);
+            if (owner != NULL)
+                uv_handle_set_data((uv_handle_t *)dt, owner);
+            uv_close((uv_handle_t *)dt, owner != NULL ? device_timer_closed : NULL);
+        }
+    }
+    f->device_timers = NULL;
+    f->device_batons = NULL;
+}
+
+
 void releaseloop(loop_data* f, SimData* simdata, SimMap* simmap)
 {
         slogi("release loop");
@@ -424,19 +475,7 @@ void releaseloop(loop_data* f, SimData* simdata, SimMap* simmap)
             simdata->rpms = 0;
             simdata->velocity = 0;
 
-            for (int x = 0; x < numdevices; x++)
-            {
-                if (devices[x].initialized == true)
-                {
-                    uv_timer_t* dt = &f->device_timers[x];
-                    slogt("attempting device timer stop and release");
-                    slogt("timer active status %i", uv_is_active((uv_handle_t*) dt));
-                    uv_timer_stop(dt);
-                    //uv_close((uv_handle_t*) dt, on_timer_close_complete);
-                }
-            }
-            free(f->device_batons);
-            free(f->device_timers);
+            close_device_timers(f);
             slogt("stopped device timers");
             for (int x = 0; x < numdevices; x++)
             {
@@ -648,61 +687,100 @@ void cb(uv_poll_t* handle, int status, int events)
 
 
 
-void* monocoque_mainloop_start(void* arg)
+static uv_poll_t mainloop_stdin_poll;
+static uv_async_t mainloop_stop_async;
+
+static void mainloop_stop_requested(uv_async_t *handle)
 {
-    MonocoqueSettings* ms = arg;
-    simdata = malloc(sizeof(SimData));
+    /* uv_async_send() is thread-safe; stopping libuv handles here ensures
+     * uv_stop() executes on the event-loop thread, not the GUI thread. */
+    appstate = 0;
+    if (baton != NULL && baton->numdevices > 0 && !baton->releasing)
+        releaseloop(baton, simdata, simmap);
+    uv_udp_recv_stop(&recv_socket);
+    uv_timer_stop(&datamaptimer);
+    uv_timer_stop(&showstatstimer);
+    uv_timer_stop(&datachecktimer);
+    uv_timer_stop(&tyrediametertimer);
+    uv_stop(handle->loop);
+}
+
+static int mainloop_run(MonocoqueSettings *ms, uv_loop_t *run_loop, bool cli)
+{
+    int err;
+    simdata = calloc(1, sizeof(*simdata));
     simmap = simapi_simmap_create();
-    slogd("setting initial app state");
-    appstate = 1;
+    baton = calloc(1, sizeof(*baton));
+    if (simdata == NULL || simmap == NULL || baton == NULL)
+    {
+        free(baton);
+        free(simdata);
+        free(simmap);
+        baton = NULL;
+        simdata = NULL;
+        simmap = NULL;
+        return -1;
+    }
 
-    //struct pollfd mypoll = { STDIN_FILENO, POLLIN|POLLPRI };
-    //uv_poll_t* poll = (uv_poll_t*) malloc(uv_handle_size(UV_POLL));
-
-    baton = (loop_data*) malloc(sizeof(loop_data));
     baton->siminfo.mapapi = -1;
     baton->simmap = simmap;
     baton->simdata = simdata;
     baton->ms = ms;
-    baton->uion = false;
-    baton->releasing = false;
-    baton->use_udp = false;
-    baton->req.data = (void*) baton;
-
+    baton->req.data = baton;
+    doui = false;
 
     simapi_set_log_info(simapilib_loginfo);
     simapi_set_log_debug(simapilib_logdebug);
     simapi_set_log_trace(simapilib_logtrace);
 
-    //if (0 != uv_poll_init(uv_default_loop(), poll, 0))
-    //{
-    //    return NULL;
-    //};
-   
-    uv_udp_init(loop, &recv_socket);
-    uv_timer_init(loop, &datachecktimer);
-    uv_timer_init(loop, &datamaptimer);
-    uv_timer_init(loop, &tyrediametertimer);
+    /* Use the supplied loop for both front ends, including all device timers
+     * created later by looprun(). */
+    if ((err = uv_udp_init(run_loop, &recv_socket)) != 0 ||
+        (err = uv_timer_init(run_loop, &datachecktimer)) != 0 ||
+        (err = uv_timer_init(run_loop, &showstatstimer)) != 0 ||
+        (err = uv_timer_init(run_loop, &datamaptimer)) != 0 ||
+        (err = uv_timer_init(run_loop, &tyrediametertimer)) != 0)
+    {
+        fprintf(stderr, "Failed to initialize main loop handle: %s\n", uv_strerror(err));
+        return -1;
+    }
 
+    uv_handle_set_data((uv_handle_t *)&recv_socket, baton);
+    uv_handle_set_data((uv_handle_t *)&datachecktimer, baton);
+    uv_handle_set_data((uv_handle_t *)&showstatstimer, baton);
+    uv_handle_set_data((uv_handle_t *)&datamaptimer, baton);
 
+    if (cli)
+    {
+        err = uv_poll_init(run_loop, &mainloop_stdin_poll, STDIN_FILENO);
+        if (err == 0)
+        {
+            uv_handle_set_data((uv_handle_t *)&mainloop_stdin_poll, baton);
+            err = uv_poll_start(&mainloop_stdin_poll, UV_READABLE, cb);
+        }
+        if (err != 0)
+        {
+            fprintf(stderr, "Failed to initialize CLI input: %s\n", uv_strerror(err));
+            return -1;
+        }
+        fprintf(stdout, "Searching for sim data... Press q to quit...\n");
+    }
 
-    uv_handle_set_data((uv_handle_t*) &datachecktimer, (void*) baton);
-    uv_handle_set_data((uv_handle_t*) &datamaptimer, (void*) baton);
-    //uv_handle_set_data((uv_handle_t*) &showstatstimer, (void*) baton);
-    uv_handle_set_data((uv_handle_t*) &recv_socket, (void*) baton);
-    //}
-    //uv_handle_set_data((uv_handle_t*) poll, (void*) baton);
+    slogd("setting initial app state");
+    appstate = 1;
+    err = uv_timer_start(&datachecktimer, datacheckcallback, 1000, 1000);
+    if (err != 0)
+    {
+        fprintf(stderr, "Failed to start simulator timer: %s\n", uv_strerror(err));
+        return -1;
+    }
+    uv_run(run_loop, UV_RUN_DEFAULT);
+    return 0;
+}
 
-    //if (0 != uv_poll_start(poll, UV_READABLE, cb))
-    //{
-    //    return NULL;
-    //};
-
-    uv_timer_start(&datachecktimer, datacheckcallback, 1000, 1000);
-
-    //fprintf(stdout, "Searching for sim data... Press q to quit...\n");
-    uv_run(loop, UV_RUN_DEFAULT);
-
+void *monocoque_mainloop_start(void *arg)
+{
+    (void)mainloop_run((MonocoqueSettings *)arg, loop, false);
     return NULL;
 }
 
@@ -733,8 +811,6 @@ void* monocoque_testloop_start(void* arg)
     simapi_set_faux_siminfo(test_siminfo);
     int initdevices = devinit(test_simdevice, test_siminfo, 1, args->ds, args->ms);
 
-
-
     test_baton->siminfo.mapapi = -1;
     test_baton->simdevice = test_simdevice;
 
@@ -763,11 +839,11 @@ int monocoque_testloop_stop()
 {
     uv_timer_stop(&testdevicetimer);
 
-    uv_stop(loop);
+    int err = uv_async_send(&mainloop_stop_async);
     pthread_join(loop_thread, NULL);
 
-    uv_run(loop, UV_RUN_NOWAIT);
     uv_walk(loop, close_walk_cb, NULL);
+    uv_run(loop, UV_RUN_NOWAIT);
     uv_loop_close(loop);
     uv_library_shutdown();
 
@@ -780,6 +856,7 @@ int monocoque_testloop_stop()
     free(test_simdevice);
     test_simdevice = NULL;
     free(loop);
+    loop = NULL;
     free(test_baton);
     //free(simdata);
     free(simmap);
@@ -787,49 +864,70 @@ int monocoque_testloop_stop()
     return 0;
 }
 
-int monocoque_mainloop_stop(MonocoqueSettings* ms)
+int monocoque_mainloop_stop(MonocoqueSettings *ms)
 {
+    (void)ms;
+    if (loop == NULL)
+        return -1;
 
-    uv_udp_recv_stop(&recv_socket);
-    uv_timer_stop(&datamaptimer);
-    uv_timer_stop(&datachecktimer);
-
-    uv_stop(loop);
+    int err = uv_async_send(&mainloop_stop_async);
+    if (err != 0)
+        return err;
     pthread_join(loop_thread, NULL);
 
-    uv_run(loop, UV_RUN_NOWAIT);
     uv_walk(loop, close_walk_cb, NULL);
-    uv_loop_close(loop);
-    uv_library_shutdown();
-
-    slogi("All threads stopped...");
+    uv_run(loop, UV_RUN_DEFAULT);  /* Drain uv_close callbacks. */
+    err = uv_loop_close(loop);
+    if (err != 0)
+        return err;  /* Do not free an active uv_loop_t. */
 
     free(loop);
+    loop = NULL;
     free(baton);
     free(simdata);
     free(simmap);
-
+    baton = NULL;
+    simdata = NULL;
+    simmap = NULL;
     appstate = 0;
+    slogi("All threads stopped...");
     return 0;
 }
 
 
-int start_loop(MonocoqueSettings* ms)
+int start_loop(MonocoqueSettings *ms)
 {
-    loop = malloc(sizeof(uv_loop_t));
-
-    if (loop == NULL)
-    {
+    if (loop != NULL)
         return -1;
-    }
+    loop = malloc(sizeof(*loop));
+    if (loop == NULL)
+        return -1;
 
-    if (uv_loop_init(loop) != 0)
+    int err = uv_loop_init(loop);
+    if (err != 0)
     {
         free(loop);
         loop = NULL;
-        return -1;
+        return err;
     }
-    return pthread_create(&loop_thread, NULL, monocoque_mainloop_start, ms);
+    err = uv_async_init(loop, &mainloop_stop_async, mainloop_stop_requested);
+    if (err != 0)
+    {
+        uv_loop_close(loop);
+        free(loop);
+        loop = NULL;
+        return err;
+    }
+    err = pthread_create(&loop_thread, NULL, monocoque_mainloop_start, ms);
+    if (err != 0)
+    {
+        uv_close((uv_handle_t *)&mainloop_stop_async, NULL);
+        uv_run(loop, UV_RUN_DEFAULT);
+        uv_loop_close(loop);
+        free(loop);
+        loop = NULL;
+    }
+    return err;
 }
 
 int start_test(test_loop_args* test_data)
@@ -888,81 +986,40 @@ const char* get_simd_onoff(void)
     return "Not Detected";
 }
 
-int monocoque_mainloop(MonocoqueSettings* ms)
+int monocoque_mainloop(MonocoqueSettings *ms)
 {
-
-    simdata = malloc(sizeof(SimData));
-    simmap = simapi_simmap_create();
-
-    struct termios newsettings, canonicalmode;
-    tcgetattr(0, &canonicalmode);
-    newsettings = canonicalmode;
-    newsettings.c_lflag &= (~ICANON & ~ECHO);
-    newsettings.c_cc[VMIN] = 1;
-    newsettings.c_cc[VTIME] = 0;
-    tcsetattr(0, TCSANOW, &newsettings);
-    char ch;
-    struct pollfd mypoll = { STDIN_FILENO, POLLIN|POLLPRI };
-
-    uv_poll_t* poll = (uv_poll_t*) malloc(uv_handle_size(UV_POLL));
-
-    baton = (loop_data*) malloc(sizeof(loop_data));
-    baton->simmap = simmap;
-    baton->simdata = simdata;
-    baton->ms = ms;
-    baton->uion = false;
-    baton->releasing = false;
-    baton->use_udp = false;
-    baton->req.data = (void*) baton;
-
-    simapi_set_log_info(simapilib_loginfo);
-    simapi_set_log_debug(simapilib_logdebug);
-    simapi_set_log_trace(simapilib_logtrace);
-
-    if (0 != uv_poll_init(uv_default_loop(), poll, 0))
+    struct termios original, raw;
+    bool restore_terminal = (tcgetattr(STDIN_FILENO, &original) == 0);
+    if (restore_terminal)
     {
-        return 1;
-    };
-    
-    uv_udp_init(uv_default_loop(), &recv_socket);
-    uv_timer_init(uv_default_loop(), &datachecktimer);
-    uv_timer_init(uv_default_loop(), &showstatstimer);
-    uv_timer_init(uv_default_loop(), &datamaptimer);
-    uv_timer_init(uv_default_loop(), &tyrediametertimer);
-    slogd("setting initial app state");
-    appstate = 1;
+        raw = original;
+        raw.c_lflag &= ~(ICANON | ECHO);
+        raw.c_cc[VMIN] = 1;
+        raw.c_cc[VTIME] = 0;
+        tcsetattr(STDIN_FILENO, TCSANOW, &raw);
+    }
 
-    uv_handle_set_data((uv_handle_t*) &datachecktimer, (void*) baton);
-    uv_handle_set_data((uv_handle_t*) &datamaptimer, (void*) baton);
-    uv_handle_set_data((uv_handle_t*) &showstatstimer, (void*) baton);
-    uv_handle_set_data((uv_handle_t*) &recv_socket, (void*) baton);
-    uv_handle_set_data((uv_handle_t*) poll, (void*) baton);
+    uv_loop_t *run_loop = uv_default_loop();
+    int result = mainloop_run(ms, run_loop, true);
+    uv_walk(run_loop, close_walk_cb, NULL);
+    uv_run(run_loop, UV_RUN_DEFAULT);
+    int close_error = uv_loop_close(run_loop);
+    if (result == 0 && close_error != 0)
+        result = close_error;
 
-    if (0 != uv_poll_start(poll, UV_READABLE, cb))
-    {
-        return 2;
-    };
-    uv_timer_start(&datachecktimer, datacheckcallback, 1000, 1000);
-
-    fprintf(stdout, "Searching for sim data... Press q to quit...\n");
-    uv_run(uv_default_loop(), UV_RUN_DEFAULT);
-
-    uv_stop(uv_default_loop());
-    //uv_walk(uv_default_loop(), close_walk_cb, NULL);
-    uv_run(uv_default_loop(), UV_RUN_DEFAULT);
-    uv_loop_close(uv_default_loop());
-    uv_library_shutdown();
-    slogi("All threads stopped...");
-
+    if (restore_terminal)
+        tcsetattr(STDIN_FILENO, TCSANOW, &original);
     fprintf(stdout, "\n");
     fflush(stdout);
-    tcsetattr(0, TCSANOW, &canonicalmode);
 
     free(baton);
     free(simdata);
     free(simmap);
-
-    return 0;
+    baton = NULL;
+    simdata = NULL;
+    simmap = NULL;
+    slogi("All threads stopped...");
+    return result;
 }
 
 void set_basic_simdata(SimData* simdata)
