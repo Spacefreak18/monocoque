@@ -284,22 +284,32 @@ int main(int argc, char** argv)
             int configs = getNumberOfConfigs(ms->config_str);
             int confignum = 0;
             confignum = getconfigtouse(ms->config_str, "default", 0, 0);
-            int configureddevices;
-            configcheck(ms->config_str, confignum, &configureddevices);
+            int configureddevices = 0;
 
-            DeviceSettings* ds = malloc(configureddevices * sizeof(DeviceSettings));
+            DeviceSettings *ds = NULL;
+            if (device_settings_load(ms->config_str, confignum, ms, &ds, &configureddevices) != 0)
+            {
+                sloge("Could not load device settings");
+                if (!ms->disable_audio) freesound();
+                slog_destroy();
+                goto cleanup_final;
+            }
             slogd("loading confignum %i, with %i devices.", confignum, configureddevices);
-
-            int numdevices = uiloadconfig(ms->config_str, confignum, configureddevices, ms, ds);
-            SimDevice* simdevices = malloc(numdevices * sizeof(SimDevice));
-            SimInfo* siminfo = malloc(sizeof(SimInfo));
+            int numdevices = configureddevices;
+            SimDevice *simdevices = calloc(configureddevices ? (size_t)configureddevices : 1, sizeof(*simdevices));
+            SimInfo *siminfo = malloc(sizeof(*siminfo));
+            if (simdevices == NULL || siminfo == NULL)
+            {
+                free(simdevices);
+                free(siminfo);
+                device_settings_free_all(ds, configureddevices);
+                if (!ms->disable_audio) freesound();
+                slog_destroy();
+                goto cleanup_final;
+            }
             simapi_set_faux_siminfo(siminfo);
             int initdevices = devinit(simdevices, siminfo, configureddevices, ds, ms);
-            for( int i = 0; i < configureddevices; i++)
-            {
-                settingsfree(ds[i]);
-            }
-            free(ds);
+            device_settings_free_all(ds, configureddevices);
             error = tester(ms, simdevices, numdevices);
             if (error == MONOCOQUE_ERROR_NONE)
             {
@@ -316,6 +326,8 @@ int main(int argc, char** argv)
                     simdevices[x].free(&simdevices[x]);
                 }
             }
+            free(simdevices);
+            free(siminfo);
             if(ms->disable_audio == false)
             {
                 freesound();
@@ -323,7 +335,6 @@ int main(int argc, char** argv)
         }
         slog_destroy();
     }
-
 
 
 cleanup_final:

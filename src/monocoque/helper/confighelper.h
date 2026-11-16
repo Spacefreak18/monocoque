@@ -253,7 +253,15 @@ int strtodevsubsubtype(const char* device_subsubtype, DeviceSettings* ds);
 
 int devsetup(const char* device_type, const char* device_subtype, const char* config_files, MonocoqueSettings* ms, DeviceSettings* ds, config_setting_t* device_settings);
 
-int settingsfree(DeviceSettings ds);
+int settingsfree(DeviceSettings ds); /* Legacy compatibility. */
+
+/* The caller owns a standalone DeviceSettings or an allocated array. */
+void device_settings_init(DeviceSettings *ds);
+void device_settings_clear(DeviceSettings *ds);
+DeviceSettings *device_settings_new(void);
+void device_settings_delete(DeviceSettings *ds);
+void device_settings_free_all(DeviceSettings *ds, int count);
+int device_settings_load(const char *config_file_str, int confignum, MonocoqueSettings *ms, DeviceSettings **out, int *count);
 
 int monocoquesettingsfree(MonocoqueSettings* ms);
 

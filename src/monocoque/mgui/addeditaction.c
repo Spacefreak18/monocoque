@@ -35,9 +35,7 @@ static AddDeviceData *i_modal_data(Window *parent)
 static void i_destroy_modal_data(AddDeviceData **data)
 {
     AddDeviceData* d = *data;
-    DeviceSettings ds = *d->ds;
-    settingsfree(ds);
-    free(d->ds);
+    device_settings_delete(d->ds);
     heap_delete(data, AddDeviceData);
 }
 
@@ -54,7 +52,13 @@ static void update_device_data_from_controls(AddDeviceData* data)
     data->ds->dev_type = combo_get_selected(data->combo_select_device_class);
     data->ds->dev_subtype = combo_get_selected(data->combo_select_device_subtype);
     uint32_t device_selected = combo_get_selected(data->combo_select_device);
-    data->ds->dev = strdup(combo_get_text(data->combo_select_device, device_selected));
+    const char *selected_dev = combo_get_text(data->combo_select_device, device_selected);
+    char *replacement = selected_dev != NULL ? strdup(selected_dev) : NULL;
+    if (selected_dev == NULL || replacement != NULL)
+    {
+        free(data->ds->dev);
+        data->ds->dev = replacement;
+    }
     if(data->ds->dev_type == SIMDEV_SERIAL)
     {
         data->ds->dev_subtype = combo_get_selected(data->combo_select_device_subtype) + SerialDevicesOffset;
@@ -625,37 +629,7 @@ Panel *adddevice_window(Window *parent, App* app, MonocoqueSettings* ms, enum de
 
     data->devicenum = devicenum;
     data->confignum = confignum;
-    data->ds = malloc(sizeof(DeviceSettings));
-
-    // move this somewhere better or use dbind to set this stuff
-    data->ds->dev_type = 0;
-    data->ds->dev_subtype = 0;
-    data->ds->dev_subsubtype = 0;
-    data->ds->dev = NULL;
-    data->ds->fps = 60;
-    data->ds->specific_config_file = NULL;
-    data->ds->has_config = false;
-    data->ds->serialdevsettings.baud = 115200;
-    data->ds->serialdevsettings.startled = 0;
-    data->ds->serialdevsettings.endled = 0;
-    data->ds->serialdevsettings.numleds = 0;
-    data->ds->sounddevsettings.channels = 2;
-    data->ds->sounddevsettings.pan = 0;
-    data->ds->sounddevsettings.volume = 50;
-    data->ds->sounddevsettings.noise = 0;
-    data->ds->hapticsettings.frequency = 440;
-    data->ds->hapticsettings.amplitude = 50;
-    data->ds->hapticsettings.frequencyMax = 440;
-    data->ds->hapticsettings.amplitudeMax = 50;
-    data->ds->hapticsettings.motorposition = 0;
-    data->ds->hapticsettings.threshold = 0.0;
-    data->ds->hapticsettings.duration = 0.0;
-    data->ds->hapticsettings.modulation = 1;
-    data->ds->hapticsettings.tyre = 0;
-    data->ds->hapticsettings.effect_type = 0;
-    data->ds->has_led_effects = false;
-    data->ds->has_haptic_effects = false;
-
+    data->ds = device_settings_new();
     data->ms = ms;
     data->apppointer = app;
     if(dev_action == DEVICE_ACTION_EDIT)

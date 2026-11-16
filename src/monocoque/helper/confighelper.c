@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <ctype.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #include <libxml/parser.h>
 #include <libxml/xmlreader.h>
@@ -986,6 +987,86 @@ int uiloadconfig(const char* config_file_str, int confignum, int configureddevic
     return numdevices;
 }
 
+int device_settings_load(const char *config_file_str, int confignum, MonocoqueSettings *ms, DeviceSettings **out, int *count)
+{
+    if (out == NULL || count == NULL)
+        return -1;
+    *out = NULL;
+    *count = 0;
+    if (config_file_str == NULL || ms == NULL || confignum < 0)
+        return -1;
+
+    config_t cfg;
+    config_init(&cfg);
+    if (!config_read_file(&cfg, config_file_str))
+    {
+        fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg),
+                config_error_line(&cfg), config_error_text(&cfg));
+        config_destroy(&cfg);
+        return -1;
+    }
+
+    config_setting_t *configs = config_lookup(&cfg, "configs");
+    config_setting_t *selected = configs != NULL
+        ? config_setting_get_elem(configs, confignum) : NULL;
+    config_setting_t *devices = selected != NULL
+        ? config_setting_lookup(selected, "devices") : NULL;
+    if (devices == NULL)
+    {
+        config_destroy(&cfg);
+        return -1;
+    }
+
+    int n = config_setting_length(devices);
+    if (n < 0)
+    {
+        config_destroy(&cfg);
+        return -1;
+    }
+
+    /* Allocate even for an empty list so NULL unambiguously means failure. */
+    DeviceSettings *items = calloc(n ? (size_t)n : 1, sizeof(*items));
+    if (items == NULL)
+    {
+        config_destroy(&cfg);
+        return -1;
+    }
+
+    slogi("Parsing config file");
+    for (int i = 0; i < n; ++i)
+    {
+        DeviceSettings *ds = &items[i];
+        device_settings_init(ds);
+        ds->dev_type = SIMDEV_UNKNOWN;
+
+        config_setting_t *entry = config_setting_get_elem(devices, i);
+        const char *type = NULL;
+        const char *subtype = NULL;
+        const char *device_config_file = NULL;
+        if (entry == NULL ||
+            !config_setting_lookup_string(entry, "device", &type) ||
+            !config_setting_lookup_string(entry, "type", &subtype) ||
+            type == NULL || subtype == NULL)
+        {
+            slogw("Skipping device configuration %d: missing device/type", i);
+            continue;
+        }
+
+        config_setting_lookup_string(entry, "config", &device_config_file);
+        if (devsetup(type, subtype, device_config_file, ms, ds, entry)
+                != MONOCOQUE_ERROR_NONE)
+        {
+            ds->is_valid = false;
+            ds->dev_type = SIMDEV_UNKNOWN;
+        }
+    }
+
+    config_destroy(&cfg);
+    *out = items;
+    *count = n;  /* Slot count, not initialized-device count. */
+    return 0;
+}
+
 int getsingledevice(const char* config_file_str, int confignum, int devicenum, MonocoqueSettings* ms, DeviceSettings* ds)
 {
     int numdevices = 0;
@@ -1540,6 +1621,75 @@ int settingsfree(DeviceSettings ds)
     }
 
     return 0;
+}
+
+void device_settings_init(DeviceSettings *ds)
+{
+    if (ds == NULL)
+        return;
+    memset(ds, 0, sizeof(*ds));
+    ds->dev_type = 0;
+    ds->dev_subtype = 0;
+    ds->dev_subsubtype = 0;
+    ds->dev = NULL;
+    ds->fps = 60;
+    ds->specific_config_file = NULL;
+    ds->has_config = false;
+    ds->serialdevsettings.baud = 115200;
+    ds->serialdevsettings.startled = 0;
+    ds->serialdevsettings.endled = 0;
+    ds->serialdevsettings.numleds = 0;
+    ds->sounddevsettings.channels = 2;
+    ds->sounddevsettings.pan = 0;
+    ds->sounddevsettings.volume = 50;
+    ds->sounddevsettings.noise = 0;
+    ds->hapticsettings.frequency = 440;
+    ds->hapticsettings.amplitude = 50;
+    ds->hapticsettings.frequencyMax = 440;
+    ds->hapticsettings.amplitudeMax = 50;
+    ds->hapticsettings.motorposition = 0;
+    ds->hapticsettings.threshold = 0.0;
+    ds->hapticsettings.duration = 0.0;
+    ds->hapticsettings.modulation = 1;
+    ds->hapticsettings.tyre = 0;
+    ds->hapticsettings.effect_type = 0;
+    ds->has_led_effects = false;
+    ds->has_haptic_effects = false;
+}
+
+void device_settings_clear(DeviceSettings *ds)
+{
+    if (ds == NULL)
+        return;
+    free(ds->dev);
+    free(ds->specific_config_file);
+    /* Tachometer-specific arrays deliberately left unchanged. */
+    memset(ds, 0, sizeof(*ds));
+}
+
+DeviceSettings *device_settings_new(void)
+{
+    DeviceSettings *ds = malloc(sizeof(*ds));
+    if (ds != NULL)
+        device_settings_init(ds);
+    return ds;
+}
+
+void device_settings_delete(DeviceSettings *ds)
+{
+    if (ds == NULL)
+        return;
+    device_settings_clear(ds);
+    free(ds);
+}
+
+void device_settings_free_all(DeviceSettings *ds, int count)
+{
+    if (ds == NULL)
+        return;
+    for (int i = 0; i < count; ++i)
+        device_settings_clear(&ds[i]);
+    free(ds);
 }
 
 int monocoquesettingsfree(MonocoqueSettings* ms)

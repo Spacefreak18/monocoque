@@ -301,19 +301,29 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
             slogd("Selected config num %i", confignum);
         }
 
-        int configureddevices;
-        configcheck(ms->config_str, confignum, &configureddevices);
-        DeviceSettings* ds = malloc(configureddevices * sizeof(DeviceSettings));
+        int configureddevices = 0;
+        DeviceSettings *ds = NULL;
+        if (device_settings_load(ms->config_str, confignum, ms,
+                                 &ds, &configureddevices) != 0)
+        {
+            sloge("Could not load device settings");
+            doui = false;
+            return;
+        }
         slogd("loading confignum %i, with %i devices.", confignum, configureddevices);
-        f->numdevices = uiloadconfig(ms->config_str, confignum, configureddevices, ms, ds);
-        f->simdevices = malloc(f->numdevices * sizeof(SimDevice));
+        f->numdevices = configureddevices;
+        f->simdevices = calloc(configureddevices ? (size_t)configureddevices : 1, sizeof(*f->simdevices));
+        if (f->simdevices == NULL)
+        {
+            device_settings_free_all(ds, configureddevices);
+            f->numdevices = 0;
+            sloge("Could not allocate runtime devices");
+            doui = false;
+            return;
+        }
         int initdevices = devinit(f->simdevices, &f->siminfo, configureddevices, ds, ms);
         slogi("initialized %i devices", initdevices);
-        for( int i = 0; i < configureddevices; i++)
-        {
-            settingsfree(ds[i]);
-        }
-        free(ds);
+        device_settings_free_all(ds, configureddevices);
 
         int numdevices = f->numdevices;
         SimDevice* devices = f->simdevices;
@@ -722,7 +732,6 @@ void* monocoque_testloop_start(void* arg)
     test_siminfo = malloc(sizeof(SimInfo));
     simapi_set_faux_siminfo(test_siminfo);
     int initdevices = devinit(test_simdevice, test_siminfo, 1, args->ds, args->ms);
-    //settingsfree(ds);
 
 
 
