@@ -329,11 +329,8 @@ static void i_OnSaveDevice(AddDeviceData *data, Event *e)
 {
     update_device_data_from_controls(data);
     slogd("Attempting save of device class %i device type %i device %s", data->ds->dev_type, data->ds->dev_subtype, data->ds->dev);
-    if(data->ds->has_haptic_effects == true) {
-        fprintf(stderr, "it does\n");
-}
-    save_device_config(data->ms->cfg, data->ms->config_str, data->confignum, data->devicenum, data->ds);
 
+    save_device_config(data->ms->cfg, data->ms->config_str, data->confignum, data->devicenum, data->ds);
 
     window_stop_modal(data->parent, 0);
 }
