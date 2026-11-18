@@ -26,6 +26,7 @@ typedef struct loop_data
     bool uion;
     bool releasing;
     bool started_tyre_calc_thread;
+    bool cli;
     int numdevices;
     SimInfo siminfo;
     // monocoque settings is a pointer from monocoque.c and freed there

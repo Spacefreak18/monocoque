@@ -370,8 +370,10 @@ void looprun(MonocoqueSettings* ms, loop_data* f, SimData* simdata)
             }
         }
 
-
-        //uv_timer_start(&showstatstimer, showstatscallback, 0, 100);
+        if(f->cli == true)
+        {
+            uv_timer_start(&showstatstimer, showstatscallback, 0, 100);
+        }
         doui = false;
     }
 }
@@ -442,6 +444,7 @@ static void close_device_timers(loop_data *f)
 
 void releaseloop(loop_data* f, SimData* simdata, SimMap* simmap)
 {
+        fprintf(stdout, "\n");
         slogi("release loop");
         if(f->releasing == false)
         {
@@ -727,6 +730,7 @@ static int mainloop_run(MonocoqueSettings *ms, uv_loop_t *run_loop, bool cli)
     baton->simdata = simdata;
     baton->ms = ms;
     baton->req.data = baton;
+    baton->cli = cli;
     doui = false;
 
     simapi_set_log_info(simapilib_loginfo);
