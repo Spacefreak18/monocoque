@@ -1045,13 +1045,13 @@ int device_settings_load(const char *config_file_str, int confignum, MonocoqueSe
         const char *device_config_file = NULL;
         if (entry == NULL ||
             !config_setting_lookup_string(entry, "device", &type) ||
-            !config_setting_lookup_string(entry, "type", &subtype) ||
-            type == NULL || subtype == NULL)
+            type == NULL)
         {
             slogw("Skipping device configuration %d: missing device/type", i);
             continue;
         }
 
+        config_setting_lookup_string(entry, "type", &subtype);
         config_setting_lookup_string(entry, "config", &device_config_file);
         if (devsetup(type, subtype, device_config_file, ms, ds, entry)
                 != MONOCOQUE_ERROR_NONE)
