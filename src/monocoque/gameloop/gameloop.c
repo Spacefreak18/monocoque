@@ -990,6 +990,33 @@ const char* get_simd_onoff(void)
     return "Not Detected";
 }
 
+const char* get_simstatus(void)
+{
+    if(appstate <= 0)
+    {
+        return "None";
+    }
+    if(baton == NULL)
+    {
+        return "None";
+    }
+    if(baton->siminfo.isSimOn == true)
+    {
+        if(simdata != NULL)
+        {
+            if(simdata->simstatus == SIMAPI_STATUS_MENU)
+            {
+                return "Menu/Paused";
+            }
+            if(simdata->simstatus >= SIMAPI_STATUS_ACTIVEPLAY)
+            {
+                return "Playing";
+            }
+        }
+    }
+    return "Off";
+}
+
 int monocoque_mainloop(MonocoqueSettings *ms)
 {
     struct termios original, raw;

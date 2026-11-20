@@ -16,6 +16,7 @@ int monocoque_testloop_stop();
 
 const char* get_simd_onoff(void);
 const char* get_simexe_name(void);
+const char* get_simstatus(void);
 SimData* get_test_simdata();
 
 

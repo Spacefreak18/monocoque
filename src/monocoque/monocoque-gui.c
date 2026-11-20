@@ -285,7 +285,7 @@ static void i_OnEdit(App *app, Event *e)
 static void set_bottom_label_status(Label* label)
 {
     char status_string[256];
-    snprintf(status_string, 256, "Game: %s      Game Status: None      Simd: %s", get_simexe_name(), get_simd_onoff());
+    snprintf(status_string, 256, "Game: %s      Game Status: %s      Simd: %s", get_simexe_name(), get_simstatus(), get_simd_onoff());
     label_text(label, status_string);
 }
 /*---------------------------------------------------------------------------*/
@@ -448,6 +448,7 @@ static App *i_create(void)
 
     monocoque_initialize(m_argc, m_argv);
     ms.cfg = open_monocoque_config(ms.config_str);
+    slogd("opened monocoque configuration");
 
     // find a better spot for this
     dbind(SimData, uint32_t, velocity);
