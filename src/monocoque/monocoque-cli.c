@@ -187,107 +187,103 @@ int main(int argc, char** argv)
     free(cfg);
 
 
+    int error = 0;
+    error = MONOCOQUE_ERROR_NONE;
+    //setupsound();
+    bool pulseaudio = false;
+
     if (ms->program_action == A_PLAY)
     {
+        ms->usetyreconfig = true;
+        slogi("running monocoque in gameloop mode..");
+//#i USE_PULSEAUDIO
+        //pa_threaded_mainloop_unlock(mainloop);
+        pulseaudio = true;
+//#e
 
-        int error = 0;
-        error = MONOCOQUE_ERROR_NONE;
-        //setupsound();
-        bool pulseaudio = false;
-
-        if (ms->program_action == A_PLAY)
+        if(ms->disable_audio == false)
         {
-            ms->usetyreconfig = true;
-            slogi("running monocoque in gameloop mode..");
-//#ifdef USE_PULSEAUDIO
-            //pa_threaded_mainloop_unlock(mainloop);
-            pulseaudio = true;
-//#endif
-
-            if(ms->disable_audio == false)
-            {
-                setupsound();
-            }
-            //error = looper(devices, numdevices, p);
-            ms->cfg = open_monocoque_config(ms->config_str);
-            error = monocoque_mainloop(ms);
-            if (error == MONOCOQUE_ERROR_NONE)
-            {
-                slogi("Game loop exited succesfully with error code: %i", error);
-            }
-            else
-            {
-                sloge("Game loop exited with error code: %i", error);
-            }
-            if(ms->disable_audio == false)
-            {
-                freesound();
-            }
+            setupsound();
+        }
+        //error = looper(devices, numdevices, p);
+        ms->cfg = open_monocoque_config(ms->config_str);
+        error = monocoque_mainloop(ms);
+        if (error == MONOCOQUE_ERROR_NONE)
+        {
+            slogi("Game loop exited succesfully with error code: %i", error);
         }
         else
         {
-            slogi("running monocoque in test mode...");
+            sloge("Game loop exited with error code: %i", error);
+        }
+        if(ms->disable_audio == false)
+        {
+            freesound();
+        }
+    }
+    else
+    {
+        slogi("running monocoque in test mode...");
 
-            if(ms->disable_audio == false)
-            {
-                setupsound();
-            }
-            ms->usetyreconfig = false;
+        if(ms->disable_audio == false)
+        {
+            setupsound();
+        }
+        ms->usetyreconfig = false;
 
-            int configs = getNumberOfConfigs(ms->config_str);
-            int confignum = 0;
-            confignum = getconfigtouse(ms->config_str, "default", 0, 0);
-            int configureddevices = 0;
+        int configs = getNumberOfConfigs(ms->config_str);
+        int confignum = 0;
+        confignum = getconfigtouse(ms->config_str, "default", 0, 0);
+        int configureddevices = 0;
 
-            DeviceSettings *ds = NULL;
-            if (device_settings_load(ms->config_str, confignum, ms, &ds, &configureddevices) != 0)
-            {
-                sloge("Could not load device settings");
-                if (!ms->disable_audio) freesound();
-                slog_destroy();
-                goto cleanup_final;
-            }
-            slogd("loading confignum %i, with %i devices.", confignum, configureddevices);
-            int numdevices = configureddevices;
-            SimDevice *simdevices = calloc(configureddevices ? (size_t)configureddevices : 1, sizeof(*simdevices));
-            SimInfo *siminfo = malloc(sizeof(*siminfo));
-            if (simdevices == NULL || siminfo == NULL)
-            {
-                free(simdevices);
-                free(siminfo);
-                device_settings_free_all(ds, configureddevices);
-                if (!ms->disable_audio) freesound();
-                slog_destroy();
-                goto cleanup_final;
-            }
-            simapi_set_faux_siminfo(siminfo);
-            int initdevices = devinit(simdevices, siminfo, configureddevices, ds, ms);
-            device_settings_free_all(ds, configureddevices);
-            error = tester(ms, simdevices, numdevices);
-            if (error == MONOCOQUE_ERROR_NONE)
-            {
-                slogi("Test exited succesfully with error code: %i", error);
-            }
-            else
-            {
-                sloge("Test exited with error code: %i", error);
-            }
-            for (int x = 0; x < numdevices; x++)
-            {
-                if (simdevices[x].initialized == true)
-                {
-                    simdevices[x].free(&simdevices[x]);
-                }
-            }
+        DeviceSettings *ds = NULL;
+        if (device_settings_load(ms->config_str, confignum, ms, &ds, &configureddevices) != 0)
+        {
+            sloge("Could not load device settings");
+            if (!ms->disable_audio) freesound();
+            slog_destroy();
+            goto cleanup_final;
+        }
+        slogd("loading confignum %i, with %i devices.", confignum, configureddevices);
+        int numdevices = configureddevices;
+        SimDevice *simdevices = calloc(configureddevices ? (size_t)configureddevices : 1, sizeof(*simdevices));
+        SimInfo *siminfo = malloc(sizeof(*siminfo));
+        if (simdevices == NULL || siminfo == NULL)
+        {
             free(simdevices);
             free(siminfo);
-            if(ms->disable_audio == false)
+            device_settings_free_all(ds, configureddevices);
+            if (!ms->disable_audio) freesound();
+            slog_destroy();
+            goto cleanup_final;
+        }
+        simapi_set_faux_siminfo(siminfo);
+        int initdevices = devinit(simdevices, siminfo, configureddevices, ds, ms);
+        device_settings_free_all(ds, configureddevices);
+        error = tester(ms, simdevices, numdevices);
+        if (error == MONOCOQUE_ERROR_NONE)
+        {
+            slogi("Test exited succesfully with error code: %i", error);
+        }
+        else
+        {
+            sloge("Test exited with error code: %i", error);
+        }
+        for (int x = 0; x < numdevices; x++)
+        {
+            if (simdevices[x].initialized == true)
             {
-                freesound();
+                simdevices[x].free(&simdevices[x]);
             }
         }
-        slog_destroy();
+        free(simdevices);
+        free(siminfo);
+        if(ms->disable_audio == false)
+        {
+            freesound();
+        }
     }
+    slog_destroy();
 
 
 cleanup_final:
