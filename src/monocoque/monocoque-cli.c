@@ -187,54 +187,7 @@ int main(int argc, char** argv)
     free(cfg);
 
 
-    if (ms->program_action == A_CONFIG_TACH)
-    {
-        int error = 0;
-        SimDevice* tachdev = malloc(sizeof(SimDevice));
-        tachdev->initialized = false;
-        SimData* sdata = malloc(sizeof(SimData));
-        SimInfo* siminfo = malloc(sizeof(SimInfo));
-        simapi_set_faux_siminfo(siminfo);
-        DeviceSettings* ds = malloc(sizeof(DeviceSettings));
-
-        error = devsetup("USB", "Tachometer", "None", ms, ds, NULL);
-
-        if (error != MONOCOQUE_ERROR_NONE)
-        {
-            sloge("Could not proceed with tachometer configuration due to error: %i", error);
-        }
-        else
-        {
-            int devices = 0;
-
-            devices = devinit(tachdev, siminfo, 1, ds, ms);
-            if(devices < 1)
-            {
-                error = MONOCOQUE_ERROR_INVALID_DEV;
-            }
-        }
-
-        if (error != MONOCOQUE_ERROR_NONE)
-        {
-            sloge("Could not proceed with tachometer configuration due to error: %i", error);
-        }
-        else
-        {
-            slogi("configuring tachometer with max revs: %i, granularity: %i, saving to %s", p->max_revs, p->granularity, p->save_file);
-            config_tachometer(p->max_revs, p->granularity, p->save_file, tachdev, sdata);
-        }
-
-        slogt("freeing devices if necessary");
-        if(tachdev->initialized == true)
-        {
-            slogt("freeing tachmoeter device");
-            tachdev->free(tachdev);
-        }
-        //free(tachdev);
-        free(sdata);
-        free(ds);
-    }
-    else
+    if (ms->program_action == A_PLAY)
     {
 
         int error = 0;
