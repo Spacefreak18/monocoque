@@ -15,8 +15,6 @@ set(simulatorapi_source_files
   simapi/include/wreckfest2data.h
   simapi/include/forza.h
   simapi/simmap/basicmap.h
-  simapi/simmap/mapacdata.c
-  simapi/simmap/mapacdata.h
   simapi/simapi/ac.h
   simapi/simapi/rf2.h
   simapi/simapi/dirt2.h
