@@ -412,7 +412,7 @@ int arduino_custom_update(SerialDevice* serialdevice, SimData* simdata)
     lua_getglobal(L,"myFunc");
     if (lua_pcall(L, 0, 0, 0) != LUA_OK)
     {
-        fprintf(stderr, "Error calling Lua script: %s\n", lua_tostring(L, -1));
+        sloge("Error calling Lua script: %s\n", lua_tostring(L, -1));
     }
 
     lua_getglobal(L, "Message");
