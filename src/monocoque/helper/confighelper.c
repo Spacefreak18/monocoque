@@ -7,10 +7,6 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#include <libxml/parser.h>
-#include <libxml/xmlreader.h>
-#include <libxml/tree.h>
-
 #include "confighelper.h"
 #include "dirhelper.h"
 
@@ -470,99 +466,6 @@ int getconfigtouse(const char* config_file_str, const char* car, int simexe, int
     return best_config;
 }
 
-int loadtachconfig(char* config_file, DeviceSettings* ds)
-{
-
-
-    xmlNode* rootnode = NULL;
-    xmlNode* curnode = NULL;
-    xmlNode* cursubnode = NULL;
-    xmlNode* cursubsubnode = NULL;
-    xmlNode* cursubsubsubnode = NULL;
-    xmlDoc* doc = NULL;
-    char* buf;
-
-    doc = xmlParseFile(config_file);
-    if (doc == NULL)
-    {
-        sloge("Could not read revburner xml config file %s", config_file);
-        return 1;
-    }
-
-    rootnode = xmlDocGetRootElement(doc);
-    if (rootnode == NULL)
-    {
-        xmlFreeDoc(doc);
-        xmlCleanupParser();
-        sloge("Invalid rev burner xml");
-        return 1;
-    }
-
-    int arraysize = 0;
-    for (curnode = rootnode; curnode; curnode = curnode->next)
-    {
-        for (cursubnode = curnode->children; cursubnode; cursubnode = cursubnode->next)
-        {
-            for (cursubsubnode = cursubnode->children; cursubsubnode; cursubsubnode = cursubsubnode->next)
-            {
-                if (cursubsubnode->type == XML_ELEMENT_NODE)
-                {
-                    slogt("Xml Element name %s", cursubsubnode->name);
-                }
-                if (strcicmp(cursubsubnode->name, "SettingsItem") == 0)
-                {
-                    arraysize++;
-                }
-
-            }
-        }
-    }
-
-    uint32_t pulses_array[arraysize];
-    uint32_t rpms_array[arraysize];
-    slogt("rev burner settings array size %i", arraysize);
-    int i = 0;
-    for (curnode = rootnode; curnode; curnode = curnode->next)
-    {
-        if (curnode->type == XML_ELEMENT_NODE)
-            for (cursubnode = curnode->children; cursubnode; cursubnode = cursubnode->next)
-            {
-                for (cursubsubnode = cursubnode->children; cursubsubnode; cursubsubnode = cursubsubnode->next)
-                {
-                    for (cursubsubsubnode = cursubsubnode->children; cursubsubsubnode; cursubsubsubnode = cursubsubsubnode->next)
-                    {
-                        if (strcicmp(cursubsubsubnode->name, "Value") == 0)
-                        {
-                            xmlChar* a = xmlNodeGetContent(cursubsubsubnode);
-                            rpms_array[i] = strtol((char*) a, &buf, 10);
-                            xmlFree(a);
-                        }
-                        if (strcicmp(cursubsubsubnode->name, "TimeValue") == 0)
-                        {
-                            xmlChar* a = xmlNodeGetContent(cursubsubsubnode);
-                            pulses_array[i] = strtol((char*) a, &buf, 10);
-                            xmlFree(a);
-                            i++;
-                        }
-                    }
-                }
-            }
-    }
-
-    ds->tachsettings.pulses_array = malloc(sizeof(pulses_array));
-    ds->tachsettings.rpms_array = malloc(sizeof(rpms_array));
-    ds->tachsettings.size = arraysize;
-
-    memcpy(ds->tachsettings.pulses_array, pulses_array, sizeof(pulses_array));
-    memcpy(ds->tachsettings.rpms_array, rpms_array, sizeof(rpms_array));
-
-
-    xmlFreeDoc(doc);
-    xmlCleanupParser();
-
-    return 0;
-}
-
 int gettyre(config_setting_t* device_settings, DeviceSettings* ds) {
 
     const char* temp;
@@ -627,10 +530,9 @@ static int load_device_specific_config(const char* config_file, DeviceSettings* 
     {
         if(ds->has_config == false)
         {
-            slogw("Tachometer must have a device specific config file!");
+            slogw("Tachometer must have a device specific config file!. Skipping configured tachometer device.");
             return 1;
         }
-        loadtachconfig(ds->specific_config_file, ds);
     }
     return 0;
 }
