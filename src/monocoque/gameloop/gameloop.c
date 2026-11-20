@@ -211,17 +211,17 @@ int showstats(SimData* simdata)
     fflush(stdout);
 }
 
-void simapilib_loginfo(char* message)
+void simapilib_loginfo(char* message, ...)
 {
     slogi(message);
 }
 
-void simapilib_logdebug(char* message)
+void simapilib_logdebug(char* message, ...)
 {
     slogd(message);
 }
 
-void simapilib_logtrace(char* message)
+void simapilib_logtrace(char* message, ...)
 {
     slog_display(SLOG_TRACE, 1, message);
 }
