@@ -262,7 +262,7 @@ modules:
       # as typiql-tauri/typiql's own submodules, src/lib/per-form etc.).
       - type: git
         url: https://github.com/spacefreak18/simapi
-        commit: 50fd181681862256780b2a0f74ef4bc459ed631a
+        commit: 3fc9d396fcd30b1f7dcad34a322e79ec24c863fd
         dest: src/monocoque/simulatorapi/simapi
       # nappgui_src is add_subdirectory()'d directly into monocoque's own
       # CMake tree (src/monocoque/mgui/CMakeLists.txt), not a separately
