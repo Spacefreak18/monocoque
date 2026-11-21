@@ -28,6 +28,15 @@ int strcicmp(char const *a, char const *b)
     }
 }
 
+bool isDefaultConfigString(char const *a)
+{
+    if(strcicmp(a, "Default") == 0 || strcicmp(a, "Any") == 0)
+    {
+        return true;
+    }
+    return false;
+}
+
 int strtoeffecttype(const char* effect, DeviceSettings* ds)
 {
     ds->is_valid = false;
@@ -251,29 +260,13 @@ int strtodev(const char* device_type, const char* device_subtype, DeviceSettings
     return MONOCOQUE_ERROR_NONE;
 }
 
-int getsimfromconfig(config_setting_t* c)
-{
-    int sim = 0;
-    const char* simstr = NULL;
-    int found = config_setting_lookup_string(c, "sim", &simstr);
-    if(found == 0)
-    {
-        int found = config_setting_lookup_int(c, "sim", &sim);
-    }
-    else
-    {
-        sim = simapi_strtogame(simstr);
-    }
-    return sim;
-}
-
 int getNumberOfConfigs(const char* config_file_str)
 {
     config_t cfg;
     config_init(&cfg);
     if (!config_read_file(&cfg, config_file_str))
     {
-        fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
+        sloge("%s:%d - %s", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
         return -1;
     }
     config_setting_t* config = NULL;
@@ -299,8 +292,13 @@ static int config_lookup_sim(config_setting_t* entry, const char* key)
     {
         const char* value = config_setting_get_string(setting);
 
-        if (value != NULL && strcicmp(value, "default") == 0)
+        if (value != NULL && isDefaultConfigString(value) == true)
             return 0;
+        if(strcicmp(key, "sim") == 0)
+        {
+            return simapi_strtogame(value);
+        }
+        //TODO: same for API
     }
 
     return 0;
@@ -349,7 +347,7 @@ int find_default_config(config_setting_t *configs)
             {
                 const char *value = config_setting_get_string(setting);
 
-                if (value == NULL || strcicmp(value, "default") != 0)
+                if (value == NULL || isDefaultConfigString(value) == false)
                     global = 0;
             }
             else
@@ -362,7 +360,7 @@ int find_default_config(config_setting_t *configs)
 
         if (config_setting_lookup_string(entry, "car", &car))
         {
-            if (car == NULL || strcicmp(car, "default") != 0)
+            if (car == NULL || isDefaultConfigString == false)
                 global = 0;
         }
         else if (config_setting_get_member(entry, "car") != NULL)
@@ -382,16 +380,13 @@ int find_default_config(config_setting_t *configs)
 
 int getconfigtouse(const char* config_file_str, const char* car, int simexe, int simapi)
 {
+    const int highest_priority = 4;
     config_t cfg;
     config_init(&cfg);
 
     if (!config_read_file(&cfg, config_file_str))
     {
-        sloge("%s:%d - %s",
-              config_error_file(&cfg),
-              config_error_line(&cfg),
-              config_error_text(&cfg));
-
+        sloge("%s:%d - %s", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
         config_destroy(&cfg);
         return -1;
     }
@@ -424,19 +419,12 @@ int getconfigtouse(const char* config_file_str, const char* car, int simexe, int
         int priority = is_default ? 1 : 0;
 
         /* Zero means global/wildcard */
-        int simexe_matches = (config_simexe == 0 ||
-                              config_simexe == simexe);
-
-        int simapi_matches = (config_simapi == 0 ||
-                              config_simapi == simapi);
-
-        int car_specific = (config_car != NULL &&
-                            strcicmp(config_car, "default") != 0);
-
-        int car_matches = (!car_specific ||
-                           (car != NULL &&
-                            strcicmp(config_car, car) == 0));
-
+        int simexe_matches = (config_simexe == 0 || config_simexe == simexe);
+        int simapi_matches = (config_simapi == 0 || config_simapi == simapi);
+        int car_specific = (config_car != NULL && isDefaultConfigString(config_car) == false);
+        int car_matches = (!car_specific || (car != NULL && strcicmp(config_car, car) == 0));
+    
+        //TODO: priority 5 would be car AND simapi matches, priority 6 car AND sim matches???
         if (simexe_matches && simapi_matches && car_matches)
         {
             if (car_specific)
@@ -448,21 +436,18 @@ int getconfigtouse(const char* config_file_str, const char* car, int simexe, int
         }
 
         slogt("Config %d priority %d", i, priority);
-
         if (priority > best_priority)
         {
             best_priority = priority;
             best_config = i;
         }
 
-        if (best_priority == 4)
+        if (best_priority == highest_priority)
             break;
     }
 
     config_destroy(&cfg);
-
     slogt("Selected config %d (priority %d)", best_config, best_priority);
-
     return best_config;
 }
 
@@ -1447,7 +1432,7 @@ config_t *open_monocoque_config(const char *filename)
         "  {\n"
         "    api = 0;\n"
         "    sim = 0;\n"
-        "    car = \"default\";\n"
+        "    car = \"Any\";\n"
         "    devices = ( );\n"
         "  } );\n";
 
@@ -1485,7 +1470,7 @@ config_t *open_monocoque_config(const char *filename)
                 return cfg;
         }
 
-        fprintf(stderr, "Failed to read config file '%s' (line %d): %s\n", filename, config_error_line(cfg), config_error_text(cfg));
+        sloge("Failed to read config file '%s' (line %d): %s", filename, config_error_line(cfg), config_error_text(cfg));
 
         goto cleanup;
     }
@@ -1493,7 +1478,7 @@ config_t *open_monocoque_config(const char *filename)
     return cfg;
 
 error:
-    fprintf(stderr, "Failed to create config file '%s': %s\n", filename, strerror(errno));
+    sloge("Failed to create config file '%s': %s", filename, strerror(errno));
 
 cleanup:
     config_destroy(cfg);

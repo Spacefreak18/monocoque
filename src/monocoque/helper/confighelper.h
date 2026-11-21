@@ -265,6 +265,7 @@ int device_settings_load(const char *config_file_str, int confignum, MonocoqueSe
 
 int monocoquesettingsfree(MonocoqueSettings* ms);
 
+bool isDefaultConfigString(char const *a);
 int strcicmp(char const *a, char const *b);
 int getconfigtouse(const char* config_file_str, const char* car, int simexe, int simapi);
 

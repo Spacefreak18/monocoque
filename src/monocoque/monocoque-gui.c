@@ -7,6 +7,7 @@
 
 #include "mgui/uiconfighelper.h"
 #include "mgui/addeditaction.h"
+#include "mgui/addeditconfig.h"
 #include "mgui/mainwindow.h"
 
 #include <nappgui.h>
@@ -212,6 +213,11 @@ static void i_OnClose(App *app, Event *e)
     unref(e);
 }
 /*---------------------------------------------------------------------------*/
+static void i_OnAddConfigClose(App *app, Event *e)
+{
+
+
+}
 
 static void i_OnAddClose(App *app, Event *e)
 {
@@ -234,6 +240,38 @@ static void i_OnDelete(App* app, Event *e)
     populate_device_list(app->listbox_devices, ms.cfg, ms.force_config);
 }
 /*---------------------------------------------------------------------------*/
+
+static void i_OnAddEditConfig(App* app, Event *e)
+{
+    Panel *panel = NULL;
+
+    //int devicenum = listbox_get_selected(app->listbox_devices);
+    //if(devicenum == UINT32_MAX && device_action == DEVICE_ACTION_EDIT)
+    //{
+    //    return;
+    //}
+    //if(device_action == DEVICE_ACTION_ADD)
+    //{
+    //    devicenum = listbox_count(app->listbox_devices);
+    //}
+    app->window3 = window_create(ekWINDOW_STDRES);
+    
+    panel = addconfig_window(app->window3, app, &ms, 0);
+    
+    window_panel(app->window3, panel);
+    window_origin(app->window3, v2df(800, 200));
+    window_title(app->window3, "monocoque");
+    window_OnClose(app->window3, listener(app, i_OnAddConfigClose, App));
+    
+    window_modal(app->window3, app->window);
+
+    window_destroy(&app->window3);
+
+    //listbox_clear(app->listbox_devices);
+    //combo_clear(app->combo_configurations);
+    //populate_combo_box(app->combo_configurations, ms.cfg, ms.force_config);
+    //populate_device_list(app->listbox_devices, ms.cfg, ms.force_config);
+}
 
 static void i_OnAddEdit(App* app, Event *e, enum device_action device_action)
 {
@@ -307,8 +345,8 @@ static Panel *i_panel(App *app, MonocoqueSettings* ms)
 
     app->listbox_devices = listbox_create();
     listbox_size(app->listbox_devices, s2df(50, 50));
-    app->combo_configurations = combo_create();
     app->label_configurations = label_create();
+    app->combo_configurations = combo_create();
     label_text(app->label_configurations, "Configuration: ");
     app->label_game_status = label_create();
     app->label_autostart = label_create();
@@ -316,6 +354,7 @@ static Panel *i_panel(App *app, MonocoqueSettings* ms)
     label_text(app->label_autostart, "AutoStart");
     label_text(app->label_forceconfig, "Force Config");
 
+    app->button_addconfig = button_push();
     app->button_autostart = button_check();
     app->edit_forceconfig = edit_create();
     app->button_startstop = button_push();
@@ -323,7 +362,7 @@ static Panel *i_panel(App *app, MonocoqueSettings* ms)
     app->button_edit = button_push();
     app->button_del = button_push();
 
-    app->layout1 = layout_create(8,1);
+    app->layout1 = layout_create(3,1);
     app->layout1a = layout_create(3,1);
     app->layout2 = layout_create(4,1);
     app->layout3 = layout_create(1,1);
@@ -351,10 +390,12 @@ static Panel *i_panel(App *app, MonocoqueSettings* ms)
     listbox_select(app->listbox_devices, 0, true);
     
     edit_int(app->edit_forceconfig, ms->force_config);
+    button_text(app->button_addconfig, "Add");
     button_text(app->button_startstop, "Start");
     button_text(app->button_add, "Add Device");
     button_text(app->button_del, "Delete Device");
     button_text(app->button_edit, "Edit Device");
+    button_OnClick(app->button_addconfig, listener(app, i_OnAddEditConfig, App));
     button_OnClick(app->button_startstop, listener(app, i_OnStart, App));
     button_OnClick(app->button_add, listener(app, i_OnAdd, App));
     button_OnClick(app->button_edit, listener(app, i_OnEdit, App));
@@ -363,6 +404,7 @@ static Panel *i_panel(App *app, MonocoqueSettings* ms)
 
     layout_label(app->layout1, app->label_configurations, 0, 0);
     layout_combo(app->layout1, app->combo_configurations, 1, 0);
+    layout_button(app->layout1, app->button_addconfig, 2, 0);
     
     layout_label(app->layout2, app->label_autostart, 0, 0);
     layout_button(app->layout2, app->button_autostart, 1, 0);

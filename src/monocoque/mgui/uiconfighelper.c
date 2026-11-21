@@ -73,9 +73,9 @@ void populate_combo_box(Combo* combo, config_t* cfg, int config_force)
     {
         config_setting_t* entry = config_setting_get_elem(configs, i);
 
-        const char* sim = "Default";
-        const char* car = "Default";
-        const char* api = "Default";
+        const char* sim = "Any";
+        const char* car = "Any";
+        const char* api = "Any";
 
         config_setting_t* setting;
         char text[256];
@@ -102,7 +102,7 @@ void populate_combo_box(Combo* combo, config_t* cfg, int config_force)
             {
                 const char* value = config_setting_get_string(setting);
 
-                if (value != NULL && strcicmp(value, "default") != 0)
+                if (value != NULL && isDefaultConfigString(value) == false)
                     sim = value;
             }
         }
@@ -140,7 +140,7 @@ void populate_combo_box(Combo* combo, config_t* cfg, int config_force)
             {
                 const char* value = config_setting_get_string(setting);
 
-                if (value != NULL && strcicmp(value, "default") != 0)
+                if (value != NULL && isDefaultConfigString(value) == false)
                     api = value;
             }
         }

@@ -33,6 +33,7 @@ struct _app_t
     Edit* edit_forceconfig;
     ListBox* listbox_devices;
 
+    Button *button_addconfig;
     Button *button_startstop;
     Button *button_add;
     Button *button_edit;

@@ -1,6 +1,8 @@
 set(mgui_source_files
   addeditaction.c
   addeditaction.h
+  addeditconfig.c
+  addeditconfig.h
   testaction.c
   testaction.h
   uiconfighelper.c
