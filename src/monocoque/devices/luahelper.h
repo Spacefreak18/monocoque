@@ -10,7 +10,7 @@
 #define luaL_openlibs(L)	luaL_openselectedlibs(L, ~0, 0)
 #endif
 
-#include "../../simulatorapi/simapi/simapi/simdata.h"
+#include "../simulatorapi/simapi/simapi/simdata.h"
 
 typedef enum {
     LUALEDCOLOR_RED = 1,

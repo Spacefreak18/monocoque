@@ -7,7 +7,7 @@
 
 #include "luahelper.h"
 
-#include "../../slog/slog.h"
+#include "../slog/slog.h"
 
 long long ledTimeInMilliseconds(void) {
     struct timeval tv;

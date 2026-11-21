@@ -5,9 +5,10 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
-#include "../../../src/monocoque/devices/serial/arduino.h"
 
+#include "../../../src/monocoque/devices/serial/arduino.h"
 #include "../../../src/monocoque/devices/serialadapter.h"
+
 static int open_result;
 static int write_result;
 static int writes;

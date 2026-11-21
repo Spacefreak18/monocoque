@@ -3,7 +3,7 @@
 #include <setjmp.h>
 #include <cmocka.h>
 #include <stdint.h>
-#include "../../../src/monocoque/devices/serial/arduinoledlua.h"
+#include "../../../src/monocoque/devices/luahelper.h"
 extern uint8_t get_color_rgb_value(int color, int rgb);
 static void primary_colors_map_to_rgb(void **state)
 {
