@@ -5,8 +5,7 @@
 #include <math.h>
 #include <sys/time.h>
 
-#include "arduinoledlua.h"
-#include "arduino.h"
+#include "luahelper.h"
 
 #include "../../slog/slog.h"
 

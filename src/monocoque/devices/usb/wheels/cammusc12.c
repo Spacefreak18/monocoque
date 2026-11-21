@@ -4,7 +4,7 @@
 #include <hidapi/hidapi.h>
 
 #include "cammusc12.h"
-#include "../../serial/arduinoledlua.h"
+#include "../../luahelper.h"
 #include "../../../slog/slog.h"
 
 const int cammusc12_hidupdate_buf_size = 16;

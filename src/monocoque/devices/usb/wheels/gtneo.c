@@ -6,7 +6,7 @@
 #include "gtneo.h"
 #include <string.h>
 #include "../../../slog/slog.h"
-#include "../../serial/arduinoledlua.h"
+#include "../../luahelper.h"
 
 // Simagic allows setting any led, therefore LED index should be defined.
 struct LED {

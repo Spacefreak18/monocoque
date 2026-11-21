@@ -5,7 +5,7 @@
 #include <math.h>
 
 #include "arduino.h"
-#include "arduinoledlua.h"
+#include "../luahelper.h"
 #include "../serialadapter.h"
 #include "../../slog/slog.h"
 
