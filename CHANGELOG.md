@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0](https://github.com/Spacefreak18/monocoque/compare/0.5.0...0.6.0) (2026-11-21)
+
+
+### Features
+
+* Add add config button ([6c06a70](https://github.com/Spacefreak18/monocoque/commit/6c06a70902fa9a9159d8e2485ddc0d4b1fb536f9))
+
+
+### Bug Fixes
+
+* pass lua serial tests ([c4e07af](https://github.com/Spacefreak18/monocoque/commit/c4e07aff17604da1e745efcc2fe6c8e93b1a37c4))
+
 ## [0.5.0](https://github.com/Spacefreak18/monocoque/compare/0.4.0...0.5.0) (2026-11-20)
 
 
