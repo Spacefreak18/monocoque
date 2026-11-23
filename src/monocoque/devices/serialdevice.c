@@ -291,7 +291,7 @@ static const vtable serialwheel_vtable = { &serial_wheel_update, &serial_wheel_f
 
 SerialDevice* new_serial_device(DeviceSettings* ds, MonocoqueSettings* ms, SimInfo* siminfo) {
 
-    SerialDevice* this = (SerialDevice*) malloc(sizeof(SerialDevice));
+    SerialDevice* this = (SerialDevice*) calloc(1, sizeof(SerialDevice));
 
     this->m.update = &update;
     this->m.free = &simdevfree;

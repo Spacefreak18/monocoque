@@ -734,9 +734,14 @@ int devsetup(const char* device_type, const char* device_subtype, const char* co
                     ds->hapticsettings.modulation = EFFECT_MODULATION_AMPLIFY;
                     slogi("Effect modulation found, set to AMPLIFY");
                 }
+                else if(strcicmp(temp, "NONE") == 0)
+                {
+                    ds->hapticsettings.modulation = EFFECT_MODULATION_NONE;
+                    slogi("Effect modulation found, set to NONE");
+                }
                 else
                 {
-                    slogw("%s is not a valid modulation type, falling back to no effect modulation");
+                    slogw("%s is not a valid modulation type, falling back to no effect modulation", temp);
                     ds->hapticsettings.modulation = EFFECT_MODULATION_NONE;
                 }
             }
