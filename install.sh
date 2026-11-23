@@ -31,6 +31,8 @@ DISTRO_VERSION=""
 DISTRO_VARIANT=""
 DISTRO_FAMILY="unknown"
 DISTRO_IMMUTABLE=0
+INIT_SYSTEM=""
+CMAKE_SERVICE_FLAGS=""
 
 SCRIPT_DIR=""
 LOCAL_SRC=""
@@ -158,6 +160,8 @@ detect_distro() {
             DISTRO_FAMILY="fedora" ;;
         steamos)
             DISTRO_FAMILY="arch" ;;
+        gentoo|funtoo|calculate)
+            DISTRO_FAMILY="gentoo" ;;
     esac
 
     if [ "$DISTRO_FAMILY" = "unknown" ]; then
@@ -166,6 +170,7 @@ detect_distro() {
             *fedora*|*rhel*) DISTRO_FAMILY="fedora" ;;
             *debian*|*ubuntu*) DISTRO_FAMILY="debian" ;;
             *suse*) DISTRO_FAMILY="opensuse" ;;
+            *gentoo*) DISTRO_FAMILY="gentoo" ;;
         esac
     fi
 }
@@ -190,6 +195,8 @@ Required build packages (names vary by distro):
 Arch:    pacman -S --needed git cmake base-devel libuv argtable libserialport libconfig hidapi lua54 libpulse pkgconf libxdg-basedir libxml2 python yder
 Fedora:  dnf install git cmake gcc gcc-c++ make libuv-devel argtable-devel libserialport-devel libconfig-devel hidapi-devel lua-devel libxdg-basedir-devel libxml2-devel pulseaudio-libs-devel pkgconf-pkg-config python3
 Debian:  apt install build-essential git cmake libuv1-dev libargtable2-dev libserialport-dev libconfig-dev libhidapi-dev liblua5.4-dev libxdg-basedir-dev libxml2-dev libpulse-dev pkg-config python3
+Gentoo:  emerge --noreplace dev-vcs/git dev-build/cmake dev-util/pkgconf dev-lang/python net-misc/curl app-arch/unzip dev-libs/libuv dev-libs/argtable dev-libs/libserialport dev-libs/libconfig dev-libs/hidapi dev-lang/lua dev-libs/libxdg-basedir dev-libs/libxml2 media-libs/libpulse sys-process/procps
+         (yder is in the guru overlay; without it the installer builds yder from source)
 EOF
 }
 
@@ -322,6 +329,39 @@ install_deps_opensuse() {
     fi
 }
 
+install_deps_gentoo() {
+    # No -devel splits on Gentoo. gcc and make are @system, so emerging them
+    # here would be a nasty surprise.
+    local deps=(
+        dev-vcs/git dev-build/cmake dev-util/pkgconf dev-lang/python
+        net-misc/curl app-arch/unzip
+        dev-libs/libuv dev-libs/argtable dev-libs/libserialport
+        dev-libs/libconfig dev-libs/hidapi dev-lang/lua
+        dev-libs/libxdg-basedir dev-libs/libxml2 media-libs/libpulse
+        sys-process/procps
+    )
+    if [ "$BUILD_BRIDGES" -eq 1 ]; then
+        deps+=(dev-util/mingw64-toolchain)
+    fi
+    log_info "Emerging Gentoo packages: ${deps[*]}"
+    # --noreplace: don't rebuild what's already installed.
+    run_root emerge --noreplace "${deps[@]}"
+
+    # yder is guru-only and ~arch, so a stock system can't emerge it. Fall
+    # back to source rather than writing to /etc/portage uninvited.
+    if run_root emerge --noreplace net-libs/yder; then
+        log_success "net-libs/yder emerged"
+    else
+        log_warn "Could not emerge net-libs/yder."
+        log_info "It lives in the guru overlay and is keyworded ~arch. To use the"
+        log_info "packaged version instead of a source build:"
+        log_info "    eselect repository enable guru && emaint sync -r guru"
+        log_info "    echo 'net-libs/yder ~amd64'    >> /etc/portage/package.accept_keywords/yder"
+        log_info "    echo 'net-libs/orcania ~amd64' >> /etc/portage/package.accept_keywords/yder"
+        install_yder_from_source
+    fi
+}
+
 install_dependencies() {
     log_info "Installing dependencies for $DISTRO_ID (family=$DISTRO_FAMILY)..."
     case "$DISTRO_FAMILY" in
@@ -329,6 +369,7 @@ install_dependencies() {
         fedora) install_deps_fedora ;;
         debian) install_deps_debian ;;
         opensuse) install_deps_opensuse ;;
+        gentoo) install_deps_gentoo ;;
         *)
             log_error "Unsupported distribution: $DISTRO_ID (ID_LIKE=$DISTRO_LIKE)"
             manual_dep_hint
@@ -402,7 +443,7 @@ install_from_aur() {
     fi
     setup_configs
     create_launcher_scripts
-    setup_systemd_services
+    setup_services
     install_udev_rules
     verify_install
     print_next_steps
@@ -467,6 +508,7 @@ prepare_sources() {
 
 build_simapi() {
     log_info "Building simapi..."
+    detect_init_system
     local gcc_major
     gcc_major="$(gcc -dumpfullversion -dumpversion 2>/dev/null | cut -d. -f1 || echo 0)"
     if [ "${gcc_major:-0}" -gt 0 ] && [ "$gcc_major" -lt 13 ]; then
@@ -474,7 +516,7 @@ build_simapi() {
         log_info "On Debian 12 use the .deb from GitHub Releases, or Ubuntu 24.04 / Debian testing."
     fi
     mkdir -p "$INSTALL_DIR/simapi/build"
-    cmake -S "$INSTALL_DIR/simapi" -B "$INSTALL_DIR/simapi/build" -DCMAKE_INSTALL_PREFIX="$SIMAPI_PREFIX"
+    cmake -S "$INSTALL_DIR/simapi" -B "$INSTALL_DIR/simapi/build" -DCMAKE_INSTALL_PREFIX="$SIMAPI_PREFIX" $CMAKE_SERVICE_FLAGS
     cmake --build "$INSTALL_DIR/simapi/build" -j"$(nproc)"
     run_root cmake --install "$INSTALL_DIR/simapi/build"
     run_root ldconfig 2>/dev/null || true
@@ -489,9 +531,11 @@ build_simapi() {
 
 build_simd() {
     log_info "Building simd..."
+    detect_init_system
     rm -rf "$INSTALL_DIR/simapi/simd/build"
     mkdir -p "$INSTALL_DIR/simapi/simd/build"
     cmake -S "$INSTALL_DIR/simapi/simd" -B "$INSTALL_DIR/simapi/simd/build" \
+        $CMAKE_SERVICE_FLAGS \
         -DCMAKE_PREFIX_PATH="$SIMAPI_PREFIX" \
         -DCMAKE_INCLUDE_PATH="$SIMAPI_PREFIX/include" \
         -DCMAKE_LIBRARY_PATH="$SIMAPI_PREFIX/lib;$SIMAPI_PREFIX/lib64" \
@@ -723,6 +767,109 @@ EOF
     log_success "Launcher scripts created"
 }
 
+detect_init_system() {
+    # Idempotent: --aur reaches setup_services without main's detection.
+    [ -n "$INIT_SYSTEM" ] && return 0
+
+    # systemd wins when both are present: that's where a user unit lands.
+    if have_cmd systemctl || [ -d /run/systemd/system ]; then
+        INIT_SYSTEM="systemd"
+    elif have_cmd rc-update || have_cmd rc-service || [ -x /sbin/openrc ] || [ -x /usr/sbin/openrc ]; then
+        INIT_SYSTEM="openrc"
+    else
+        INIT_SYSTEM="unknown"
+    fi
+
+    # Keeps simd's CMake install from writing to ~/.config/systemd/user. A
+    # variable, not a helper: stdout would be captured as a cmake argument.
+    if [ "$INIT_SYSTEM" = "systemd" ]; then
+        CMAKE_SERVICE_FLAGS=""
+    else
+        CMAKE_SERVICE_FLAGS="-DINSTALL_SYSTEMD_SERVICE=OFF"
+    fi
+
+    log_info "Init system detected: $INIT_SYSTEM"
+}
+
+setup_services() {
+    detect_init_system
+    case "$INIT_SYSTEM" in
+        systemd) setup_systemd_services ;;
+        openrc)  setup_openrc_services ;;
+        *)
+            log_warn "Neither systemd nor OpenRC detected; not installing a service"
+            resolve_binaries
+            if [ -n "${SIMD_BIN}" ]; then
+                log_info "Start simd by hand before racing:"
+                echo "    LD_LIBRARY_PATH=$SIMAPI_PREFIX/lib:$SIMAPI_PREFIX/lib64 $SIMD_BIN"
+            fi
+            ;;
+    esac
+}
+
+setup_openrc_services() {
+    log_info "Creating OpenRC user service for simd..."
+    resolve_binaries
+
+    if [ -z "${SIMD_BIN}" ]; then
+        log_warn "simd binary not found; skipping OpenRC service"
+        return 0
+    fi
+
+    # OpenRC user services (0.60+) live under XDG_CONFIG_HOME and run as the
+    # user, so no root and no command_user: simd's config and shared memory are
+    # the user's anyway.
+    local rc_dir="${XDG_CONFIG_HOME:-$HOME/.config}/rc/init.d"
+    local script="$rc_dir/simd"
+    if ! ensure_writable_dir "$rc_dir"; then
+        log_warn "Skipping OpenRC service"
+        return 0
+    fi
+
+    # supervise-daemon for the restart-on-failure the systemd unit gets from
+    # Restart=on-failure; command_background has no equivalent.
+    local supervision
+    if have_cmd supervise-daemon; then
+        # Give up after 5 crashes in 60s rather than looping forever.
+        supervision='supervisor="supervise-daemon"
+respawn_delay=5
+respawn_max=5
+respawn_period=60'
+    else
+        supervision='command_background="yes"'
+        log_warn "supervise-daemon not found; service will not restart on failure"
+    fi
+
+    cat > "$script" << EOF
+#!/sbin/openrc-run
+# OpenRC user service, written by monocoque's install.sh.
+description="Sim Telemetry Daemon"
+
+command="$SIMD_BIN"
+# --nodaemon because simd daemonises itself by default
+command_args="--nodaemon"
+pidfile="\${XDG_RUNTIME_DIR:-/tmp}/simd.pid"
+$supervision
+export LD_LIBRARY_PATH="$SIMAPI_PREFIX/lib:$SIMAPI_PREFIX/lib64"
+
+start_pre() {
+    if [ -e /tmp/simd.pid ] && ! pgrep -x simd >/dev/null 2>&1; then
+        ewarn "Removing stale /tmp/simd.pid"
+        rm -f /tmp/simd.pid
+    fi
+}
+EOF
+    chmod +x "$script"
+    log_success "Wrote $script"
+    log_info "Enable with: rc-update --user add simd default && rc-service --user simd start"
+    log_info "User services need XDG_RUNTIME_DIR set, and a session started at"
+    log_info "login via pam_openrc.so, or at boot with:"
+    echo "    sudo ln -s /etc/init.d/user /etc/init.d/user.\$USER"
+    echo "    sudo rc-update add user.\$USER default"
+    log_info "Or skip the service and run simd in a terminal:"
+    echo "    LD_LIBRARY_PATH=$SIMAPI_PREFIX/lib:$SIMAPI_PREFIX/lib64 $SIMD_BIN"
+}
+
 setup_systemd_services() {
     local systemd_dir="$CONFIG_DIR/systemd/user"
     log_info "Creating systemd user service..."
@@ -833,8 +980,20 @@ print_next_steps() {
     echo "  hexdump /dev/shm/SIMAPI.DAT | head"
     echo "  hexdump /dev/shm/acpmf_physics | head     # AC / ACC"
     echo ""
-    echo "Enable simd at login:"
-    echo "  systemctl --user enable --now simd.service"
+    case "$INIT_SYSTEM" in
+        systemd)
+            echo "Enable simd at login:"
+            echo "  systemctl --user enable --now simd.service"
+            ;;
+        openrc)
+            echo "Enable simd (OpenRC user service):"
+            echo "  rc-update --user add simd default && rc-service --user simd start"
+            ;;
+        *)
+            echo "Start simd before racing:"
+            echo "  LD_LIBRARY_PATH=$SIMAPI_PREFIX/lib:$SIMAPI_PREFIX/lib64 simd"
+            ;;
+    esac
     echo ""
     echo "Edit devices:  $CONFIG_DIR/monocoque/monocoque.config"
     echo "Examples:      $CONFIG_DIR/monocoque/monocoque.config.example"
@@ -921,6 +1080,7 @@ main() {
 
     install_dependencies
     check_requirements
+    detect_init_system
 
     if [ "$DEPS_ONLY" -eq 1 ]; then
         log_success "Dependencies only; done"
@@ -940,7 +1100,7 @@ main() {
     install_bridges
     setup_configs
     create_launcher_scripts
-    setup_systemd_services
+    setup_services
     install_udev_rules
     verify_install
     print_next_steps
